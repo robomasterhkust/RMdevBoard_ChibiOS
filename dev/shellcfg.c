@@ -83,7 +83,7 @@ void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
 {
   (void) argc,argv;
 
-  chprintf(chp,"Shell Working");
+  chprintf(chp,"Shell Working\r\n");
 }
 
 /**
@@ -107,7 +107,7 @@ void cmd_data(BaseSequentialStream * chp, int argc, char *argv[])
     sec = (finalNum < 60 ? finalNum : 60);
   }
 
-  chprintf(chp,"Data transmission start in %d seconds...", sec);
+  chprintf(chp,"Data transmission start in %d seconds...\r\n", sec);
   chThdSleepSeconds(sec);
 
   chThdCreateStatic(Host_thread_wa, sizeof(Host_thread_wa),

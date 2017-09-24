@@ -11,9 +11,9 @@
   <board_name>STMicroelectronics STM32F4-Discovery</board_name>
   <board_id>ST_STM32F4_DISCOVERY</board_id>
   <board_functions></board_functions>
-  <subtype>STM32F407xx</subtype>
+  <subtype>STM32F429xI</subtype>
   <clocks
-    HSEFrequency="8000000"
+    HSEFrequency="12000000"
     HSEBypass="false"
     LSEFrequency="0"
     LSEBypass="false"

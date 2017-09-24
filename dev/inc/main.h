@@ -7,8 +7,8 @@
 #include "flash.h"
 #include "chprintf.h"
 
-#define SERIAL_CMD       &SD2
-#define SERIAL_DATA      &SD2
+#define SERIAL_CMD       &SD3
+#define SERIAL_DATA      &SD3
 
 void shellStart(void);
 
