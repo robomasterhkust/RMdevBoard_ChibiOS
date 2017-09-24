@@ -49,6 +49,8 @@ int main(void) {
 
   shellStart();
 
+  tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
+
   chThdCreateStatic(Test_thread_wa, sizeof(Test_thread_wa),
   NORMALPRIO - 10,
                     Test_thread, NULL);

@@ -24,7 +24,7 @@ typedef struct tagIMUStruct {
   float accelData[3];     /* Accelerometer data.             */
   float gyroData[3];      /* Gyroscope data.                 */
   float temperature;      /* IMU temperature.                 */
-  
+
   float accelFiltered[3]; /* Filtered accelerometer data.    */
   float gyroFiltered[3];  /* Filtered gyro data.    */
   float accelBias[3];     /* Accelerometer bias.             */
@@ -33,7 +33,6 @@ typedef struct tagIMUStruct {
   float v2Filtered[3];    /* Filtered directionattr of gravity.  */
   float qIMU[4];          /* Attitude quaternion of the IMU. */
 
-  uint8_t addr;
   uint16_t accel_psc;
   uint16_t gyro_psc;
 } __attribute__((packed)) IMUStruct, *PIMUStruct;

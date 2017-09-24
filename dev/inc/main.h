@@ -6,6 +6,7 @@
 
 #include "flash.h"
 #include "chprintf.h"
+#include "tft_display.h"
 
 #define SERIAL_CMD       &SD3
 #define SERIAL_DATA      &SD3

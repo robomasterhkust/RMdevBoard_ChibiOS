@@ -53,7 +53,7 @@ static const SPIConfig MPU6050_SPI_cfg =
   NULL,
   GPIO_CS,
   GPIO_Pin_CS,
-  SPI_CR1_BR_0| SPI_CR1_MSTR |
+  SPI_CR1_BR_0 | SPI_CR1_MSTR |
   SPI_CR1_CPHA | SPI_CR1_CPOL
 };
 
