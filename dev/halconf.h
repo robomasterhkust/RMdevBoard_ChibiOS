@@ -30,6 +30,10 @@
 
 #include "mcuconf.h"
 
+#define CHPRINTF_USE_FLOAT TRUE
+#define SERIAL_CMD       &SD3
+#define SERIAL_DATA      &SD3
+
 /**
  * @brief   Enables the PAL subsystem.
  */

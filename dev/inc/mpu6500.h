@@ -1,12 +1,8 @@
-#ifndef _MPU6050_H_
-#define _MPU6050_H_
+#ifndef _MPU6500_H_
+#define _MPU6500_H_
 
-#define MPU6050_UPDATE_FREQ                    1000U  //Read MPU @ 50Hz
-#define MPU6050_FLASH_ADDR               0x08040000
-
-#define MPU6500_SPI		                 	 &SPID5
-#define GPIO_Pin_CS		       GPIOF_SPI5_IMU_NSS
-#define GPIO_CS			                      GPIOF
+#define MPU6500_UPDATE_FREQ                    1000U  //Read MPU @ 1000Hz
+#define IMU_CAL_FLASH                     0x08040000
 
 typedef enum {
   X = 0U,
@@ -21,22 +17,22 @@ typedef enum {
 } mpu_euler_angle_t;
 
 typedef enum {
-  MPU6050_I2C_ADDR_A0_LOW = 0x68,
-  MPU6050_I2C_ADDR_A0_HIGH = 0x69
+  MPU6500_I2C_ADDR_A0_LOW = 0x68,
+  MPU6500_I2C_ADDR_A0_HIGH = 0x69
 } mpu_i2c_addr_t;
 
 typedef enum {
-  MPU6050_GYRO_SCALE_250 = 0,
-  MPU6050_GYRO_SCALE_500 = 1,
-  MPU6050_GYRO_SCALE_1000 = 2,
-  MPU6050_GYRO_SCALE_2000 = 3
+  MPU6500_GYRO_SCALE_250 = 0,
+  MPU6500_GYRO_SCALE_500 = 1,
+  MPU6500_GYRO_SCALE_1000 = 2,
+  MPU6500_GYRO_SCALE_2000 = 3
 } mpu_gyro_scale_t;
 
 typedef enum {
-  MPU6050_ACCEL_SCALE_2G = 0,
-  MPU6050_ACCEL_SCALE_4G = 1,
-  MPU6050_ACCEL_SCALE_8G = 2,
-  MPU6050_ACCEL_SCALE_16G = 3
+  MPU6500_ACCEL_SCALE_2G = 0,
+  MPU6500_ACCEL_SCALE_4G = 1,
+  MPU6500_ACCEL_SCALE_8G = 2,
+  MPU6500_ACCEL_SCALE_16G = 3
 } mpu_accel_scale_t;
 
 typedef enum {
@@ -48,7 +44,7 @@ typedef enum {
   IMU_CORRUPTED_Q_DATA = 5
 } imu_att_error_t;
 
-#define MPU6050_UPDATE_PERIOD     1000000U/MPU6050_UPDATE_FREQ
+#define MPU6500_UPDATE_PERIOD     1000000U/MPU6500_UPDATE_FREQ
 
 typedef struct tagIMUStruct {
   float accelData[3];     /* Accelerometer data.             */
@@ -69,8 +65,9 @@ typedef struct tagIMUStruct {
   float accel_psc;
   float gyro_psc;
 
-  SPIDriver* const imu_spi;
+  SPIDriver* imu_spi;
   uint8_t inited;
+  uint8_t data_invalid;
   uint32_t tprev;
   float dt;
   thread_reference_t imu_Thd;
@@ -88,13 +85,13 @@ typedef struct {
 #ifdef __cplusplus
 extern "C" {
 #endif
-  PIMUStruct mpu6050_get(void);
+  PIMUStruct imu_get(void);
 
-  uint8_t mpu6050Init(PIMUStruct pIMU, const IMUConfigStruct* const imu_conf);
-  uint8_t mpu6050GetDataRaw(PIMUStruct pIMU, float AccelRaw[3], float GyroRaw[3]);
-  uint8_t mpu6050GetData(PIMUStruct pIMU);
+  uint8_t imuInit(PIMUStruct pIMU, const IMUConfigStruct* const imu_conf);
+  uint8_t imuGetDataRaw(PIMUStruct pIMU, float AccelRaw[3], float GyroRaw[3]);
+  uint8_t imuGetData(PIMUStruct pIMU);
 
 #ifdef __cplusplus
 #endif
 
-#endif /* _MPU6050_H_ */
+#endif /* _MPU6500_H_ */

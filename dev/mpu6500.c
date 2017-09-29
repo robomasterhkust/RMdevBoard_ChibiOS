@@ -19,7 +19,7 @@
 #define MPU6500_RX_BUF_SIZE       0x0E
 #define MPU6500_TX_BUF_SIZE       0x05
 
-/* MPU6050 useful registers */
+/* imu useful registers */
 #define MPU6500_SMPLRT_DIV        0x19
 #define MPU6500_CONFIG            0x1A
 #define MPU6500_GYRO_CONFIG       0x1B
@@ -70,26 +70,22 @@ typedef enum{
   ADLPF_41HZ  =  3,
   ADLPF_20HZ  =  4,
   ADLPF_10HZ  =  5,
-  ADLPF_5HZ   =  6,
-  ADLPF_460HZ =  7
+  ADLPF_5HZ   =  6
 } mpu6500_acc_dlpf_config_t;
 
 static const SPIConfig MPU6500_SPI_cfg =
 {
   NULL,
-  GPIO_CS,
-  GPIO_Pin_CS,
-  SPI_CR1_BR_2 | SPI_CR1_MSTR |
+  GPIOF,
+  GPIOF_SPI5_IMU_NSS,
+  SPI_CR1_BR_2 | SPI_CR1_BR_1 | SPI_CR1_MSTR |
   SPI_CR1_CPHA | SPI_CR1_CPOL
 };
 
 /* IMU data structure. */
 IMUStruct g_IMU1;
 
-/* I2C error info structure. */
-I2CErrorStruct g_i2cErrorInfo = {0, 0, 0};
-
-PIMUStruct MPU6500_get(void)
+PIMUStruct imu_get(void)
 {
   return  &g_IMU1;
 }
@@ -98,10 +94,10 @@ PIMUStruct MPU6500_get(void)
  * Local variables
  */
 /* Data buffers */
-static int16_t mpu6050Data[7];
+static int16_t imuData[7];
 
-static uint8_t mpu6050RXData[MPU6500_RX_BUF_SIZE];
-static uint8_t mpu6050TXData[MPU6500_TX_BUF_SIZE];
+static uint8_t imuRXData[MPU6500_RX_BUF_SIZE];
+static uint8_t imuTXData[MPU6500_TX_BUF_SIZE];
 
 /**
  * @brief  Initialization function of IMU data structure.
@@ -114,8 +110,7 @@ static void imuStructureInit(PIMUStruct pIMU, IMUConfigStruct* imu_conf)
   pIMU->imu_spi = imu_conf->imu_spi;
   pIMU->imu_Thd = NULL;
 
-  pIMU->mpu_spi = imu_conf->mpu_spi;
-  pIMU->addr = imu_conf->a0_high;
+  pIMU->imu_spi = imu_conf->imu_spi;
 
   pIMU->accelT[0][0] = 1.0f;
   pIMU->accelT[1][1] = 1.0f;
@@ -186,14 +181,14 @@ static void trans_accel_offset(PIMUStruct pIMU, float accelData[3])
  * @return 1 - if reading was successful;
  *         0 - if reading failed.
  */
-uint8_t mpu6050GetData(PIMUStruct pIMU)
+uint8_t imuGetData(PIMUStruct pIMU)
 {
   uint32_t tcurr = chVTGetSystemTimeX();
   pIMU->dt = ST2US(tcurr - pIMU->tprev)/1000000.0f;
   pIMU->tprev = tcurr;
 
   float accelData[3],gyroData[3];
-  uint8_t error =  mpu6050GetDataRaw(pIMU, accelData, gyroData);
+  uint8_t error =  imuGetDataRaw(pIMU, accelData, gyroData);
 
   if(!error)
   {
@@ -212,87 +207,95 @@ uint8_t mpu6050GetData(PIMUStruct pIMU)
  * @return 1 - if reading was successful;
  *         0 - if reading failed.
  */
-uint8_t mpu6050GetDataRaw(PIMUStruct pIMU, float AccelRaw[3], float GyroRaw[3])
+uint8_t imuGetDataRaw(PIMUStruct pIMU, float AccelRaw[3], float GyroRaw[3])
 {
   msg_t status = MSG_OK;
 
   /* Set the start register address for bulk data transfer. */
-  mpu6050TXData[0] = MPU6500_ACCEL_XOUT_H | MPU6500_SPI_READ;
-  spiAcquireBus(pIMU->mpu_spi);
-  spiSend(pIMU->mpu_spi, 1, mpu6050TXData);
-  spiReceive(pIMU->mpu_spi, 14, mpu6050RXData);
-	spiReleaseBus(pIMU->mpu_spi);
+  imuTXData[0] = MPU6500_ACCEL_XOUT_H | MPU6500_SPI_READ;
+  spiAcquireBus(pIMU->imu_spi);
+  spiSelect(pIMU->imu_spi);
+  spiSend(pIMU->imu_spi, 1, imuTXData);
+  spiReceive(pIMU->imu_spi, 14, imuRXData);
+  spiUnselect(pIMU->imu_spi);
+	spiReleaseBus(pIMU->imu_spi);
 
-  mpu6050Data[0] = (int16_t)((mpu6050RXData[ 0]<<8) | mpu6050RXData[ 1]); /* Accel X */
-  mpu6050Data[1] = (int16_t)((mpu6050RXData[ 2]<<8) | mpu6050RXData[ 3]); /* Accel Y */
-  mpu6050Data[2] = (int16_t)((mpu6050RXData[ 4]<<8) | mpu6050RXData[ 5]); /* Accel Z */
-  mpu6050Data[3] = (int16_t)((mpu6050RXData[ 8]<<8) | mpu6050RXData[ 9]); /* Gyro X  */
-  mpu6050Data[4] = (int16_t)((mpu6050RXData[10]<<8) | mpu6050RXData[11]); /* Gyro Y  */
-  mpu6050Data[5] = (int16_t)((mpu6050RXData[12]<<8) | mpu6050RXData[13]); /* Gyro Z  */
-  mpu6050Data[6] = (int16_t)((mpu6050RXData[6]<<8) | mpu6050RXData[7]); /* Temperature */
+  imuData[0] = (int16_t)((imuRXData[ 0]<<8) | imuRXData[ 1]); /* Accel X */
+  imuData[1] = (int16_t)((imuRXData[ 2]<<8) | imuRXData[ 3]); /* Accel Y */
+  imuData[2] = (int16_t)((imuRXData[ 4]<<8) | imuRXData[ 5]); /* Accel Z */
+  imuData[3] = (int16_t)((imuRXData[ 8]<<8) | imuRXData[ 9]); /* Gyro X  */
+  imuData[4] = (int16_t)((imuRXData[10]<<8) | imuRXData[11]); /* Gyro Y  */
+  imuData[5] = (int16_t)((imuRXData[12]<<8) | imuRXData[13]); /* Gyro Z  */
+  imuData[6] = (int16_t)((imuRXData[6 ]<<8) | imuRXData[7 ]); /* Temperature */
 
   /* X: */
-  AccelRaw[X] = (float)mpu6050Data[0] * pIMU->accel_psc;
-  GyroRaw[X]  = (float)mpu6050Data[3] * pIMU->gyro_psc;
+  AccelRaw[X] = (float)imuData[0] * pIMU->accel_psc;
+  GyroRaw[X]  = (float)imuData[3] * pIMU->gyro_psc;
 
   /* Y: */
-  AccelRaw[Y] = (float)mpu6050Data[1] * pIMU->accel_psc;
-  GyroRaw[Y]  = (float)mpu6050Data[4] * pIMU->gyro_psc;
+  AccelRaw[Y] = (float)imuData[1] * pIMU->accel_psc;
+  GyroRaw[Y]  = (float)imuData[4] * pIMU->gyro_psc;
 
   /* Z: */
-  AccelRaw[Z] = (float)mpu6050Data[2] * pIMU->accel_psc;
-  GyroRaw[Z]  = (float)mpu6050Data[5] * pIMU->gyro_psc;
+  AccelRaw[Z] = (float)imuData[2] * pIMU->accel_psc;
+  GyroRaw[Z]  = (float)imuData[5] * pIMU->gyro_psc;
 
   return IMU_OK;
 }
 
 /**
- * @brief  Initialization function for the MPU6050 sensor.
- * @param  addr - I2C address of MPU6050 chip.
+ * @brief  Initialization function for the imu sensor.
+ * @param  addr - I2C address of imu chip.
  * @return 1 - if initialization was successful;
  *         0 - if initialization failed.
  */
-uint8_t mpu6050Init(PIMUStruct pIMU, const IMUConfigStruct* const imu_conf)
+uint8_t imuInit(PIMUStruct pIMU, const IMUConfigStruct* const imu_conf)
 {
   msg_t status = MSG_OK;
 
   imuStructureInit(pIMU, imu_conf);
 
-  spiStart(pIMU->mpu_spi, &MPU6500_SPI_cfg);
+  spiStart(pIMU->imu_spi, &MPU6500_SPI_cfg);
 
-  /* Reset all MPU6050 registers to their default values */
-  mpu6050TXData[0] = MPU6500_PWR_MGMT_1;  // Start register address;
-  mpu6050TXData[1] = MPU6500_SENSOR_RESET;
+  /* Reset all imu registers to their default values */
+  imuTXData[0] = MPU6500_PWR_MGMT_1;  // Start register address;
+  imuTXData[1] = MPU6500_SENSOR_RESET | MPU6500_SENSOR_SLEEP;
 
-  spiAcquireBus(pIMU->mpu_spi);
-  spiSend(pIMU->mpu_spi, 2, mpu6050TXData);
-  spiReleaseBus(pIMU->mpu_spi);
+  spiAcquireBus(pIMU->imu_spi);
+  spiSelect(pIMU->imu_spi);
+  spiSend(pIMU->imu_spi, 2, imuTXData);
+  spiUnselect(pIMU->imu_spi);
+  spiReleaseBus(pIMU->imu_spi);
 
-  /* Wait 100 ms for the MPU6050 to reset */
+  /* Wait 100 ms for the imu to reset */
   chThdSleepMilliseconds(100);
 
   /* Clear the SLEEP flag, set the clock and start measuring. */
-  mpu6050TXData[0] = MPU6500_PWR_MGMT_1;  // Start register address;
-  mpu6050TXData[1] = MPU6500_AUTO_SELECT_CLK;
+  imuTXData[0] = MPU6500_PWR_MGMT_1;  // Start register address;
+  imuTXData[1] = MPU6500_AUTO_SELECT_CLK;
 
-  spiAcquireBus(pIMU->mpu_spi);
-  spiSend(pIMU->mpu_spi, 2, mpu6050TXData);
-  spiReleaseBus(pIMU->mpu_spi);
+  spiAcquireBus(pIMU->imu_spi);
+  spiSelect(pIMU->imu_spi);
+  spiSend(pIMU->imu_spi, 2, imuTXData);
+  spiUnselect(pIMU->imu_spi);
+  spiReleaseBus(pIMU->imu_spi);
 
 
-  /* Configure the MPU6050 sensor        */
+  /* Configure the imu sensor        */
   /* NOTE:                               */
   /* - SLEEP flag must be cleared before */
   /*   configuring the sensor.           */
-  mpu6050TXData[0] = MPU6500_CONFIG;  // Start register address;
-  mpu6050TXData[1] = DLPF_41HZ;          // CONFIG register value DLPF_CFG;
-  mpu6050TXData[2] = (uint8_t)(imu_conf->gyroConf << 3U);          // GYRO_CONFIG register value
-  mpu6050TXData[3] = (uint8_t)(imu_conf->accelConf << 3U);          // ACCEL_CONFIG_1 register value
-  mpu6050TXData[4] = ADLPF_41HZ;          // ACCEL_CONFIG_2 register value
+  imuTXData[0] = MPU6500_CONFIG;  // Start register address;
+  imuTXData[1] = DLPF_41HZ;          // CONFIG register value DLPF_CFG;
+  imuTXData[2] = (uint8_t)(imu_conf->gyroConf << 3U);          // GYRO_CONFIG register value
+  imuTXData[3] = (uint8_t)(imu_conf->accelConf << 3U);          // ACCEL_CONFIG_1 register value
+  imuTXData[4] = ADLPF_41HZ;          // ACCEL_CONFIG_2 register value
 
-  spiAcquireBus(pIMU->mpu_spi);
-  spiSend(pIMU->mpu_spi, 5, mpu6050TXData);
-  spiReleaseBus(pIMU->mpu_spi);
+  spiAcquireBus(pIMU->imu_spi);
+  spiSelect(pIMU->imu_spi);
+  spiSend(pIMU->imu_spi, 5, imuTXData);
+  spiUnselect(pIMU->imu_spi);
+  spiReleaseBus(pIMU->imu_spi);
 
   pIMU->tprev = chVTGetSystemTimeX();
   pIMU->inited = 1;

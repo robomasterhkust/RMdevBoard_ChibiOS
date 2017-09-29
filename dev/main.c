@@ -15,6 +15,8 @@
 */
 #include "main.h"
 
+static BaseSequentialStream* chp = (BaseSequentialStream*)SERIAL_CMD;
+
 static THD_WORKING_AREA(Test_thread_wa, 128);
 static THD_FUNCTION(Test_thread, p)
 {
@@ -32,6 +34,56 @@ static THD_FUNCTION(Test_thread, p)
   }
 }
 
+static PIMUStruct pIMU;
+static const IMUConfigStruct imu1_conf = {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_1000};
+
+#define MPU6500_UPDATE_PERIOD_US 1000000U/MPU6500_UPDATE_FREQ
+static THD_WORKING_AREA(Attitude_thread_wa, 4096);
+static THD_FUNCTION(Attitude_thread, p)
+{
+  chRegSetThreadName("IMU Attitude Estimator");
+  uint8_t errorCode;
+
+  PIMUStruct pIMU_1 = (PIMUStruct)p;
+
+  chThdSleepMilliseconds(100);
+  errorCode = imuInit(pIMU_1, &imu1_conf);
+
+  while(errorCode)
+  {
+    chprintf(chp,"IMU Init Failed: %d", errorCode);
+    pIMU->data_invalid = true;
+    chThdSleepMilliseconds(500);
+  }
+
+  uint32_t tick = chVTGetSystemTimeX();
+  while(true)
+  {
+    tick += US2ST(MPU6500_UPDATE_PERIOD_US);
+    if(chVTGetSystemTimeX() < tick)
+      chThdSleepUntil(tick);
+    else
+    {
+      tick = chVTGetSystemTimeX();
+    }
+
+    errorCode = imuGetData(pIMU_1);
+
+    while(errorCode)
+    {
+      pIMU->data_invalid = true;
+      chprintf(chp,"IMU Reading Error %d", errorCode);
+      chThdSleepMilliseconds(500);
+    }
+
+    if(pIMU_1->accelerometer_not_calibrated || pIMU_1->gyroscope_not_calibrated)
+    {
+      chSysLock();
+      chThdSuspendS(&(pIMU_1->imu_Thd));
+      chSysUnlock();
+    }
+  }
+}
 /*
  * Application entry point.
  */
@@ -49,11 +101,17 @@ int main(void) {
 
   shellStart();
 
-  tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
+//  tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
 
   chThdCreateStatic(Test_thread_wa, sizeof(Test_thread_wa),
   NORMALPRIO - 10,
                     Test_thread, NULL);
+
+  pIMU = imu_get();
+
+  chThdCreateStatic(Attitude_thread_wa, sizeof(Attitude_thread_wa),
+  NORMALPRIO + 5,
+                    Attitude_thread, pIMU);
 
   while (true)
   {

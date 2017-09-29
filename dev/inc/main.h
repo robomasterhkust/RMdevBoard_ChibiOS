@@ -7,9 +7,8 @@
 #include "flash.h"
 #include "chprintf.h"
 #include "tft_display.h"
-
-#define SERIAL_CMD       &SD3
-#define SERIAL_DATA      &SD3
+#include "mpu6500.h"
+#include "math_misc.h"
 
 void shellStart(void);
 

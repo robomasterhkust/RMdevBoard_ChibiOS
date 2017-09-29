@@ -83,7 +83,14 @@ void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
 {
   (void) argc,argv;
 
-  chprintf(chp,"Shell Working\r\n");
+  PIMUStruct pIMU = imu_get();
+
+  chprintf(chp,"AccelX: %f\r\n",pIMU->accelData[X]);
+  chprintf(chp,"AccelY: %f\r\n",pIMU->accelData[Y]);
+  chprintf(chp,"AccelZ: %f\r\n",pIMU->accelData[Z]);
+  chprintf(chp,"GyroX:  %f\r\n",pIMU->gyroData[X]*180.0f/M_PI);
+  chprintf(chp,"GyroY:  %f\r\n",pIMU->gyroData[Y]*180.0f/M_PI);
+  chprintf(chp,"GyroZ:  %f\r\n",pIMU->gyroData[Z]*180.0f/M_PI);
 }
 
 /**
