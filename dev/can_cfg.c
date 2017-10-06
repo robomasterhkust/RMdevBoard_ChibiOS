@@ -51,6 +51,7 @@ static THD_FUNCTION(can_rx, p) {
     {
       chSysLock();
       /* Process message.*/
+      palTogglePad(GPIOF, GPIOF_LED_G);
       chSysUnlock();
     }
   }
@@ -100,8 +101,8 @@ void RM_can_init(void)
    */
   chThdCreateStatic(can_rx1_wa, sizeof(can_rx1_wa), NORMALPRIO + 7,
                     can_rx, (void *)&can1);
-  chThdCreateStatic(can_rx2_wa, sizeof(can_rx2_wa), NORMALPRIO + 7,
-                    can_rx, (void *)&can2);
+  //chThdCreateStatic(can_rx2_wa, sizeof(can_rx2_wa), NORMALPRIO + 7,
+  //                  can_rx, (void *)&can2);
   chThdCreateStatic(can1_tx_wa, sizeof(can1_tx_wa), NORMALPRIO + 7,
                     can1_tx, NULL);
 }

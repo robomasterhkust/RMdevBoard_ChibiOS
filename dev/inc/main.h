@@ -9,6 +9,7 @@
 #include "tft_display.h"
 #include "mpu6500.h"
 #include "math_misc.h"
+#include "can_cfg.h"
 
 void shellStart(void);
 

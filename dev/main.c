@@ -17,23 +17,6 @@
 
 static BaseSequentialStream* chp = (BaseSequentialStream*)SERIAL_CMD;
 
-static THD_WORKING_AREA(Test_thread_wa, 128);
-static THD_FUNCTION(Test_thread, p)
-{
-  (void)p;
-  chRegSetThreadName("test");
-
-  palSetPad(GPIOE, GPIOE_LED_R);
-  palClearPad(GPIOF, GPIOF_LED_G);
-
-  while(true)
-  {
-    palTogglePad(GPIOE, GPIOE_LED_R);
-    palTogglePad(GPIOF, GPIOF_LED_G);
-    chThdSleepMilliseconds(200);
-  }
-}
-
 static PIMUStruct pIMU;
 static const IMUConfigStruct imu1_conf = {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_1000};
 
@@ -100,12 +83,9 @@ int main(void) {
   chSysInit();
 
   shellStart();
+  RM_can_init();
 
 //  tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
-
-  chThdCreateStatic(Test_thread_wa, sizeof(Test_thread_wa),
-  NORMALPRIO - 10,
-                    Test_thread, NULL);
 
   pIMU = imu_get();
 
@@ -113,8 +93,13 @@ int main(void) {
   NORMALPRIO + 5,
                     Attitude_thread, pIMU);
 
+  palSetPad(GPIOE, GPIOE_LED_R);
+  //palClearPad(GPIOF, GPIOF_LED_G);
+
   while (true)
   {
+    palTogglePad(GPIOE, GPIOE_LED_R);
+    //palTogglePad(GPIOF, GPIOF_LED_G);
     chThdSleepMilliseconds(500);
   }
 
