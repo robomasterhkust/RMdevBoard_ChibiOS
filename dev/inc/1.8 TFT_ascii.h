@@ -1,5 +1,5 @@
-#ifndef __LCD_FONT_H
-#define __LCD_FONT_H
+#ifndef __LCD_FONT_H_
+#define __LCD_FONT_H_
 
 // 8x16 ASCII
 #define STARTING_ASCII 												0x00		// 32 (space bar)

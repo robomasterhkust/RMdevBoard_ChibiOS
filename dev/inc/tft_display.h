@@ -1,5 +1,5 @@
-#ifndef __LCD_RED_H
-#define __LCD_RED_H
+#ifndef __LCD_RED_H_
+#define __LCD_RED_H_
 
 #include "1.8 TFT_ascii.h"
 
