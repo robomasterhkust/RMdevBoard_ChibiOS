@@ -56,7 +56,6 @@ static THD_FUNCTION(can_rx, p) {
     {
       chSysLock();
       /* Process message.*/
-      palTogglePad(GPIOF,GPIOF_LED_G);
       chSysUnlock();
     }
   }

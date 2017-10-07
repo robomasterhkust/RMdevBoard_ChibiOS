@@ -82,7 +82,7 @@ static THD_WORKING_AREA(Shell_thread_wa, 1024);
 void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
 {
   (void) argc,argv;
-
+/*
   PIMUStruct pIMU = imu_get();
 
   chprintf(chp,"AccelX: %f\r\n",pIMU->accelData[X]);
@@ -90,7 +90,13 @@ void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
   chprintf(chp,"AccelZ: %f\r\n",pIMU->accelData[Z]);
   chprintf(chp,"GyroX:  %f\r\n",pIMU->gyroData[X]*180.0f/M_PI);
   chprintf(chp,"GyroY:  %f\r\n",pIMU->gyroData[Y]*180.0f/M_PI);
-  chprintf(chp,"GyroZ:  %f\r\n",pIMU->gyroData[Z]*180.0f/M_PI);
+  chprintf(chp,"GyroZ:  %f\r\n",pIMU->gyroData[Z]*180.0f/M_PI);*/
+  RC_Ctl_t* RC_Ctl = RC_get();
+
+  chprintf(chp,"CH0: %d\r\n",RC_Ctl->rc.channel0);
+  chprintf(chp,"CH1: %d\r\n",RC_Ctl->rc.channel1);
+  chprintf(chp,"CH2: %d\r\n",RC_Ctl->rc.channel2);
+  chprintf(chp,"CH3: %d\r\n",RC_Ctl->rc.channel3);
 }
 
 /**

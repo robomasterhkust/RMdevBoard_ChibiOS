@@ -419,7 +419,7 @@
                                      PIN_MODE_INPUT(GPIOB_PIN3) |        \
                                      PIN_MODE_ALTERNATE(GPIOB_TIM3_BUZZER) |           \
                                      PIN_MODE_ALTERNATE(GPIOB_TIM3_HEAT_PWM) |           \
-                                     PIN_MODE_ALTERNATE(GPIOB_UART1_TX) |        \
+                                     PIN_MODE_INPUT(GPIOB_UART1_TX) |        \
                                      PIN_MODE_ALTERNATE(GPIOB_UART1_RX) |           \
                                      PIN_MODE_INPUT(GPIOB_PIN8) |           \
                                      PIN_MODE_INPUT(GPIOB_PIN9) |        \
@@ -499,7 +499,7 @@
                                      PIN_AFIO_AF(GPIOB_PIN3, 0U) |           \
                                      PIN_AFIO_AF(GPIOB_TIM3_BUZZER, 2U) |          \
                                      PIN_AFIO_AF(GPIOB_TIM3_HEAT_PWM, 2U) |          \
-                                     PIN_AFIO_AF(GPIOB_UART1_TX, 7U) |           \
+                                     PIN_AFIO_AF(GPIOB_UART1_TX, 0U) |           \
                                      PIN_AFIO_AF(GPIOB_UART1_RX, 7U))
 #define VAL_GPIOB_AFRH              (PIN_AFIO_AF(GPIOB_PIN8, 0U) |          \
                                      PIN_AFIO_AF(GPIOB_PIN9, 0U) |           \

@@ -82,24 +82,24 @@ int main(void) {
   halInit();
   chSysInit();
 
+
+  palSetPad(GPIOE, GPIOE_LED_R);
+  palSetPad(GPIOF, GPIOF_LED_G);
+
   shellStart();
   RM_can_init();
-
+  RC_Init();
 //  tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
 
   pIMU = imu_get();
 
-  chThdCreateStatic(Attitude_thread_wa, sizeof(Attitude_thread_wa),
-  NORMALPRIO + 5,
-                    Attitude_thread, pIMU);
-
-  palSetPad(GPIOE, GPIOE_LED_R);
-  //palClearPad(GPIOF, GPIOF_LED_G);
+//  chThdCreateStatic(Attitude_thread_wa, sizeof(Attitude_thread_wa),
+//  NORMALPRIO + 5,
+//                    Attitude_thread, pIMU);
 
   while (true)
   {
     palTogglePad(GPIOE, GPIOE_LED_R);
-    //palTogglePad(GPIOF, GPIOF_LED_G);
     chThdSleepMilliseconds(500);
   }
 

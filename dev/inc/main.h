@@ -10,6 +10,7 @@
 #include "mpu6500.h"
 #include "math_misc.h"
 #include "can_cfg.h"
+#include "dbus.h"
 
 void shellStart(void);
 
