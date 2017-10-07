@@ -21,12 +21,17 @@ static canConfigStruct can2 = {&CAND2, US2ST(1000000U/CAN2_TX_FREQ)};
  * Internal loopback mode, 500KBaud, automatic wakeup, automatic recover
  * from abort mode.
  * See section 22.7.7 on the STM32 reference manual.
+ * TODO
  */
 static const CANConfig cancfg = {
-  CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP,
-  CAN_BTR_LBKM | CAN_BTR_SJW(0) | CAN_BTR_TS2(1) |
-  CAN_BTR_TS1(8) | CAN_BTR_BRP(6)
+  CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP, //HAL LIB, hcan1.Init.ABOM = DISABLE;hcan1.Init.AWUM = DISABLE;
+  CAN_BTR_SJW(0) | CAN_BTR_TS2(3) |
+  CAN_BTR_TS1(8) | CAN_BTR_BRP(2)
 };
+
+#define CAN_FILTER_NUM 28U
+/* TODO */
+static CANFilter canfilter[CAN_FILTER_NUM];
 
 /*
  * Receiver thread.
@@ -51,7 +56,7 @@ static THD_FUNCTION(can_rx, p) {
     {
       chSysLock();
       /* Process message.*/
-      palTogglePad(GPIOF, GPIOF_LED_G);
+      palTogglePad(GPIOF,GPIOF_LED_G);
       chSysUnlock();
     }
   }
@@ -69,12 +74,13 @@ static THD_FUNCTION(can1_tx, p) {
 
   chRegSetThreadName("can1 transmitter");
 
-  txmsg.IDE = CAN_IDE_EXT;
-  txmsg.EID = 0x01234567;
+  /* TODO Modify this*/
+  txmsg.IDE = CAN_IDE_STD;
+  txmsg.EID = 0x200;
   txmsg.RTR = CAN_RTR_DATA;
   txmsg.DLC = 8;
-  txmsg.data32[0] = 0x55AA55AA;
-  txmsg.data32[1] = 0x00FF00FF;
+  txmsg.data32[0] = 0x33333333;
+  txmsg.data32[1] = 0x33333333;
 
   uint32_t tick = chVTGetSystemTimeX();
   while (!chThdShouldTerminateX())
@@ -93,6 +99,19 @@ static THD_FUNCTION(can1_tx, p) {
 
 void RM_can_init(void)
 {
+  uint8_t i;
+  for (i = 0; i < CAN_FILTER_NUM; i++)
+  {
+    canfilter[i].filter = i;
+    canfilter[i].mode = 0; //CAN_FilterMode_IdMask
+    canfilter[i].scale = 1; //CAN_FilterScale_32bit
+    canfilter[i].assignment = 0;
+    canfilter[i].register1 = 0;
+    canfilter[i].register2 = 0;
+  }
+
+  canSTM32SetFilters(14, CAN_FILTER_NUM, canfilter);
+
   canStart(&CAND1, &cancfg);
   canStart(&CAND2, &cancfg);
 
@@ -101,8 +120,8 @@ void RM_can_init(void)
    */
   chThdCreateStatic(can_rx1_wa, sizeof(can_rx1_wa), NORMALPRIO + 7,
                     can_rx, (void *)&can1);
-  //chThdCreateStatic(can_rx2_wa, sizeof(can_rx2_wa), NORMALPRIO + 7,
-  //                  can_rx, (void *)&can2);
+  chThdCreateStatic(can_rx2_wa, sizeof(can_rx2_wa), NORMALPRIO + 7,
+                    can_rx, (void *)&can2);
   chThdCreateStatic(can1_tx_wa, sizeof(can1_tx_wa), NORMALPRIO + 7,
                     can1_tx, NULL);
 }
