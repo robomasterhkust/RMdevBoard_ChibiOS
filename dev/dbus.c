@@ -8,7 +8,9 @@ static RC_Ctl_t RC_Ctl;
 static thread_reference_t uart_host_thread_handler = NULL;
 static uint8_t rx_start_flag = 1;
 
-//Interrupt function
+/**
+ * @brief   Decode the received DBUS sequence and store it in RC_Ctl struct
+ */
 static void decryptDBUS(void)
 {
   RC_Ctl.rc.channel0 = ((rxbuf[0]) | (rxbuf[1]<<8)) & 0x07FF;
@@ -18,7 +20,6 @@ static void decryptDBUS(void)
   RC_Ctl.rc.s1  = ((rxbuf[5] >> 4)& 0x000C) >> 2;                         //!< Switch left
   RC_Ctl.rc.s2  = ((rxbuf[5] >> 4)& 0x0003);
 }
-
 
 /*
  * This callback is invoked when a receive buffer has been completely written.
@@ -75,14 +76,21 @@ static THD_FUNCTION(uart_dbus_thread, p)
     chSysLock();
     chThdSuspendS(&uart_host_thread_handler);
     chSysUnlock();
+    }
   }
 }
 
+/**
+ * @brief   Return the RC_Ctl struct
+ */
 RC_Ctl_t* RC_get(void)
 {
   return &RC_Ctl;
 }
 
+/**
+ * @brief   Initialize the RC receiver
+ */
 void RC_Init(void)
 {
 	RC_Ctl.rc.channel0 = 5;
