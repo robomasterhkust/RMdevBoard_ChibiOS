@@ -34,6 +34,13 @@
 #define SERIAL_CMD       &SD3
 #define SERIAL_DATA      &SD3
 
+#define LEDG_ON()       (palClearPad(GPIOF, GPIOF_LED_G))
+#define LEDG_OFF()      (palSetPad(GPIOF, GPIOF_LED_G))
+#define LEDG_TOGGLE()   (palTogglePad(GPIOF, GPIOF_LED_G))
+#define LEDR_ON()       (palClearPad(GPIOE, GPIOE_LED_R))
+#define LEDR_OFF()      (palSetPad(GPIOE, GPIOE_LED_R))
+#define LEDR_TOGGLE()   (palTogglePad(GPIOE, GPIOE_LED_R))
+
 /**
  * @brief   Enables the PAL subsystem.
  */

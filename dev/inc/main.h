@@ -9,8 +9,10 @@
 #include "tft_display.h"
 #include "mpu6500.h"
 #include "math_misc.h"
-#include "can_cfg.h"
+#include "canBusProcess.h"
 #include "dbus.h"
+
+#include "gimbal.h"
 
 void shellStart(void);
 

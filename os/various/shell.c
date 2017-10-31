@@ -144,10 +144,9 @@ static THD_FUNCTION(shell_thread, p) {
   chprintf(chp, "\r\nChibiOS/RT Shell\r\n");
   while (true) {
     chprintf(chp, "ch> ");
-    if (shellGetLine(chp, line, sizeof(line))) {
-      chprintf(chp, "\r\nlogout");
-      break;
-    }
+    
+    shellGetLine(chp, line, sizeof(line));
+
     lp = _strtok(line, " \t", &tokp);
     cmd = lp;
     n = 0;

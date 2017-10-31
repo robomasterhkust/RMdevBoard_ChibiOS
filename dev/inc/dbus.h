@@ -21,6 +21,6 @@ typedef union{
 }RC_Ctl_t;
 
 RC_Ctl_t* RC_get(void);
-void RC_Init(void);
+void RC_init(void);
 
 #endif

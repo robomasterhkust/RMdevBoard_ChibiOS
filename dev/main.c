@@ -67,6 +67,7 @@ static THD_FUNCTION(Attitude_thread, p)
     }
   }
 }
+
 /*
  * Application entry point.
  */
@@ -87,20 +88,20 @@ int main(void) {
   palSetPad(GPIOF, GPIOF_LED_G);
 
   shellStart();
-  RM_can_init();
-  RC_Init();
-//  tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
+  can_processInit();
+  RC_init();
+  gimbal_init();
+  //tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
 
   pIMU = imu_get();
 
-//  chThdCreateStatic(Attitude_thread_wa, sizeof(Attitude_thread_wa),
-//  NORMALPRIO + 5,
-//                    Attitude_thread, pIMU);
+  chThdCreateStatic(Attitude_thread_wa, sizeof(Attitude_thread_wa),
+  NORMALPRIO + 5,
+                    Attitude_thread, pIMU);
 
   while (true)
   {
-    palTogglePad(GPIOE, GPIOE_LED_R);
-    chThdSleepMilliseconds(500);
+    chThdSleepSeconds(1);
   }
 
   return 0;

@@ -1,6 +1,6 @@
 #ifndef _MATH_MISC_H_
 #define _MATH_MISC_H_
-#include "ch.h"
+#include "hal.h"
 #include <math.h>
 
 #define GRAV               9.80665f

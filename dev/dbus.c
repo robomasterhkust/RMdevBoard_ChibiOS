@@ -2,6 +2,8 @@
 #include "hal.h"
 
 #include "dbus.h"
+//#include "chprintf.h"
+//static BaseSequentialStream* chp = (BaseSequentialStream*)SERIAL_CMD;
 
 static uint8_t rxbuf[DBUS_BUFFER_SIZE];
 static RC_Ctl_t RC_Ctl;
@@ -29,8 +31,6 @@ static void rxend(UARTDriver *uartp) {
   if(rx_start_flag)
   {
     chSysLockFromISR();
-    palTogglePad(GPIOF,GPIOF_LED_G);
-    decryptDBUS();
     chThdResumeI(&uart_host_thread_handler, MSG_OK);
     chSysUnlockFromISR();
   }
@@ -50,7 +50,7 @@ static UARTConfig uart_cfg = {
 };
 
 #define  DBUS_INIT_WAIT_TIME_MS      4U
-#define  DBUS_WAIT_TIME_MS          10U
+#define  DBUS_WAIT_TIME_MS         100U
 static THD_WORKING_AREA(uart_dbus_thread_wa, 512);
 static THD_FUNCTION(uart_dbus_thread, p)
 {
@@ -61,22 +61,41 @@ static THD_FUNCTION(uart_dbus_thread, p)
   dmaStreamRelease(*UART_DBUS.dmatx);
 
   size_t rx_size;
-
-  while(!chThdShouldTerminateX() && !rx_start_flag)
-  {
-    uartStartReceive(UART_DBUS, DBUS_BUFFER_SIZE, rxbuf);
-    chThdSleepMilliseconds(DBUS_INIT_WAIT_TIME_MS);
-    uartStopReceive(UART_DBUS);
-  }
+  msg_t rxmsg;
+  bool rxflag = false;
+  systime_t timeout = MS2ST(DBUS_INIT_WAIT_TIME_MS);
+  uint32_t count = 0;
 
   while(!chThdShouldTerminateX())
   {
+    uartStopReceive(UART_DBUS);
     uartStartReceive(UART_DBUS, DBUS_BUFFER_SIZE, rxbuf);
 
     chSysLock();
-    chThdSuspendS(&uart_host_thread_handler);
+    rxmsg = chThdSuspendTimeoutS(&uart_host_thread_handler, timeout);
     chSysUnlock();
+
+    if(rxmsg == MSG_OK)
+    {
+      if(!rxflag)
+      {
+        timeout = MS2ST(DBUS_WAIT_TIME_MS);
+        rxflag = true;
+      }
+      else
+        decryptDBUS();
     }
+    else
+    {
+      rxflag = false;
+      timeout = MS2ST(DBUS_INIT_WAIT_TIME_MS);
+    }
+
+    //Control the flashing of green LED
+    if((!(count % 25) && !rxflag) || !(count% 75))
+      LEDG_TOGGLE();
+    count++;
+
   }
 }
 
@@ -88,15 +107,20 @@ RC_Ctl_t* RC_get(void)
   return &RC_Ctl;
 }
 
+static void rcStructInit(void)
+{
+  RC_Ctl.rc.channel0 = 1024;
+  RC_Ctl.rc.channel1 = 1024;
+  RC_Ctl.rc.channel2 = 1024;
+  RC_Ctl.rc.channel3 = 1024;
+}
+
 /**
  * @brief   Initialize the RC receiver
  */
-void RC_Init(void)
+void RC_init(void)
 {
-	RC_Ctl.rc.channel0 = 5;
-	RC_Ctl.rc.channel1 = 5;
-	RC_Ctl.rc.channel2 = 5;
-	RC_Ctl.rc.channel3 = 5;
+  rcStructInit();
 
   chThdCreateStatic(uart_dbus_thread_wa, sizeof(uart_dbus_thread_wa),
                     NORMALPRIO + 7,
