@@ -11,6 +11,7 @@
 #include "math_misc.h"
 #include "canBusProcess.h"
 #include "dbus.h"
+#include "params.h"
 
 #include "gimbal.h"
 

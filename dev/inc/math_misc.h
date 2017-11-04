@@ -18,12 +18,6 @@ typedef struct {
   float data[2];
 } lpfilterStruct;
 
-typedef enum {
-  ROLL = 0,
-  PITCH = 1,
-  YAW = 2
-} euler_angle_t;
-
 static inline float vector_norm(const float v[], const uint8_t length)
 {
   uint8_t i;
@@ -94,9 +88,9 @@ static inline void q_derivative(const float q[4], const float v[3],
  */
 static inline void quarternion2euler(const float q[4], float euler_angle[3])
 {
-  euler_angle[ROLL] = atan2f(2.0f * (q[0] * q[1] + q[2] * q[3]), 1.0f - 2.0f * (q[1] * q[1] + q[2] * q[2]));
-  euler_angle[PITCH] = asinf(2.0f * (q[0] * q[2] - q[3] * q[1]));
-  euler_angle[YAW] = atan2f(2.0f * (q[0] * q[3] + q[1] * q[2]), 1.0f - 2.0f * (q[2] * q[2] + q[3] * q[3]));
+  euler_angle[0] = atan2f(2.0f * (q[0] * q[1] + q[2] * q[3]), 1.0f - 2.0f * (q[1] * q[1] + q[2] * q[2]));
+  euler_angle[1] = asinf(2.0f * (q[0] * q[2] - q[3] * q[1]));
+  euler_angle[2] = atan2f(2.0f * (q[0] * q[3] + q[1] * q[2]), 1.0f - 2.0f * (q[2] * q[2] + q[3] * q[3]));
 }
 
 /**

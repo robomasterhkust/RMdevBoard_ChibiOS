@@ -82,21 +82,14 @@ static THD_WORKING_AREA(Shell_thread_wa, 1024);
 void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
 {
   (void) argc,argv;
-/*
-  PIMUStruct pIMU = imu_get();
+  GimbalStruct* gimbal = gimbal_get();
 
-  chprintf(chp,"AccelX: %f\r\n",pIMU->accelData[X]);
-  chprintf(chp,"AccelY: %f\r\n",pIMU->accelData[Y]);
-  chprintf(chp,"AccelZ: %f\r\n",pIMU->accelData[Z]);
-  chprintf(chp,"GyroX:  %f\r\n",pIMU->gyroData[X]*180.0f/M_PI);
-  chprintf(chp,"GyroY:  %f\r\n",pIMU->gyroData[Y]*180.0f/M_PI);
-  chprintf(chp,"GyroZ:  %f\r\n",pIMU->gyroData[Z]*180.0f/M_PI);*/
-  RC_Ctl_t* RC_Ctl = RC_get();
-
-  chprintf(chp,"CH0: %d\r\n",RC_Ctl->rc.channel0);
-  chprintf(chp,"CH1: %d\r\n",RC_Ctl->rc.channel1);
-  chprintf(chp,"CH2: %d\r\n",RC_Ctl->rc.channel2);
-  chprintf(chp,"CH3: %d\r\n",RC_Ctl->rc.channel3);
+  chprintf(chp,"Pitch angle: %f\r\n",gimbal->pitch_angle);
+  chprintf(chp,"Yaw angle: %f\r\n",gimbal->yaw_angle);
+  chprintf(chp,"Pitch current: %f\r\n",gimbal->pitch_current);
+  chprintf(chp,"Yaw current: %f\r\n",gimbal->yaw_current);
+  chprintf(chp,"Pitch current sp: %d\r\n",gimbal->encoder_can[GIMBAL_PITCH].current_setpoint);
+  chprintf(chp,"Yaw current sp: %d\r\n",gimbal->encoder_can[GIMBAL_YAW].current_setpoint);
 }
 
 /**

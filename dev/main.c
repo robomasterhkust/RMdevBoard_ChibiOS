@@ -16,9 +16,9 @@
 #include "main.h"
 
 static BaseSequentialStream* chp = (BaseSequentialStream*)SERIAL_CMD;
-
-static PIMUStruct pIMU;
 static const IMUConfigStruct imu1_conf = {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_1000};
+
+PIMUStruct pIMU;
 
 #define MPU6500_UPDATE_PERIOD_US 1000000U/MPU6500_UPDATE_FREQ
 static THD_WORKING_AREA(Attitude_thread_wa, 4096);
@@ -88,6 +88,7 @@ int main(void) {
   palSetPad(GPIOF, GPIOF_LED_G);
 
   shellStart();
+  params_init();
   can_processInit();
   RC_init();
   gimbal_init();

@@ -1,6 +1,6 @@
 /**
- * Edward ZHANG, 20171007
- * @file    can_cfg.c
+ * Edward ZHANG, 20171101
+ * @file    canBusProcess.c
  * @brief   CAN driver configuration file
  */
 #include "ch.h"
@@ -45,8 +45,8 @@ static inline void can_processChassisEncoder
 {
   chSysLock();
   cm->updated = true;
-  cm->raw_angle = rxmsg->data16[0];
-  cm->raw_speed = rxmsg->data16[1];
+  cm->raw_angle = (uint16_t)(rxmsg->data8[0]) << 8 | rxmsg->data8[1];
+  cm->raw_speed = (int16_t)(rxmsg->data8[2]) << 8 | rxmsg->data8[3];
   chSysUnlock();
 }
 
@@ -55,15 +55,15 @@ static inline void can_processGimbalEncoder
 {
   chSysLock();
   gm->updated = true;
-  gm->raw_angle        = rxmsg->data16[0];
-  gm->raw_current      = rxmsg->data16[1];
-  gm->current_setpoint = rxmsg->data16[2];
+  gm->raw_angle        = (uint16_t)(rxmsg->data8[0]) << 8 | rxmsg->data8[1];
+  gm->raw_current      = (int16_t)((rxmsg->data8[2]) << 8 | rxmsg->data8[3]);
+  gm->current_setpoint = (int16_t)((rxmsg->data8[4]) << 8 | rxmsg->data8[5]);
   chSysUnlock();
 }
 
 static void can_processEncoderMessage(const CANRxFrame* const rxmsg)
 {
-  switch(rxmsg->EID)
+  switch(rxmsg->SID)
   {
       case CAN_CHASSIS_FL_FEEDBACK_MSG_ID:
         can_processChassisEncoder(&chassis_encoder[FRONT_LEFT] ,rxmsg);
@@ -134,10 +134,17 @@ void can_motorSetCurrent(CANDriver *const CANx,
     txmsg.RTR = CAN_RTR_DATA;
     txmsg.DLC = 0x08;
 
-    txmsg.data16[0] = cm1_iq;
-    txmsg.data16[1] = cm2_iq;
-    txmsg.data16[2] = cm3_iq;
-    txmsg.data16[3] = cm4_iq;
+    txmsg.data8[0] = (uint8_t)(cm1_iq >> 8);
+    txmsg.data8[1] = (uint8_t)cm1_iq;
+
+    txmsg.data8[2] = (uint8_t)(cm2_iq >> 8);
+    txmsg.data8[3] = (uint8_t)cm2_iq;
+
+    txmsg.data8[4] = (uint8_t)(cm3_iq >> 8);
+    txmsg.data8[5] = (uint8_t)cm3_iq;
+
+    txmsg.data8[6] = (uint8_t)(cm4_iq >> 8);
+    txmsg.data8[7] = (uint8_t)cm4_iq;
 
     canTransmit(CANx, CAN_ANY_MAILBOX, &txmsg, MS2ST(100));
 }
