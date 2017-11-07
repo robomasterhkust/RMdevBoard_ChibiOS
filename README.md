@@ -1,6 +1,7 @@
 # RMdevBoard_ChibiOS  
   
 ## Get ChibiOS up and running in Windows (Written by Alex Wong, tell me if I got sth wrong)  
+(Written by Alex Wong, tell me if I got sth wrong)  
 1. Downloading ChibiStudio  
 - Go to [ChibiStudio download site](https://sourceforge.net/projects/chibios/files/ChibiStudio/) and download the latest version of ChibiStudio. At the time of writing, latest version available was ChibiStudio_Preview19.7z  
   
