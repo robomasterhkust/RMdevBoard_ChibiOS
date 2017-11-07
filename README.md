@@ -62,7 +62,7 @@
   - The green LED on the RM board should flash on and off every 500ms if everything is correct  
   
 ## Get ChibiOS up and running in Mac [provisory]
-This installation makes use of terminal, if you are not familiar with the use of the command line tool you can follow this [tutorial] (https://www.davidbaumgold.com/tutorials/command-line/) to get started with it:
+This installation makes use of terminal, if you are not familiar with the use of the command line tool you can follow this [tutorial](https://www.davidbaumgold.com/tutorials/command-line/) to get started with it:
  
 1. Open terminal and create a directory inside your user folder and name it GitHub with the following command
 
@@ -96,7 +96,7 @@ CSRC = $(STARTUPSRC) \
        main.c shellcfg.c flash.c tft_display.c mpu6500.c math_misc.c \
 			 canBusProcess.c dbus.c gimbal.c params.c
 ```
-  Will become:
+  	Will become:
 
 ```
 CSRC = $(STARTUPSRC) \
@@ -124,7 +124,7 @@ CSRC = $(STARTUPSRC) \
     - type
     
           make upload
-     -The green LED should be blinking once every 500ms, SUCCESS
+     - The green LED should be blinking once every 500ms, SUCCESS
   - Ozone using JLINK (same used for internals):
     - In terminal, cd into the dev directory:
     
@@ -146,6 +146,6 @@ CSRC = $(STARTUPSRC) \
 
 ### Install CLion with a free student license
  1. Go to [JetBrains website](https://www.jetbrains.com/clion/download/#section=mac) and dowload CLion
- 2. Obtain a student license using [this procedure] (https://www.jetbrains.com/shop/eform/students) and your connect.ust.hk email address
+ 2. Obtain a student license using [this procedure](https://www.jetbrains.com/shop/eform/students) and your connect.ust.hk email address
   
   
