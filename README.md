@@ -96,7 +96,7 @@ CSRC = $(STARTUPSRC) \
        main.c shellcfg.c flash.c tft_display.c mpu6500.c math_misc.c \
 			 canBusProcess.c dbus.c gimbal.c params.c
 ```
-  	Will become:
+    Will become:
 
 ```
 CSRC = $(STARTUPSRC) \
@@ -124,7 +124,7 @@ CSRC = $(STARTUPSRC) \
     - type
     
           make upload
-     - The green LED should be blinking once every 500ms, SUCCESS
+     - The green LED on the RM board should flash on and off every 500ms if everything is correct
   - Ozone using JLINK (same used for internals):
     - In terminal, cd into the dev directory:
     
@@ -138,7 +138,7 @@ CSRC = $(STARTUPSRC) \
     - Select 'New Project', choose 'STM32F427II' as 'Device', press 'Next >'  
     - 'Target Interface' = 'SWD'; 'Target Interface Speed' = '50MHz'; 'Host Interface' = 'USB', press 'Next >'  
     - For 'ELF, Motorola S-record .....' field, browse into the GitHub folder and choose  
-    `User/`your-username`/GitHub/ChibiStudio/workspace_user/RMdevBoard_ChibiOS/dev/build/ch.elf
+    `User/`your-username`/GitHub/ChibiStudio/workspace_user/RMdevBoard_ChibiOS/dev/build/ch.elf`
     - After project creation, at the top-left corner, press the 'Download and reset program' button, which is shaped like a green power button  
     - After flashing the program, press the triangle-shaped 'Resume program excution' button  
     - The green LED on the RM board should flash on and off every 500ms if everything is correct
