@@ -61,7 +61,7 @@
   - After flashing the program, press the triangle-shaped 'Resume program excution' button  
   - The green LED on the RM board should flash on and off every 500ms if everything is correct  
   
-## Get ChibiOS in Mac up and running in Mac [provisory]
+## Get ChibiOS up and running in Mac [provisory]
 This installation makes use of terminal, if you are not familiar with the use of the command line tool you can follow this [tutorial] (https://www.davidbaumgold.com/tutorials/command-line/) to get started with it:
  
 1. Open terminal and create a directory inside your user folder and name it GitHub with the following command
