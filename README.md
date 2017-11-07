@@ -2,8 +2,10 @@
   
 ## Get ChibiOS up and running in Windows (Written by Alex Wong, tell me if I got sth wrong)  
 (Written by Alex Wong, tell me if I got sth wrong)  
+  
 1. Downloading ChibiStudio  
 - Go to [ChibiStudio download site](https://sourceforge.net/projects/chibios/files/ChibiStudio/) and download the latest version of ChibiStudio. At the time of writing, latest version available was ChibiStudio_Preview19.7z  
+  
   
 2. Installing ChibiStudio  
 - Extract and place the ChibiStudio folder into:  
@@ -11,13 +13,16 @@
 - Such that your Chibistudio installation path is  
 > C:\ChibiStudio  
   
+  
 3. Copy launch shortcut elsewhere
 - Inside 'C:\ChibiStudio', you will see two shortcuts, "Chibi Studio GCC 4.7" and "Chibi Studio GCC 6.3", we will be using the one ending with 6.3, so copy and paste that shortcut to somewhere convenient for you.  
+  
   
 4. Launch Eclipse for the first time  
 - Eclipse will prompt you to choose a location as your workspace, enter:   
 > C:\ChibiStudio\workspace_user   
 - Eclipse will launch and show a welcoming 'readme.txt'  
+  
   
 5. Importing this project  
 - Clone this repo into  
@@ -31,9 +36,11 @@
 - leave the three options UN-checked  
 - Press 'Finish'  
   
+  
 6. Testing Everything
 - Press 'Ctrl-B' 
 - If everything is correct, your Console should display a bunch of source files being compiled, follwed by 'Done' at the end, ignore the warnings  
+  
   
 7. Update Eclipse Version (optional)  
 ChibiStudio comes with Eclipse LUNA, which you can only theme the text editor dark, not the rest of the UI like Project explorer, console etc. If you are OCD like me, you can consider updating Eclipse to a newer release, at the time of writing, latest version available was Eclipse OXYGEN  
