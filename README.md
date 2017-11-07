@@ -1,6 +1,6 @@
 # RMdevBoard_ChibiOS  
   
-## Get ChibiOS up and running in Windows (Written by Alex Wong, tell me if I got sth wrong)  
+## Get ChibiOS up and running in Windows
 (Written by Alex Wong, tell me if I got sth wrong)  
   
 1. Downloading ChibiStudio  
@@ -57,6 +57,6 @@
   - 'Target Interface' = 'SWD'; 'Target Interface Speed' = '50MHz'; 'Host Interface' = 'USB', press 'Next >'  
   - For 'ELF, Motorola S-record .....' field, browse and choose  
   > C:/ChibiStudio/workspace_user/RMdevBoard_ChibiOS/dev/build/ch.elf  
-  - At the top-left corner, press the 'Download and reset program' button, which is shaped like a green power button  
+  - After project creation, at the top-left corner, press the 'Download and reset program' button, which is shaped like a green power button  
   - After flashing the program, press the triangle-shaped 'Resume program excution' button  
   - The green LED on the RM board should flash on and off every 500ms if everything is correct  
