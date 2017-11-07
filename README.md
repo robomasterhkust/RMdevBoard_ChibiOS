@@ -1,6 +1,6 @@
 # RMdevBoard_ChibiOS  
   
-## Get ChibiOS up and running in Windows
+## Get Chibi up and running in Windows
 (Written by Alex Wong, tell me if I got sth wrong)  
   
 1. Downloading ChibiStudio  
