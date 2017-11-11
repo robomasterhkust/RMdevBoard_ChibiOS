@@ -138,7 +138,8 @@ This installation makes use of terminal, if you are not familiar with the use of
 
 6. Flash compiled code into the board (two methods):
   - CLion: STLink
-    - Select "Upload" configuration, click the green arrow on the top right corner and watch the code get flashed
+    - Select "STLink" configuration, click the green arrow on the top right corner and watch the code get flashed
+    - When the upload completes you should be able to see `Process finished with exit code 0` in the console
     - The green LED on the RM board should flash on and off every 500ms if everything is correct
     
   - Clion: Ozone using JLINK (same used for internals)
