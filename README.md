@@ -68,79 +68,79 @@ This installation makes use of terminal, if you are not familiar with the use of
 
 		mkdir GitHub
 
-2. cd into the directory with 
+2. cd into the directory with
 
 		cd GitHub
 
-3. Clone this repository
+3. Clone this repository:
 
 		git clone https://github.com/robomasterhkust/RMdevBoard_ChibiOS
 
-4. Open CLion (if you do not have CLion installed [follow these steps](#install-clion-with-a-free-student-license) to obtain a free student license) or any other editor of choice and import `RMdevBoard_ChibiOS` as a project.
+4. Import the project in CLion:
+	- Open CLion (if you do not have CLion installed [follow these steps](#install-clion-with-a-free-student-license) to obtain a free student license) or any other editor of choice and import `RMdevBoard_ChibiOS` as a project.
 
-5. You can now modify all the code, however in order for new `.c` and `.h` files to be compiled you will need to add them to the make file. Under the section '# C sources'. For example in order to add a `test.c` file after creating it and adding it into the 'dev' folder (with relative header `test.h` in the 'inc' folder) the following section:
-```
-CSRC = $(STARTUPSRC) \
-       $(KERNSRC) \
-       $(PORTSRC) \
-       $(OSALSRC) \
-       $(HALSRC) \
-       $(PLATFORMSRC) \
-       $(BOARDSRC) \
-       $(TESTSRC) \
-			 $(CHIBIOS)/os/various/shell.c \
-       $(CHIBIOS)/os/various/evtimer.c \
-       $(CHIBIOS)/os/various/syscalls.c \
-			 $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
-       $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
-       main.c shellcfg.c flash.c tft_display.c mpu6500.c math_misc.c \
-			 canBusProcess.c dbus.c gimbal.c params.c
-```
-    Will become:
+5. Create the upload configurations:
+	- On the right top corner click the configurations menu (default "Build all") and select "Edit Configurations"
+	- Add the first new configuration with "+" and name it "Upload"
+		- Select "All targets" and under executable "select other"
+		- Browse into the source folder and select the "STlink.sh" executable
+	- Add the second new configuration with "+" and name it "Ozone"
+		- Select "All targets" and under executable "select other"
+		- Browse into your application folder
+		- double click on "Ozone", "Contents", "MacOS"
+		- Select the "Ozone" executable
+		- Under "Program arguments" type `run.jdebug`
+		- Under "Working directory" select "..." and browse to the "RMdevBoard_ChibiOs" folder
+		- Lastly, check the "Signle instance only" box on the top right in order to avoid having multiple instances running at the same time.
+		
 
-```
-CSRC = $(STARTUPSRC) \
-       $(KERNSRC) \
-       $(PORTSRC) \
-       $(OSALSRC) \
-       $(HALSRC) \
-       $(PLATFORMSRC) \
-       $(BOARDSRC) \
-       $(TESTSRC) \
-			 $(CHIBIOS)/os/various/shell.c \
-       $(CHIBIOS)/os/various/evtimer.c \
-       $(CHIBIOS)/os/various/syscalls.c \
-			 $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
-       $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
-       main.c shellcfg.c flash.c tft_display.c mpu6500.c math_misc.c \
-			 canBusProcess.c dbus.c gimbal.c params.c test.c
-```
+5. Modify the code:
+	- You can now modify all the code, however in order for new `.c` and `.h` files to be compiled you will need to add them to the make file. Under the section '# C sources'. For example in order to add a `test.c` file after creating it and adding it into the 'dev' folder (with relative header `test.h` in the 'inc' folder) the following section:
+	```
+	CSRC = $(STARTUPSRC) \
+	       $(KERNSRC) \
+	       $(PORTSRC) \
+	       $(OSALSRC) \
+	       $(HALSRC) \
+	       $(PLATFORMSRC) \
+	       $(BOARDSRC) \
+	       $(TESTSRC) \
+				 $(CHIBIOS)/os/various/shell.c \
+	       $(CHIBIOS)/os/various/evtimer.c \
+	       $(CHIBIOS)/os/various/syscalls.c \
+				 $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
+	       $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
+	       main.c shellcfg.c flash.c tft_display.c mpu6500.c math_misc.c \
+				 canBusProcess.c dbus.c gimbal.c params.c
+	```
+	Will become:
+
+	```
+	CSRC = $(STARTUPSRC) \
+	       $(KERNSRC) \
+	       $(PORTSRC) \
+	       $(OSALSRC) \
+	       $(HALSRC) \
+	       $(PLATFORMSRC) \
+	       $(BOARDSRC) \
+	       $(TESTSRC) \
+				 $(CHIBIOS)/os/various/shell.c \
+	       $(CHIBIOS)/os/various/evtimer.c \
+	       $(CHIBIOS)/os/various/syscalls.c \
+				 $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
+	       $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
+	       main.c shellcfg.c flash.c tft_display.c mpu6500.c math_misc.c \
+				 canBusProcess.c dbus.c gimbal.c params.c test.c
+	```
 
 6. Flash compiled code into the board (two methods):
-  - Command Line, using STLINKV2 (looks like a USB stick with 8 Pins on the end):
-    - In terminal cd into the dev directory:
+  - CLion: STLink
+    - Select "Upload" configuration, click the green arrow on the top right corner and watch the code get flashed
+    - The green LED on the RM board should flash on and off every 500ms if everything is correct
     
-          cd GitHub/RMdevBoard_ChibiOS/dev
-    - type
-    
-          make upload
-     - The green LED on the RM board should flash on and off every 500ms if everything is correct
-  - Ozone using JLINK (same used for internals):
-    - In terminal, cd into the dev directory:
-    
-          cd GitHub/RMdevBoard_ChibiOS/dev
-    - type
-    
-          make
-      this step is necessary only if you changed the code since the last version
-    - Download and install [Ozone](https://www.segger.com/downloads/jlink/#Ozone) if you haven't already  
-    - Launch Ozone  
-    - Select 'New Project', choose 'STM32F427II' as 'Device', press 'Next >'  
-    - 'Target Interface' = 'SWD'; 'Target Interface Speed' = '50MHz'; 'Host Interface' = 'USB', press 'Next >'  
-    - For 'ELF, Motorola S-record .....' field, browse into the GitHub folder and choose  
-    `User/`your-username`/GitHub/ChibiStudio/workspace_user/RMdevBoard_ChibiOS/dev/build/ch.elf`
-    - After project creation, at the top-left corner, press the 'Download and reset program' button, which is shaped like a green power button  
-    - After flashing the program, press the triangle-shaped 'Resume program excution' button  
+  - Clion: Ozone using JLINK (same used for internals)
+    - Select "Ozone" configuration, click the green arrow on the top right corner
+    - Ozone should open, you can now upload the code with the top left green button and use the debugger
     - The green LED on the RM board should flash on and off every 500ms if everything is correct
 
 
