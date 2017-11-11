@@ -61,7 +61,7 @@
   - After flashing the program, press the triangle-shaped 'Resume program excution' button  
   - The green LED on the RM board should flash on and off every 500ms if everything is correct  
   
-## Get ChibiOS up and running in Mac [provisory]
+## Get ChibiOS up and running in Mac (CLion automatic upload)
 This installation makes use of terminal, if you are not familiar with the use of the command line tool you can follow this [tutorial](https://www.davidbaumgold.com/tutorials/command-line/) to get started with it:
  
 1. Open terminal and create a directory inside your user folder and name it GitHub with the following command
@@ -77,7 +77,8 @@ This installation makes use of terminal, if you are not familiar with the use of
 		git clone https://github.com/robomasterhkust/RMdevBoard_ChibiOS
 
 4. Import the project in CLion:
-	- Open CLion (if you do not have CLion installed [follow these steps](#install-clion-with-a-free-student-license) to obtain a free student license) or any other editor of choice and import `RMdevBoard_ChibiOS` as a project.
+	- Open CLion (if you do not have CLion installed [follow these steps](#install-clion-with-a-free-student-license) to obtain a free student license) and import `RMdevBoard_ChibiOS` as a project.
+	- Select "open project" and DO NOT overwrite "CMakeList.txt"
 
 5. Create the upload configurations:
 	- On the right top corner click the configurations menu (default "Build all") and select "Edit Configurations"
