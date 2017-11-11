@@ -82,11 +82,13 @@ This installation makes use of terminal, if you are not familiar with the use of
 
 5. Create the upload configurations:
 	- On the right top corner click the configurations menu (default "Build all") and select "Edit Configurations"
-	- Add the first new configuration with "+" and name it "Upload"
-		- Under "Target" Select "STLink" and under executable "select other"
-		- Browse into the source folder and select the "STlink.sh" executable
-	- Add the second new configuration with "+" and name it "Ozone"
-		- Under "Target" Select "Ozone" and under executable "select other"
+	- Modify configuration "STLink"
+		- "Target" should be "STLink" 
+		- Under "Executable" click "select other"
+		- Browse into the source folder and select the "STlink.sh" executable (note: this is actually only a dummy file used to avoid CLion from giving an error response, the "make upload" command is actually directly exectuted inside the editor)
+	- Modify configuration "Ozone"
+		- "Target" should be "Ozone"
+		- Under "Executable" click "select other"
 		- Browse into your application folder
 		- double click on "Ozone", "Contents", "MacOS"
 		- Select the "Ozone" executable
