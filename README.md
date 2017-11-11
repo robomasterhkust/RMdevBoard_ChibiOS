@@ -82,16 +82,16 @@ This installation makes use of terminal, if you are not familiar with the use of
 5. Create the upload configurations:
 	- On the right top corner click the configurations menu (default "Build all") and select "Edit Configurations"
 	- Add the first new configuration with "+" and name it "Upload"
-		- Select "All targets" and under executable "select other"
+		- Under "Target" Select "STLink" and under executable "select other"
 		- Browse into the source folder and select the "STlink.sh" executable
 	- Add the second new configuration with "+" and name it "Ozone"
-		- Select "All targets" and under executable "select other"
+		- Under "Target" Select "Ozone" and under executable "select other"
 		- Browse into your application folder
 		- double click on "Ozone", "Contents", "MacOS"
 		- Select the "Ozone" executable
 		- Under "Program arguments" type `run.jdebug`
 		- Under "Working directory" select "..." and browse to the "RMdevBoard_ChibiOs" folder
-		- Lastly, check the "Signle instance only" box on the top right in order to avoid having multiple instances running at the same time.
+		- Lastly, check the "Signle instance only" box on the top right in order to avoid having multiple instances of ozone running at the same time.
 		
 
 5. Modify the code:
