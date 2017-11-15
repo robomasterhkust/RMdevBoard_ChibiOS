@@ -92,6 +92,7 @@ int main(void) {
   can_processInit();
   RC_init();
   gimbal_init();
+
   //tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
 
   pIMU = imu_get();

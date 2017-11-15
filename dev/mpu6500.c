@@ -107,59 +107,64 @@ static uint8_t imuTXData[MPU6500_TX_BUF_SIZE];
 static void imuStructureInit(PIMUStruct pIMU, IMUConfigStruct* imu_conf)
 {
   memset((void *)pIMU, 0, sizeof(IMUStruct));
-  pIMU->imu_spi = imu_conf->imu_spi;
+  pIMU->_imu_spi = imu_conf->_imu_spi;
   pIMU->imu_Thd = NULL;
 
-  pIMU->imu_spi = imu_conf->imu_spi;
+  pIMU->_imu_spi = imu_conf->_imu_spi;
 
-  pIMU->accelT[0][0] = 1.0f;
-  pIMU->accelT[1][1] = 1.0f;
-  pIMU->accelT[2][2] = 1.0f;
-  pIMU->accelT[0][1] = 0.0f;
-  pIMU->accelT[1][2] = 0.0f;
-  pIMU->accelT[2][0] = 0.0f;
-  pIMU->accelT[0][2] = 0.0f;
-  pIMU->accelT[1][0] = 0.0f;
-  pIMU->accelT[2][1] = 0.0f;
+  pIMU->_accelT[0][0] = 1.0f;
+  pIMU->_accelT[1][1] = 1.0f;
+  pIMU->_accelT[2][2] = 1.0f;
+  pIMU->_accelT[0][1] = 0.0f;
+  pIMU->_accelT[1][2] = 0.0f;
+  pIMU->_accelT[2][0] = 0.0f;
+  pIMU->_accelT[0][2] = 0.0f;
+  pIMU->_accelT[1][0] = 0.0f;
+  pIMU->_accelT[2][1] = 0.0f;
 
-  pIMU->accelBias[0] = 0.0f;
-  pIMU->accelBias[1] = 0.0f;
-  pIMU->accelBias[2] = 0.0f;
+  pIMU->_accelBias[0] = 0.0f;
+  pIMU->_accelBias[1] = 0.0f;
+  pIMU->_accelBias[2] = 0.0f;
+
+  pIMU->_gyroBias[0] = 0.0f;
+  pIMU->_gyroBias[1] = 0.0f;
+  pIMU->_gyroBias[2] = 0.0f;
+
 
   float flash_test;
   flashRead(IMU_CAL_FLASH, &flash_test, 4);
   if(isfinite(flash_test))
-    flashRead(IMU_CAL_FLASH, (char*)(pIMU->accelBias), 60);
+    flashRead(IMU_CAL_FLASH, (char*)(pIMU->_accelBias), 60);
 
-  switch(imu_conf->gyroConf)
+  switch(imu_conf->_gyroConf)
   {
     case MPU6500_GYRO_SCALE_250:
-      pIMU->gyro_psc = (1.0f / 131.0f) * M_PI/180.0f;
+      pIMU->_gyro_psc = (1.0f / 131.0f) * M_PI/180.0f;
       break;
     case MPU6500_GYRO_SCALE_500:
-      pIMU->gyro_psc = (1.0f /  65.5f) * M_PI/180.0f;
+      pIMU->_gyro_psc = (1.0f /  65.5f) * M_PI/180.0f;
       break;
     case MPU6500_GYRO_SCALE_1000:
-      pIMU->gyro_psc = (1.0f /  32.8f) * M_PI/180.0f;
+      pIMU->_gyro_psc = (1.0f /  32.8f) * M_PI/180.0f;
       break;
     case MPU6500_GYRO_SCALE_2000:
-      pIMU->gyro_psc = (1.0f /  16.4f) * M_PI/180.0f;
+      pIMU->_gyro_psc = (1.0f /  16.4f) * M_PI/180.0f;
       break;
   }
 
-  switch(imu_conf->accelConf)
+  switch(imu_conf->_accelConf)
   {
     case MPU6500_ACCEL_SCALE_2G:
-      pIMU->accel_psc = (GRAV / 16384.0f);
+      pIMU->_accel_psc = (GRAV / 16384.0f);
       break;
     case MPU6500_ACCEL_SCALE_4G:
-      pIMU->accel_psc = (GRAV /  8192.0f);
+      pIMU->_accel_psc = (GRAV /  8192.0f);
       break;
     case MPU6500_ACCEL_SCALE_8G:
-      pIMU->accel_psc = (GRAV /  4096.0f);
+      pIMU->_accel_psc = (GRAV /  4096.0f);
       break;
     case MPU6500_ACCEL_SCALE_16G:
-      pIMU->accel_psc = (GRAV /  2048.0f);
+      pIMU->_accel_psc = (GRAV /  2048.0f);
       break;
   }
 }
@@ -168,11 +173,11 @@ static void trans_accel_offset(PIMUStruct pIMU, float accelData[3])
 {
   float accelData_temp[3];
 
-  accelData_temp[X] = accelData[X] - pIMU->accelBias[X];
-  accelData_temp[Y] = accelData[Y] - pIMU->accelBias[Y];
-  accelData_temp[Z] = accelData[Z] - pIMU->accelBias[Z];
+  accelData_temp[X] = accelData[X] - pIMU->_accelBias[X];
+  accelData_temp[Y] = accelData[Y] - pIMU->_accelBias[Y];
+  accelData_temp[Z] = accelData[Z] - pIMU->_accelBias[Z];
 
-  matrix33_multiply_vector3(pIMU->accelT, accelData_temp, pIMU->accelData);
+  matrix33_multiply_vector3(pIMU->_accelT, accelData_temp, pIMU->accelData);
 }
 
 /**
@@ -184,8 +189,8 @@ static void trans_accel_offset(PIMUStruct pIMU, float accelData[3])
 uint8_t imuGetData(PIMUStruct pIMU)
 {
   uint32_t tcurr = chVTGetSystemTimeX();
-  pIMU->dt = ST2US(tcurr - pIMU->tprev)/1000000.0f;
-  pIMU->tprev = tcurr;
+  pIMU->dt = ST2US(tcurr - pIMU->_tprev)/1000000.0f;
+  pIMU->_tprev = tcurr;
 
   float accelData[3],gyroData[3];
   uint8_t error =  imuGetDataRaw(pIMU, accelData, gyroData);
@@ -213,12 +218,12 @@ uint8_t imuGetDataRaw(PIMUStruct pIMU, float AccelRaw[3], float GyroRaw[3])
 
   /* Set the start register address for bulk data transfer. */
   imuTXData[0] = MPU6500_ACCEL_XOUT_H | MPU6500_SPI_READ;
-  spiAcquireBus(pIMU->imu_spi);
-  spiSelect(pIMU->imu_spi);
-  spiSend(pIMU->imu_spi, 1, imuTXData);
-  spiReceive(pIMU->imu_spi, 14, imuRXData);
-  spiUnselect(pIMU->imu_spi);
-	spiReleaseBus(pIMU->imu_spi);
+  spiAcquireBus(pIMU->_imu_spi);
+  spiSelect(pIMU->_imu_spi);
+  spiSend(pIMU->_imu_spi, 1, imuTXData);
+  spiReceive(pIMU->_imu_spi, 14, imuRXData);
+  spiUnselect(pIMU->_imu_spi);
+	spiReleaseBus(pIMU->_imu_spi);
 
   imuData[0] = (int16_t)((imuRXData[ 0]<<8) | imuRXData[ 1]); /* Accel X */
   imuData[1] = (int16_t)((imuRXData[ 2]<<8) | imuRXData[ 3]); /* Accel Y */
@@ -229,23 +234,22 @@ uint8_t imuGetDataRaw(PIMUStruct pIMU, float AccelRaw[3], float GyroRaw[3])
   imuData[6] = (int16_t)((imuRXData[6 ]<<8) | imuRXData[7 ]); /* Temperature */
 
   /* X: */
-  AccelRaw[X] = (float)imuData[0] * pIMU->accel_psc;
-  GyroRaw[X]  = (float)imuData[3] * pIMU->gyro_psc;
+  AccelRaw[X] = (float)imuData[0] * pIMU->_accel_psc;
+  GyroRaw[X]  = (float)imuData[3] * pIMU->_gyro_psc;
 
   /* Y: */
-  AccelRaw[Y] = (float)imuData[1] * pIMU->accel_psc;
-  GyroRaw[Y]  = (float)imuData[4] * pIMU->gyro_psc;
+  AccelRaw[Y] = (float)imuData[1] * pIMU->_accel_psc;
+  GyroRaw[Y]  = (float)imuData[4] * pIMU->_gyro_psc;
 
   /* Z: */
-  AccelRaw[Z] = (float)imuData[2] * pIMU->accel_psc;
-  GyroRaw[Z]  = (float)imuData[5] * pIMU->gyro_psc;
+  AccelRaw[Z] = (float)imuData[2] * pIMU->_accel_psc;
+  GyroRaw[Z]  = (float)imuData[5] * pIMU->_gyro_psc;
 
   return IMU_OK;
 }
 
 /**
  * @brief  Initialization function for the imu sensor.
- * @param  addr - I2C address of imu chip.
  * @return 1 - if initialization was successful;
  *         0 - if initialization failed.
  */
@@ -255,17 +259,17 @@ uint8_t imuInit(PIMUStruct pIMU, const IMUConfigStruct* const imu_conf)
 
   imuStructureInit(pIMU, imu_conf);
 
-  spiStart(pIMU->imu_spi, &MPU6500_SPI_cfg);
+  spiStart(pIMU->_imu_spi, &MPU6500_SPI_cfg);
 
   /* Reset all imu registers to their default values */
   imuTXData[0] = MPU6500_PWR_MGMT_1;  // Start register address;
   imuTXData[1] = MPU6500_SENSOR_RESET | MPU6500_SENSOR_SLEEP;
 
-  spiAcquireBus(pIMU->imu_spi);
-  spiSelect(pIMU->imu_spi);
-  spiSend(pIMU->imu_spi, 2, imuTXData);
-  spiUnselect(pIMU->imu_spi);
-  spiReleaseBus(pIMU->imu_spi);
+  spiAcquireBus(pIMU->_imu_spi);
+  spiSelect(pIMU->_imu_spi);
+  spiSend(pIMU->_imu_spi, 2, imuTXData);
+  spiUnselect(pIMU->_imu_spi);
+  spiReleaseBus(pIMU->_imu_spi);
 
   /* Wait 100 ms for the imu to reset */
   chThdSleepMilliseconds(100);
@@ -274,11 +278,11 @@ uint8_t imuInit(PIMUStruct pIMU, const IMUConfigStruct* const imu_conf)
   imuTXData[0] = MPU6500_PWR_MGMT_1;  // Start register address;
   imuTXData[1] = MPU6500_AUTO_SELECT_CLK;
 
-  spiAcquireBus(pIMU->imu_spi);
-  spiSelect(pIMU->imu_spi);
-  spiSend(pIMU->imu_spi, 2, imuTXData);
-  spiUnselect(pIMU->imu_spi);
-  spiReleaseBus(pIMU->imu_spi);
+  spiAcquireBus(pIMU->_imu_spi);
+  spiSelect(pIMU->_imu_spi);
+  spiSend(pIMU->_imu_spi, 2, imuTXData);
+  spiUnselect(pIMU->_imu_spi);
+  spiReleaseBus(pIMU->_imu_spi);
 
 
   /* Configure the imu sensor        */
@@ -287,17 +291,17 @@ uint8_t imuInit(PIMUStruct pIMU, const IMUConfigStruct* const imu_conf)
   /*   configuring the sensor.           */
   imuTXData[0] = MPU6500_CONFIG;  // Start register address;
   imuTXData[1] = DLPF_41HZ;          // CONFIG register value DLPF_CFG;
-  imuTXData[2] = (uint8_t)(imu_conf->gyroConf << 3U);          // GYRO_CONFIG register value
-  imuTXData[3] = (uint8_t)(imu_conf->accelConf << 3U);          // ACCEL_CONFIG_1 register value
+  imuTXData[2] = (uint8_t)(imu_conf->_gyroConf << 3U);          // GYRO_CONFIG register value
+  imuTXData[3] = (uint8_t)(imu_conf->_accelConf << 3U);          // ACCEL_CONFIG_1 register value
   imuTXData[4] = ADLPF_41HZ;          // ACCEL_CONFIG_2 register value
 
-  spiAcquireBus(pIMU->imu_spi);
-  spiSelect(pIMU->imu_spi);
-  spiSend(pIMU->imu_spi, 5, imuTXData);
-  spiUnselect(pIMU->imu_spi);
-  spiReleaseBus(pIMU->imu_spi);
+  spiAcquireBus(pIMU->_imu_spi);
+  spiSelect(pIMU->_imu_spi);
+  spiSend(pIMU->_imu_spi, 5, imuTXData);
+  spiUnselect(pIMU->_imu_spi);
+  spiReleaseBus(pIMU->_imu_spi);
 
-  pIMU->tprev = chVTGetSystemTimeX();
+  pIMU->_tprev = chVTGetSystemTimeX();
   pIMU->inited = 1;
   return IMU_OK;
 }

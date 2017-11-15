@@ -1,6 +1,8 @@
 #ifndef _CAN_BUS_PROCESS_H_
 #define _CAN_BUS_PROCESS_H_
 
+#define GIMBAL_MOTOR_NUM  2U
+#define CHASSIS_MOTOR_NUM 4U
 /* CAN Bus 1 or 2 */
 #define CAN_CHASSIS_FL_FEEDBACK_MSG_ID              0x201
 #define CAN_CHASSIS_FR_FEEDBACK_MSG_ID              0x202

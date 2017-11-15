@@ -2,6 +2,7 @@
 #define _GIMBAL_H_
 
 #include "canBusProcess.h"
+#include "mpu6500.h"
 #include "params.h"
 
 #define GIMBAL_CONTROL_FREQ 1000U
@@ -28,8 +29,8 @@ typedef enum {
 
 static const char gimbal_error_messages[][GIMBAL_ERROR_COUNT] =
 {
-  "E:Gimbal yaw not connected!",
-  "E:Gimbal pitch not connected!",
+  "E:Gimbal yaw not connected",
+  "E:Gimbal pitch not connected",
   "W:Gimbal control lose frame"
 };
 
@@ -40,7 +41,9 @@ typedef struct{
 
 typedef struct{
   bool inited;
-  GimbalEncoder_canStruct* encoder_can;
+  GimbalEncoder_canStruct* _encoder_can;
+  PIMUStruct _pIMU;
+
   uint32_t errorFlag;
 
   /* motor status */
@@ -56,9 +59,13 @@ typedef struct{
     float pitch_speed_enc;
   #endif
 
+  float yaw_speed;
+  float pitch_speed;
+
   /* Controller part*/
-  gimbal_vel_controller_t* yaw_vel;
-  gimbal_vel_controller_t* pitch_vel;
+  param_t axis_ff_weight[2];
+  gimbal_vel_controller_t yaw_vel;
+  gimbal_vel_controller_t pitch_vel;
 
   /* TODO: control intermidiate current output (phase prediction)*/
   float yaw_iq_cmd;

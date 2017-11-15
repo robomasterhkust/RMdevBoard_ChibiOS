@@ -88,8 +88,6 @@ void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
   chprintf(chp,"Yaw angle: %f\r\n",gimbal->yaw_angle);
   chprintf(chp,"Pitch current: %f\r\n",gimbal->pitch_current);
   chprintf(chp,"Yaw current: %f\r\n",gimbal->yaw_current);
-  chprintf(chp,"Pitch current sp: %d\r\n",gimbal->encoder_can[GIMBAL_PITCH].current_setpoint);
-  chprintf(chp,"Yaw current sp: %d\r\n",gimbal->encoder_can[GIMBAL_YAW].current_setpoint);
 }
 
 /**

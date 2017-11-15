@@ -8,9 +8,6 @@
 
 #include "canBusProcess.h"
 
-#define GIMBAL_MOTOR_NUM  2U
-#define CHASSIS_MOTOR_NUM 4U
-
 static volatile GimbalEncoder_canStruct  gimbal_encoder[GIMBAL_MOTOR_NUM];
 static volatile ChassisEncoder_canStruct chassis_encoder[CHASSIS_MOTOR_NUM];
 
