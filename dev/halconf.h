@@ -31,8 +31,6 @@
 #include "mcuconf.h"
 
 #define CHPRINTF_USE_FLOAT TRUE
-#define SERIAL_CMD       &SD3
-#define SERIAL_DATA      &SD3
 
 #define LEDG_ON()       (palClearPad(GPIOF, GPIOF_LED_G))
 #define LEDG_OFF()      (palSetPad(GPIOF, GPIOF_LED_G))
@@ -143,14 +141,14 @@
  * @brief   Enables the SERIAL subsystem.
  */
 #if !defined(HAL_USE_SERIAL) || defined(__DOXYGEN__)
-#define HAL_USE_SERIAL              TRUE
+#define HAL_USE_SERIAL              FALSE
 #endif
 
 /**
  * @brief   Enables the SERIAL over USB subsystem.
  */
 #if !defined(HAL_USE_SERIAL_USB) || defined(__DOXYGEN__)
-#define HAL_USE_SERIAL_USB          FALSE
+#define HAL_USE_SERIAL_USB          TRUE
 #endif
 
 /**
@@ -171,7 +169,7 @@
  * @brief   Enables the USB subsystem.
  */
 #if !defined(HAL_USE_USB) || defined(__DOXYGEN__)
-#define HAL_USE_USB                 FALSE
+#define HAL_USE_USB                 TRUE
 #endif
 
 /**

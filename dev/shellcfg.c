@@ -6,6 +6,10 @@
 #include "main.h"
 #include "shell.h"
 
+#define SERIAL_CMD       &SDU1
+#define SERIAL_DATA      &SDU1
+
+static thread_t* matlab_thread_handler = NULL;
 /**
  * @brief Transmit uint32_t and float through serial port to host machine
  * @require Initialization of ChibiOS serial driver before using this function
@@ -19,7 +23,7 @@
  * @TODO improve the transmission protocol to enable easier setup for the host machine
  */
 #define SYNC_SEQ  0xaabbccdd
-static void transmit_host
+static void transmit_matlab
   (BaseSequentialStream* chp,
     uint32_t* const txbuf_d, float* const txbuf_f,
     const uint8_t num_int, const uint8_t num_float)
@@ -42,14 +46,14 @@ static void transmit_host
 
 #include <math.h>
 #define HOST_TRANSMIT_FREQ  100U
-static THD_WORKING_AREA(Host_thread_wa, 512);
-static THD_FUNCTION(Host_thread, p)
+static THD_WORKING_AREA(matlab_thread_wa, 512);
+static THD_FUNCTION(matlab_thread, p)
 {
   (void)p;
-  chRegSetThreadName("Host tramsmitter");
+  chRegSetThreadName("matlab tramsmitter");
 
-  if((*SERIAL_DATA).state != SD_READY)
-    sdStart(SERIAL_DATA, NULL);
+//  if((*SERIAL_DATA).state != SD_READY)
+//    sdStart(SERIAL_DATA, NULL);
 
   int32_t txbuf_d[16];
   float txbuf_f[16];
@@ -58,7 +62,7 @@ static THD_FUNCTION(Host_thread, p)
   uint32_t tick = chVTGetSystemTimeX();
 
   const uint16_t period = US2ST(1000000/HOST_TRANSMIT_FREQ);
-  while (true)
+  while (!chThdShouldTerminateX())
   {
     tick += period;
     if(tick > chVTGetSystemTimeX())
@@ -68,10 +72,10 @@ static THD_FUNCTION(Host_thread, p)
       tick = chVTGetSystemTimeX();
     }
 
-    txbuf_d[0] = (int16_t)(tick % 10000);
-    txbuf_f[0] = sinf((float)(txbuf_d[0] - 5000) * M_PI/5000.0f);
+    txbuf_d[0] = (int16_t)((tick/10) % 5000);
+    txbuf_f[0] = sinf((float)(txbuf_d[0] - 2500) * M_PI/2500.0f);
 
-    transmit_host(chp, txbuf_d, txbuf_f, 1, 1);
+    transmit_matlab(chp, txbuf_d, txbuf_f, 1, 1);
   }
 }
 
@@ -91,14 +95,14 @@ void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
 }
 
 /**
- * @brief Start the data tramsmission to host machine
+ * @brief Start the data tramsmission to matlab
  * @note caution of data flooding to the serial port
  */
 void cmd_data(BaseSequentialStream * chp, int argc, char *argv[])
 {
   uint8_t sec = 10;
 
-  if(argc)
+  if(argc && matlab_thread_handler == NULL)
   {
     char *toNumber = argv[0];
     uint32_t finalNum=0;
@@ -109,14 +113,19 @@ void cmd_data(BaseSequentialStream * chp, int argc, char *argv[])
       finalNum = 10;
 
     sec = (finalNum < 60 ? finalNum : 60);
+
+    chprintf(chp,"Data transmission start in %d seconds...\r\n", sec);
+    chThdSleepSeconds(sec);
+
+    matlab_thread_handler = chThdCreateStatic(matlab_thread_wa, sizeof(matlab_thread_wa),
+        NORMALPRIO - 3,
+        matlab_thread, NULL);
   }
-
-  chprintf(chp,"Data transmission start in %d seconds...\r\n", sec);
-  chThdSleepSeconds(sec);
-
-  chThdCreateStatic(Host_thread_wa, sizeof(Host_thread_wa),
-  NORMALPRIO,
-                    Host_thread, NULL);
+  else if(matlab_thread_handler)
+  {
+    chThdTerminate(matlab_thread_handler);
+    matlab_thread_handler = NULL;
+  }
 }
 
 /**
@@ -126,7 +135,8 @@ void cmd_data(BaseSequentialStream * chp, int argc, char *argv[])
 static const ShellCommand commands[] =
 {
   {"test", cmd_test},
-  {"data", cmd_data}
+  {"data", cmd_data},
+  {NULL, NULL}
 };
 
 static const ShellConfig shell_cfg1 =
@@ -144,9 +154,29 @@ static const ShellConfig shell_cfg1 =
  */
 void shellStart(void)
 {
-  sdStart(SERIAL_CMD, NULL);
+  //sdStart(SERIAL_CMD, NULL);
+  /*
+   * Initializes a serial-over-USB CDC driver.
+   */
+  sduObjectInit(&SDU1);
+  sduStart(&SDU1, &serusbcfg);
+
+  /*
+   * Activates the USB driver and then the USB bus pull-up on D+.
+   * Note, a delay is inserted in order to not have to disconnect the cable
+   * after a reset.
+   */
+
+
+  usbDisconnectBus(serusbcfg.usbp);
+  chThdSleepMilliseconds(1500);
+
+  usbStart(serusbcfg.usbp, &usbcfg);
+  usbConnectBus(serusbcfg.usbp);
 
   shellInit();
+
   shellCreateStatic(&shell_cfg1, Shell_thread_wa,
       sizeof(Shell_thread_wa), NORMALPRIO);
+
 }

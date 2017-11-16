@@ -1,7 +1,7 @@
 #ifndef _PARAMS_H_
 #define _PARAMS_H_
 
-#define UART_PARAMS &UARTD2
+#define UART_PARAMS &UARTD3
 #define PARAMS_NUM_MAX        32U
 
 typedef float param_t, *p_param_t;

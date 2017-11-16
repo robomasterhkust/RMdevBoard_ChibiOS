@@ -15,7 +15,7 @@
 */
 #include "main.h"
 
-static BaseSequentialStream* chp = (BaseSequentialStream*)SERIAL_CMD;
+static BaseSequentialStream* chp = (BaseSequentialStream*)&SDU1;
 static const IMUConfigStruct imu1_conf = {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_1000};
 
 PIMUStruct pIMU;

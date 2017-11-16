@@ -143,8 +143,9 @@ static THD_FUNCTION(shell_thread, p) {
   chRegSetThreadName("shell");
   chprintf(chp, "\r\nChibiOS/RT Shell\r\n");
   while (true) {
+
     chprintf(chp, "ch> ");
-    
+
     shellGetLine(chp, line, sizeof(line));
 
     lp = _strtok(line, " \t", &tokp);
@@ -158,7 +159,9 @@ static THD_FUNCTION(shell_thread, p) {
       }
       args[n++] = lp;
     }
+
     args[n] = NULL;
+
     if (cmd != NULL) {
       if (strcmp(cmd, "exit") == 0) {
         if (n > 0) {
@@ -167,6 +170,7 @@ static THD_FUNCTION(shell_thread, p) {
         }
         break;
       }
+
       else if (strcmp(cmd, "help") == 0) {
         if (n > 0) {
           usage(chp, "help");
@@ -178,12 +182,16 @@ static THD_FUNCTION(shell_thread, p) {
           list_commands(chp, scp);
         chprintf(chp, "\r\n");
       }
+
       else if (cmdexec(local_commands, chp, cmd, n, args) &&
           ((scp == NULL) || cmdexec(scp, chp, cmd, n, args))) {
         chprintf(chp, "%s", cmd);
         chprintf(chp, " ?\r\n");
       }
+
+      chThdSleepMilliseconds(5);
     }
+
   }
   shellExit(MSG_OK);
 }

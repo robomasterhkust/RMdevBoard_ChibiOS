@@ -4,6 +4,7 @@
 #include "ch.h"
 #include "hal.h"
 
+#include "usbcfg.h"
 #include "flash.h"
 #include "chprintf.h"
 #include "tft_display.h"
