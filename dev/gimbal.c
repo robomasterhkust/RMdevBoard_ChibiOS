@@ -15,11 +15,11 @@
   (can_motorSetCurrent(GIMBAL_CAN, GIMBAL_CAN_EID, \
     gimbal.yaw_iq_output, gimbal.pitch_iq_output, 0, 0))
 
-static volatile lpfilterStruct lp_yawAngle;
-static volatile lpfilterStruct lp_pitchAngle;
-static volatile GimbalStruct gimbal;
+static lpfilterStruct lp_yawAngle;
+static lpfilterStruct lp_pitchAngle;
+static GimbalStruct gimbal;
 
-volatile GimbalStruct* gimbal_get(void)
+GimbalStruct* gimbal_get(void)
 {
   return &gimbal;
 }
@@ -194,6 +194,7 @@ void gimbal_init(void)
 {
   memset(&gimbal, 0 ,sizeof(GimbalStruct));
   gimbal._encoder_can = can_getGimbalMotor();
+  gimbal._pIMU = imu_get();
   chThdSleepMilliseconds(3);
 
   gimbal.pitch_speed = 0.0f;

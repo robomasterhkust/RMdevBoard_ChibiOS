@@ -21,5 +21,6 @@ uint8_t params_set(param_t* const     p_param,
                   param_name_t const  subParam_name,
                   param_public_flag_t param_private);
 void params_init(void);
+void param_save_flash(void);
 
 #endif

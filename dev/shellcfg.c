@@ -5,6 +5,7 @@
  */
 #include "main.h"
 #include "shell.h"
+#include <string.h>
 
 #define SERIAL_CMD       &SDU1
 #define SERIAL_DATA      &SDU1
@@ -71,11 +72,13 @@ static THD_FUNCTION(matlab_thread, p)
     {
       tick = chVTGetSystemTimeX();
     }
+    PIMUStruct pIMU = imu_get();
 
-    txbuf_d[0] = (int16_t)((tick/10) % 5000);
-    txbuf_f[0] = sinf((float)(txbuf_d[0] - 2500) * M_PI/2500.0f);
+    txbuf_f[0] = pIMU->gyroData[X];
+    txbuf_f[1] = pIMU->gyroData[Y];
+    txbuf_f[2] = pIMU->gyroData[Z];
 
-    transmit_matlab(chp, txbuf_d, txbuf_f, 1, 1);
+    transmit_matlab(chp, NULL, txbuf_f, 0, 3);
   }
 }
 
@@ -87,11 +90,11 @@ void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
 {
   (void) argc,argv;
   GimbalStruct* gimbal = gimbal_get();
+  PIMUStruct PIMU = imu_get();
 
-  chprintf(chp,"Pitch angle: %f\r\n",gimbal->pitch_angle);
-  chprintf(chp,"Yaw angle: %f\r\n",gimbal->yaw_angle);
-  chprintf(chp,"Pitch current: %f\r\n",gimbal->pitch_current);
-  chprintf(chp,"Yaw current: %f\r\n",gimbal->yaw_current);
+  chprintf(chp,"Gyro offset X: %f\r\n",PIMU->_gyroBias[X]);
+  chprintf(chp,"Gyro offset Y: %f\r\n",PIMU->_gyroBias[Y]);
+  chprintf(chp,"Gyro offset Z: %f\r\n",PIMU->_gyroBias[Z]);
 }
 
 /**
@@ -128,6 +131,32 @@ void cmd_data(BaseSequentialStream * chp, int argc, char *argv[])
   }
 }
 
+void cmd_calibrate(BaseSequentialStream * chp, int argc, char *argv[])
+{
+  PIMUStruct pIMU = imu_get();
+
+  if(argc)
+  {
+    if(!strcmp(argv[0], "accl"))
+    {
+      pIMU->accelerometer_not_calibrated = true;
+      chThdSleepMilliseconds(10);
+      calibrate_accelerometer(pIMU);
+      chThdResume(&(pIMU->imu_Thd), MSG_OK);
+    }
+    else if(!strcmp(argv[0], "gyro"))
+    {
+      pIMU->gyroscope_not_calibrated = true;
+      chThdSleepMilliseconds(10);
+      calibrate_gyroscope(pIMU);
+      chThdResume(&(pIMU->imu_Thd), MSG_OK);
+    }
+    param_save_flash();
+  }
+  else
+    chprintf(chp,"Calibration: gyro, accl, adi\r\n");
+}
+
 /**
  * @brief array of shell commands, put the corresponding command and functions below
  * {"command", callback_function}
@@ -136,6 +165,7 @@ static const ShellCommand commands[] =
 {
   {"test", cmd_test},
   {"data", cmd_data},
+  {"cal", cmd_calibrate},
   {NULL, NULL}
 };
 

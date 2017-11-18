@@ -41,8 +41,8 @@ typedef struct{
 
 typedef struct{
   bool inited;
-  GimbalEncoder_canStruct* _encoder_can;
-  PIMUStruct _pIMU;
+  volatile GimbalEncoder_canStruct* _encoder_can;
+  volatile IMUStruct* _pIMU;
 
   uint32_t errorFlag;
 
@@ -77,7 +77,7 @@ typedef struct{
 
 }  GimbalStruct;
 
-volatile GimbalStruct* gimbal_get(void);
+GimbalStruct* gimbal_get(void);
 uint32_t gimbal_get_error(void);
 void gimbal_init(void);
 

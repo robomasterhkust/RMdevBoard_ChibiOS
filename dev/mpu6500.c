@@ -112,29 +112,21 @@ static void imuStructureInit(PIMUStruct pIMU, IMUConfigStruct* imu_conf)
 
   pIMU->_imu_spi = imu_conf->_imu_spi;
 
-  pIMU->_accelT[0][0] = 1.0f;
-  pIMU->_accelT[1][1] = 1.0f;
-  pIMU->_accelT[2][2] = 1.0f;
-  pIMU->_accelT[0][1] = 0.0f;
-  pIMU->_accelT[1][2] = 0.0f;
-  pIMU->_accelT[2][0] = 0.0f;
-  pIMU->_accelT[0][2] = 0.0f;
-  pIMU->_accelT[1][0] = 0.0f;
-  pIMU->_accelT[2][1] = 0.0f;
-
-  pIMU->_accelBias[0] = 0.0f;
-  pIMU->_accelBias[1] = 0.0f;
-  pIMU->_accelBias[2] = 0.0f;
-
-  pIMU->_gyroBias[0] = 0.0f;
-  pIMU->_gyroBias[1] = 0.0f;
-  pIMU->_gyroBias[2] = 0.0f;
-
-
-  float flash_test;
-  flashRead(IMU_CAL_FLASH, &flash_test, 4);
-  if(isfinite(flash_test))
-    flashRead(IMU_CAL_FLASH, (char*)(pIMU->_accelBias), 60);
+  params_set(pIMU->_accelBias, 31, 3, NULL, NULL, PARAM_PRIVATE);
+  params_set(pIMU->_gyroBias, 30, 3, NULL, NULL, PARAM_PRIVATE);
+  if(params_set(pIMU->_accelT[0], 29, 6, NULL, NULL, PARAM_PRIVATE) ||
+     params_set(pIMU->_accelT[2], 28, 3, NULL, NULL, PARAM_PRIVATE))
+  {
+    pIMU->_accelT[0][0] = 1.0f;
+    pIMU->_accelT[1][1] = 1.0f;
+    pIMU->_accelT[2][2] = 1.0f;
+    pIMU->_accelT[0][1] = 0.0f;
+    pIMU->_accelT[1][2] = 0.0f;
+    pIMU->_accelT[2][0] = 0.0f;
+    pIMU->_accelT[0][2] = 0.0f;
+    pIMU->_accelT[1][0] = 0.0f;
+    pIMU->_accelT[2][1] = 0.0f;
+  }
 
   switch(imu_conf->_gyroConf)
   {
@@ -198,9 +190,9 @@ uint8_t imuGetData(PIMUStruct pIMU)
   if(!error)
   {
     trans_accel_offset(pIMU, accelData);
-    pIMU->gyroData[X] = gyroData[X];
-    pIMU->gyroData[Y] = gyroData[Y];
-    pIMU->gyroData[Z] = gyroData[Z];
+    pIMU->gyroData[X] = gyroData[X] + pIMU->_gyroBias[X];
+    pIMU->gyroData[Y] = gyroData[Y] + pIMU->_gyroBias[Y];
+    pIMU->gyroData[Z] = gyroData[Z] + pIMU->_gyroBias[Z];
   }
 
   return error;

@@ -2,7 +2,8 @@
 #define _MPU6500_H_
 
 #define MPU6500_UPDATE_FREQ                    1000U  //Read MPU @ 1000Hz
-#define IMU_CAL_FLASH                     0x08040000
+
+#include "params.h"
 
 typedef enum {
   X = 0U,
@@ -55,13 +56,16 @@ typedef struct tagIMUStruct {
   float gyroFiltered[3];  /* Filtered gyro data.    */
 
   float qIMU[4];          /* Attitude quaternion of the IMU. */
-  float euler_angle[3];   /* Euler angle of the IMU. */
-  float d_euler_angle[3]; /* Euler angle changing rate of the IMU. */
-  float _attitude_err_int[3];
+  float dqIMU[4];         /* Attitude quaternion changing rate of the IMU. */
 
-  float _accelBias[3];     /* Accelerometer bias.             */
-  float _accelT[3][3];     /* Accelerometer rotational bias matrix       */
-  float _gyroBias[3];      /* Gyroscope bias.                 */
+  #ifdef  IMU_USE_EULER_ANGLE
+    float euler_angle[3];      /* Euler angle of the IMU. */
+    float d_euler_angle[3];    /* Euler angle changing rate of the IMU. */
+  #endif
+
+  param_t _accelBias[3];    /* Accelerometer bias.             */
+  param_t _accelT[3][3];    /* Accelerometer rotational bias matrix       */
+  param_t _gyroBias[3];     /* Gyroscope bias.                 */
 
   float _accel_psc;
   float _gyro_psc;

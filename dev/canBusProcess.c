@@ -38,7 +38,7 @@ volatile ChassisEncoder_canStruct* can_getChassisMotor(void)
 }
 
 static inline void can_processChassisEncoder
-  (ChassisEncoder_canStruct* cm, const CANRxFrame* const rxmsg)
+  (volatile ChassisEncoder_canStruct* cm, const CANRxFrame* const rxmsg)
 {
   chSysLock();
   cm->updated = true;
@@ -48,7 +48,7 @@ static inline void can_processChassisEncoder
 }
 
 static inline void can_processGimbalEncoder
-  (GimbalEncoder_canStruct* gm, const CANRxFrame* const rxmsg)
+  (volatile GimbalEncoder_canStruct* gm, const CANRxFrame* const rxmsg)
 {
   chSysLock();
   gm->updated = true;
@@ -131,6 +131,7 @@ void can_motorSetCurrent(CANDriver *const CANx,
     txmsg.RTR = CAN_RTR_DATA;
     txmsg.DLC = 0x08;
 
+    chSysLock();
     txmsg.data8[0] = (uint8_t)(cm1_iq >> 8);
     txmsg.data8[1] = (uint8_t)cm1_iq;
 
@@ -142,6 +143,7 @@ void can_motorSetCurrent(CANDriver *const CANx,
 
     txmsg.data8[6] = (uint8_t)(cm4_iq >> 8);
     txmsg.data8[7] = (uint8_t)cm4_iq;
+    chSysUnlock();
 
     canTransmit(CANx, CAN_ANY_MAILBOX, &txmsg, MS2ST(100));
 }
