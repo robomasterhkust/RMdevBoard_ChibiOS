@@ -16,19 +16,27 @@
   #define GIMBAL_SPEED_BUFFER_LEN      10U
 #endif
 
-#define GIMBAL_ERROR_COUNT 3U
 typedef enum {
   GIMBAL_YAW_NOT_CONNECTED = 1<<0,
   GIMBAL_PITCH_NOT_CONNECTED = 1<<1,
-  GIMBAL_CONTROL_LOSE_FRAME = 1<<2
+  GIMBAL_INITALIZATION_TIMEOUT = 1<<2,
+  GIMBAL_CONTROL_LOSE_FRAME = 1<<31
 } gimbal_error_t;
 
+#define GIMBAL_ERROR_COUNT    3U
+#define GIMBAL_WARNING_COUNT  1U
 static const char gimbal_error_messages[][GIMBAL_ERROR_COUNT] =
 {
   "E:Gimbal yaw not connected",
   "E:Gimbal pitch not connected",
+  "E:Gimbal init timeout"
+};
+
+static const char gimbal_warning_messages[][GIMBAL_WARNING_COUNT] =
+{
   "W:Gimbal control lose frame"
 };
+
 
 typedef struct{
   param_t kp;

@@ -7,6 +7,7 @@
 #include "hal.h"
 
 #include "gimbal.h"
+#include "attitude.h"
 #include "math_misc.h"
 
 #define GIMBAL_IQ_MAX 5000
@@ -193,6 +194,9 @@ static THD_FUNCTION(gimbal_thread, p)
   }
 }
 
+#define GIMBAL_INIT_MAX_ERROR    8.7266e-4
+#define GIMBAL_INIT_SCORE_FULL       1000U
+#define GIMBAL_INIT_TIMEOUT         10000U
 static THD_WORKING_AREA(gimbal_init_thread_wa, 2048);
 static THD_FUNCTION(gimbal_init_thread, p)
 {
@@ -226,6 +230,10 @@ static THD_FUNCTION(gimbal_init_thread, p)
 
   params_set(&_yaw_pos,   3, 3, yaw_pos_name,   subname_PID,   PARAM_PUBLIC);
   params_set(&_pitch_pos, 4, 3, pitch_pos_name, subname_PID,   PARAM_PUBLIC);
+
+  uint16_t _init_score[2] = {0, 0};
+  uint16_t _init_time = 0;
+  uint16_t _wait_time = 0;
 
   while(true)
   {
@@ -271,6 +279,37 @@ static THD_FUNCTION(gimbal_init_thread, p)
       gimbal.pitch_iq_output = -_output_max;
 
     gimbal_canUpdate();
+
+    //evaluation of init status
+    for (i = 0; i < 2; i++)
+    {
+      if(_error[i] < GIMBAL_INIT_MAX_ERROR && _error[i] > -GIMBAL_INIT_MAX_ERROR)
+        _init_score[i]++;
+      else if(_init_score[i] > 100U)
+        _init_score[i] -= 100;
+      else
+        _init_score[i] = 0;
+    }
+    if(_init_score[0] > GIMBAL_INIT_SCORE_FULL && _init_score[0] > GIMBAL_INIT_SCORE_FULL)
+    {
+      attitude_imu_init(gimbal._pIMU);
+      _wait_time++;
+      if(_wait_time>500)
+      {
+        if(gimbal._pIMU->inited)
+          gimbal._pIMU->inited = 2;
+        /*exit this thread and start attitude control*/
+      }
+    }
+    else if(_init_time++ > GIMBAL_INIT_TIMEOUT)
+    {
+      gimbal.errorFlag |= GIMBAL_INITALIZATION_TIMEOUT;
+      gimbal.yaw_iq_output = 0.0f;
+      gimbal.pitch_iq_output = 0.0f;
+      gimbal_canUpdate();
+      chThdExit(MSG_OK);
+    }
+
     chThdSleepMilliseconds(1);
   }
 }
@@ -313,7 +352,7 @@ void gimbal_init(void)
   params_set(&(gimbal.pitch_vel),   1, 2, pitch_vel_name, subname_PI,      PARAM_PUBLIC);
   params_set(gimbal.axis_ff_weight, 2, 2, axis_ff_name,   subname_axis,    PARAM_PUBLIC);
 
-  params_set(gimbal.axis_init_pos,  5, 2, init_pos_name,  subname_axis,    PARAM_PUBLIC);
+  params_set(gimbal.axis_init_pos,  5, 2, init_pos_name,  subname_axis,    PARAM_PRIVATE);
 
   chThdCreateStatic(gimbal_init_thread_wa, sizeof(gimbal_init_thread_wa),
                     NORMALPRIO - 5, gimbal_init_thread, NULL);

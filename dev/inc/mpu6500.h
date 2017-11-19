@@ -2,6 +2,7 @@
 #define _MPU6500_H_
 
 #define MPU6500_UPDATE_FREQ                    1000U  //Read MPU @ 1000Hz
+#define IMU_USE_EULER_ANGLE
 
 #include "params.h"
 
@@ -38,12 +39,21 @@ typedef enum {
 
 typedef enum {
   IMU_OK = 0,
-  IMU_I2C_ERROR1 = 1,
-  IMU_I2C_ERROR2 = 2,
-  IMU_I2C_ERROR3 = 3,
-  IMU_ATT_TIMEOUT = 4,
-  IMU_CORRUPTED_Q_DATA = 5
+  IMU_CORRUPTED_Q_DATA = 1<<1,
+  IMU_LOSE_FRAME = 1<<31
 } imu_att_error_t;
+
+#define IMU_ERROR_COUNT    1U
+#define IMU_WARNING_COUNT  1U
+static const char imu_error_messages[][IMU_ERROR_COUNT] =
+{
+  "E:Corrupted IMU Q data",
+};
+
+static const char imu_warning_messages[][IMU_WARNING_COUNT] =
+{
+  "W:IMU Reading lose frame"
+};
 
 #define MPU6500_UPDATE_PERIOD     1000000U/MPU6500_UPDATE_FREQ
 
@@ -72,7 +82,7 @@ typedef struct tagIMUStruct {
 
   SPIDriver* _imu_spi;
   uint8_t inited;
-  uint8_t data_invalid;
+  uint32_t errorCode;
   uint32_t _tprev;
   float dt;
   thread_reference_t imu_Thd;

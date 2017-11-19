@@ -206,8 +206,6 @@ uint8_t imuGetData(PIMUStruct pIMU)
  */
 uint8_t imuGetDataRaw(PIMUStruct pIMU, float AccelRaw[3], float GyroRaw[3])
 {
-  msg_t status = MSG_OK;
-
   /* Set the start register address for bulk data transfer. */
   imuTXData[0] = MPU6500_ACCEL_XOUT_H | MPU6500_SPI_READ;
   spiAcquireBus(pIMU->_imu_spi);
@@ -247,8 +245,6 @@ uint8_t imuGetDataRaw(PIMUStruct pIMU, float AccelRaw[3], float GyroRaw[3])
  */
 uint8_t imuInit(PIMUStruct pIMU, const IMUConfigStruct* const imu_conf)
 {
-  msg_t status = MSG_OK;
-
   imuStructureInit(pIMU, imu_conf);
 
   spiStart(pIMU->_imu_spi, &MPU6500_SPI_cfg);

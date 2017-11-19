@@ -29,15 +29,7 @@ static THD_FUNCTION(Attitude_thread, p)
 
   PIMUStruct pIMU_1 = (PIMUStruct)p;
 
-  chThdSleepMilliseconds(100);
-  errorCode = imuInit(pIMU_1, &imu1_conf);
-
-  while(errorCode)
-  {
-    chprintf(chp,"IMU Init Failed: %d", errorCode);
-    pIMU->data_invalid = true;
-    chThdSleepMilliseconds(500);
-  }
+  imuInit(pIMU_1, &imu1_conf);
 
   uint32_t tick = chVTGetSystemTimeX();
   while(true)
@@ -48,16 +40,12 @@ static THD_FUNCTION(Attitude_thread, p)
     else
     {
       tick = chVTGetSystemTimeX();
+      pIMU_1->errorCode |= IMU_LOSE_FRAME;
     }
 
-    errorCode = imuGetData(pIMU_1);
-
-    while(errorCode)
-    {
-      pIMU->data_invalid = true;
-      chprintf(chp,"IMU Reading Error %d", errorCode);
-      chThdSleepMilliseconds(500);
-    }
+    imuGetData(pIMU_1);
+    if(pIMU->inited == 2)
+      attitude_update(pIMU_1);
 
     if(pIMU_1->accelerometer_not_calibrated || pIMU_1->gyroscope_not_calibrated)
     {
