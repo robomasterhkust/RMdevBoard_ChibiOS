@@ -72,13 +72,12 @@ static THD_FUNCTION(matlab_thread, p)
     {
       tick = chVTGetSystemTimeX();
     }
-    PIMUStruct pIMU = imu_get();
+    GimbalStruct* gimbal = gimbal_get();
 
-    txbuf_f[0] = pIMU->gyroData[X];
-    txbuf_f[1] = pIMU->gyroData[Y];
-    txbuf_f[2] = pIMU->gyroData[Z];
+    txbuf_f[0] = gimbal->pitch_angle;
+    txbuf_f[1] = gimbal->yaw_angle;
 
-    transmit_matlab(chp, NULL, txbuf_f, 0, 3);
+    transmit_matlab(chp, NULL, txbuf_f, 0, 2);
   }
 }
 

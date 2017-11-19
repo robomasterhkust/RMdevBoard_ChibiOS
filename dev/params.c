@@ -180,11 +180,12 @@ static uint8_t param_load_flash(const uint8_t param_pos, const uint8_t param_num
   flashRead(address,subparams[param_pos],8);
 
   uint8_t i;
-  if(subparams[param_pos][0] == 0xFF)
+  if(subparams[param_pos][0] != param_num)
   {
-    for(i = 0; i < 8; i++)
+    for(i = 1; i < 8; i++)
       subparams[param_pos][i] = 0;
     subparams[param_pos][0] = param_num;
+    result = 1;
   }
 
   flashRead(address + PARAM_FLASH_HALF_BLOCK,
@@ -224,10 +225,7 @@ uint8_t params_set(param_t* const     p_param,
   subparams[param_pos][0] = param_num;
 
   if(param_load_flash(param_pos, param_num))
-  {
-    subparams[param_pos][0] = param_num;
     result = 3;
-  }
 
   param_name[param_pos] = Param_name;
   subparam_name[param_pos] = subParam_name;

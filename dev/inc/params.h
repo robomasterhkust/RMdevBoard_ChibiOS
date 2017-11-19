@@ -13,6 +13,7 @@ typedef enum {
 } param_public_flag_t;
 
 static const char subname_PI[] = "KP KI";
+static const char subname_PID[] = "KP KI KD";
 
 uint8_t params_set(param_t* const     p_param,
                   const uint8_t       param_pos,

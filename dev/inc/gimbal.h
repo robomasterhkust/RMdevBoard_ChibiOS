@@ -12,10 +12,6 @@
 #define GIMBAL_CAN  &CAND1
 #define GIMBAL_CAN_EID  0x1FF
 
-/* Mechanical design parameters */
-#define GIMBAL_PITCH_ANGLE_OFFSET     0.0f
-#define GIMBAL_YAW_ANGLE_OFFSET       0.0f
-
 #ifdef GIMBAL_ENCODER_USE_SPEED
   #define GIMBAL_SPEED_BUFFER_LEN      10U
 #endif
@@ -37,7 +33,13 @@ static const char gimbal_error_messages[][GIMBAL_ERROR_COUNT] =
 typedef struct{
   param_t kp;
   param_t ki;
-} __attribute__((packed)) gimbal_vel_controller_t;
+} __attribute__((packed)) pi_controller_t;
+
+typedef struct{
+  param_t kp;
+  param_t ki;
+  param_t kd;
+} __attribute__((packed)) pid_controller_t;
 
 typedef struct{
   bool inited;
@@ -63,9 +65,12 @@ typedef struct{
   float pitch_speed;
 
   /* Controller part*/
+  pi_controller_t yaw_vel;
+  pi_controller_t pitch_vel;
+
+  /*Mechanical parameters*/
+  param_t axis_init_pos[2];
   param_t axis_ff_weight[2];
-  gimbal_vel_controller_t yaw_vel;
-  gimbal_vel_controller_t pitch_vel;
 
   /* TODO: control intermidiate current output (phase prediction)*/
   float yaw_iq_cmd;
