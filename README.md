@@ -86,6 +86,12 @@ This installation makes use of terminal, if you are not familiar with the use of
 		- "Target" should be "STLink" 
 		- Under "Executable" click "select other"
 		- Browse into the source folder and select the "STlink.sh" executable (note: this is actually only a dummy file used to avoid CLion from giving an error response, the "make upload" command is actually directly exectuted inside the editor)
+		- if the STlink.sh file can't be added to the exectable it means that your mac is not recognizing this as a exectable file, to solve this simply open terminal, navigate to the source folder  and type:
+		
+		chmod a+x STlink.sh
+		
+		this will make the script exectable, then you should be able to add it.
+		
 	- Modify configuration "Ozone"
 		- "Target" should be "Ozone"
 		- Under "Executable" click "select other"
