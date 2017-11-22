@@ -159,17 +159,13 @@ static void imuStructureInit(PIMUStruct pIMU, IMUConfigStruct* imu_conf)
       pIMU->_accel_psc = (GRAV /  2048.0f);
       break;
   }
-}
 
-static void trans_accel_offset(PIMUStruct pIMU, float accelData[3])
-{
-  float accelData_temp[3];
-
-  accelData_temp[X] = accelData[X] - pIMU->_accelBias[X];
-  accelData_temp[Y] = accelData[Y] - pIMU->_accelBias[Y];
-  accelData_temp[Z] = accelData[Z] - pIMU->_accelBias[Z];
-
-  matrix33_multiply_vector3(pIMU->_accelT, accelData_temp, pIMU->accelData);
+  if(imu_conf->_axis_rev & MPU6500_AXIS_REV_X)
+    pIMU->_axis_rev[X] = 1;
+  if(imu_conf->_axis_rev & MPU6500_AXIS_REV_Y)
+    pIMU->_axis_rev[Y] = 1;
+  if(imu_conf->_axis_rev & MPU6500_AXIS_REV_Z)
+    pIMU->_axis_rev[Z] = 1;
 }
 
 /**
@@ -189,10 +185,47 @@ uint8_t imuGetData(PIMUStruct pIMU)
 
   if(!error)
   {
-    trans_accel_offset(pIMU, accelData);
-    pIMU->gyroData[X] = gyroData[X] + pIMU->_gyroBias[X];
-    pIMU->gyroData[Y] = gyroData[Y] + pIMU->_gyroBias[Y];
-    pIMU->gyroData[Z] = gyroData[Z] + pIMU->_gyroBias[Z];
+    float accelData_temp[3];
+
+    accelData_temp[X] = accelData[X] - pIMU->_accelBias[X];
+    accelData_temp[Y] = accelData[Y] - pIMU->_accelBias[Y];
+    accelData_temp[Z] = accelData[Z] - pIMU->_accelBias[Z];
+
+    //matrix33_multiply_vector3(pIMU->_accelT, accelData_temp, pIMU->accelData);
+    matrix33_multiply_vector3(pIMU->_accelT, accelData_temp, accelData);
+
+    if(pIMU->_axis_rev[X])
+    {
+      pIMU->gyroData[X] = -gyroData[X] - pIMU->_gyroBias[X];
+      pIMU->accelData[X] = -accelData[X];
+    }
+    else
+    {
+      pIMU->gyroData[X] = gyroData[X] + pIMU->_gyroBias[X];
+      pIMU->accelData[X] = accelData[X];
+    }
+
+    if(pIMU->_axis_rev[Y])
+    {
+      pIMU->gyroData[Y] = -gyroData[Y] - pIMU->_gyroBias[Y];
+      pIMU->accelData[Y] = -accelData[Y];
+    }
+    else
+    {
+      pIMU->gyroData[Y] = gyroData[Y] + pIMU->_gyroBias[Y];
+      pIMU->accelData[Y] = accelData[Y];
+    }
+
+    if(pIMU->_axis_rev[Z])
+    {
+      pIMU->gyroData[Z] = -gyroData[Z] - pIMU->_gyroBias[Z];
+      pIMU->accelData[Z] = -accelData[Z];
+    }
+    else
+    {
+      pIMU->gyroData[Z] = gyroData[Z] + pIMU->_gyroBias[Z];
+      pIMU->accelData[Z] = accelData[Z];
+    }
   }
 
   return error;

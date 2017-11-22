@@ -7,7 +7,7 @@
 
 static uint8_t rxbuf[DBUS_BUFFER_SIZE];
 static RC_Ctl_t RC_Ctl;
-static thread_reference_t uart_host_thread_handler = NULL;
+static thread_reference_t uart_dbus_thread_handler = NULL;
 static uint8_t rx_start_flag = 1;
 
 /**
@@ -31,7 +31,7 @@ static void rxend(UARTDriver *uartp) {
   if(rx_start_flag)
   {
     chSysLockFromISR();
-    chThdResumeI(&uart_host_thread_handler, MSG_OK);
+    chThdResumeI(&uart_dbus_thread_handler, MSG_OK);
     chSysUnlockFromISR();
   }
   else
@@ -72,7 +72,7 @@ static THD_FUNCTION(uart_dbus_thread, p)
     uartStartReceive(UART_DBUS, DBUS_BUFFER_SIZE, rxbuf);
 
     chSysLock();
-    rxmsg = chThdSuspendTimeoutS(&uart_host_thread_handler, timeout);
+    rxmsg = chThdSuspendTimeoutS(&uart_dbus_thread_handler, timeout);
     chSysUnlock();
 
     if(rxmsg == MSG_OK)

@@ -45,7 +45,6 @@ static void transmit_matlab
     chSequentialStreamPut(chp, *byte++);
 }
 
-#include <math.h>
 #define HOST_TRANSMIT_FREQ  100U
 static THD_WORKING_AREA(matlab_thread_wa, 512);
 static THD_FUNCTION(matlab_thread, p)
@@ -60,8 +59,10 @@ static THD_FUNCTION(matlab_thread, p)
   float txbuf_f[16];
   BaseSequentialStream* chp = (BaseSequentialStream*)SERIAL_DATA;
 
-  uint32_t tick = chVTGetSystemTimeX();
+  PIMUStruct PIMU = imu_get();
+  GimbalStruct* gimbal = gimbal_get();
 
+  uint32_t tick = chVTGetSystemTimeX();
   const uint16_t period = US2ST(1000000/HOST_TRANSMIT_FREQ);
   while (!chThdShouldTerminateX())
   {
@@ -72,12 +73,13 @@ static THD_FUNCTION(matlab_thread, p)
     {
       tick = chVTGetSystemTimeX();
     }
-    GimbalStruct* gimbal = gimbal_get();
 
     txbuf_f[0] = gimbal->pitch_angle;
-    txbuf_f[1] = gimbal->yaw_angle;
+    txbuf_f[1] = PIMU->accelData[X];
+    txbuf_f[2] = PIMU->accelData[Y];
+    txbuf_f[3] = PIMU->accelData[Z];
 
-    transmit_matlab(chp, NULL, txbuf_f, 0, 2);
+    transmit_matlab(chp, NULL, txbuf_f, 0, 4);
   }
 }
 
@@ -88,12 +90,15 @@ static THD_WORKING_AREA(Shell_thread_wa, 1024);
 void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
 {
   (void) argc,argv;
-  GimbalStruct* gimbal = gimbal_get();
   PIMUStruct PIMU = imu_get();
+  GimbalStruct* gimbal = gimbal_get();
 
-  chprintf(chp,"Gyro offset X: %f\r\n",PIMU->_gyroBias[X]);
-  chprintf(chp,"Gyro offset Y: %f\r\n",PIMU->_gyroBias[Y]);
-  chprintf(chp,"Gyro offset Z: %f\r\n",PIMU->_gyroBias[Z]);
+  chprintf(chp,"AccelX: %f\r\n",PIMU->accelData[X]);
+  chprintf(chp,"AccelY: %f\r\n",PIMU->accelData[Y]);
+  chprintf(chp,"AccelZ: %f\r\n",PIMU->accelData[Z]);
+
+  chprintf(chp,"Gimbal Pitch: %f\r\n",gimbal->pitch_angle);
+  chprintf(chp,"Gimbal Yaw: %f\r\n",gimbal->yaw_angle);
 }
 
 /**
@@ -123,7 +128,7 @@ void cmd_data(BaseSequentialStream * chp, int argc, char *argv[])
         NORMALPRIO - 3,
         matlab_thread, NULL);
   }
-  else if(matlab_thread_handler)
+  else if(matlab_thread_handler != NULL)
   {
     chThdTerminate(matlab_thread_handler);
     matlab_thread_handler = NULL;

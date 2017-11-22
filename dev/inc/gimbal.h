@@ -72,13 +72,12 @@ typedef struct{
   float yaw_speed;
   float pitch_speed;
 
-  /* Controller part*/
-  pi_controller_t yaw_vel;
-  pi_controller_t pitch_vel;
-
   /*Mechanical parameters*/
   param_t axis_init_pos[2];
-  param_t axis_ff_weight[2];
+  param_t axis_ff_weight[4];
+  /*first three subparams: pitch axis accelerometer maximum in XYZ
+  last three subparams: yaw axis accelerometer maximum in XYZ when pitch at maximum*/
+  param_t axis_ff_accel[6];
 
   /* TODO: control intermidiate current output (phase prediction)*/
   float yaw_iq_cmd;

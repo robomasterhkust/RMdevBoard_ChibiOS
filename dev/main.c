@@ -16,7 +16,8 @@
 #include "main.h"
 
 static BaseSequentialStream* chp = (BaseSequentialStream*)&SDU1;
-static const IMUConfigStruct imu1_conf = {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_1000};
+static const IMUConfigStruct imu1_conf =
+  {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_1000, MPU6500_AXIS_REV_Z};
 
 PIMUStruct pIMU;
 
@@ -25,11 +26,10 @@ static THD_WORKING_AREA(Attitude_thread_wa, 4096);
 static THD_FUNCTION(Attitude_thread, p)
 {
   chRegSetThreadName("IMU Attitude Estimator");
-  uint8_t errorCode;
 
-  PIMUStruct pIMU_1 = (PIMUStruct)p;
+  (void)p;
 
-  imuInit(pIMU_1, &imu1_conf);
+  imuInit(pIMU, &imu1_conf);
 
   uint32_t tick = chVTGetSystemTimeX();
   while(true)
@@ -40,17 +40,17 @@ static THD_FUNCTION(Attitude_thread, p)
     else
     {
       tick = chVTGetSystemTimeX();
-      pIMU_1->errorCode |= IMU_LOSE_FRAME;
+      pIMU->errorCode |= IMU_LOSE_FRAME;
     }
 
-    imuGetData(pIMU_1);
+    imuGetData(pIMU);
     if(pIMU->inited == 2)
-      attitude_update(pIMU_1);
+      attitude_update(pIMU);
 
-    if(pIMU_1->accelerometer_not_calibrated || pIMU_1->gyroscope_not_calibrated)
+    if(pIMU->accelerometer_not_calibrated || pIMU->gyroscope_not_calibrated)
     {
       chSysLock();
-      chThdSuspendS(&(pIMU_1->imu_Thd));
+      chThdSuspendS(&(pIMU->imu_Thd));
       chSysUnlock();
     }
   }
@@ -87,7 +87,7 @@ int main(void) {
 
   chThdCreateStatic(Attitude_thread_wa, sizeof(Attitude_thread_wa),
   NORMALPRIO + 5,
-                    Attitude_thread, pIMU);
+                    Attitude_thread, NULL);
 
   while (true)
   {

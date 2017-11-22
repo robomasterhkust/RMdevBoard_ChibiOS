@@ -7,8 +7,8 @@
 #include "params.h"
 
 typedef enum {
-  X = 0U,
-  Y = 1U,
+  X = 1U,
+  Y = 0U,
   Z = 2U
 } mpu_axis_mask_t;
 
@@ -36,6 +36,13 @@ typedef enum {
   MPU6500_ACCEL_SCALE_8G = 2,
   MPU6500_ACCEL_SCALE_16G = 3
 } mpu_accel_scale_t;
+
+typedef enum {
+  MPU6500_AXIS_REV_NO = 0,
+  MPU6500_AXIS_REV_X = 1,
+  MPU6500_AXIS_REV_Y = 2,
+  MPU6500_AXIS_REV_Z = 4,
+} mpu_axis_rev_t;
 
 typedef enum {
   IMU_OK = 0,
@@ -77,6 +84,7 @@ typedef struct tagIMUStruct {
   param_t _accelT[3][3];    /* Accelerometer rotational bias matrix       */
   param_t _gyroBias[3];     /* Gyroscope bias.                 */
 
+  uint8_t _axis_rev[3];
   float _accel_psc;
   float _gyro_psc;
 
@@ -95,6 +103,7 @@ typedef struct {
   SPIDriver* const _imu_spi;
   const mpu_accel_scale_t _accelConf;
   const mpu_gyro_scale_t _gyroConf;
+  const uint8_t _axis_rev;
 } IMUConfigStruct;
 
 #ifdef __cplusplus
