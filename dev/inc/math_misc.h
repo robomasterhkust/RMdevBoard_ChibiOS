@@ -18,6 +18,27 @@ typedef struct {
   float data[2];
 } lpfilterStruct;
 
+static inline void bound(float* input, const float max)
+{
+  if(*input > max)
+    *input = max;
+  else if(*input < -max)
+    *input = -max;
+}
+
+static inline float boundOutput(const float input, const float max)
+{
+  float output;
+  if(input < max && input > -max)
+    output = input;
+  else if(input > max)
+    output = max;
+  else
+    output = -max;
+
+  return output;
+}
+
 static inline float vector_norm(const float v[], const uint8_t length)
 {
   uint8_t i;

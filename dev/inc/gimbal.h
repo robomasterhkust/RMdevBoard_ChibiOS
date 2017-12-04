@@ -41,12 +41,16 @@ static const char gimbal_warning_messages[][GIMBAL_WARNING_COUNT] =
 typedef struct{
   param_t kp;
   param_t ki;
+  float error_int;
+  float error_int_max;
 } __attribute__((packed)) pi_controller_t;
 
 typedef struct{
   param_t kp;
   param_t ki;
   param_t kd;
+  float error_int;
+  float error_int_max;
 } __attribute__((packed)) pid_controller_t;
 
 typedef struct{
@@ -69,6 +73,9 @@ typedef struct{
     float pitch_speed_enc;
   #endif
 
+  float yaw_speed_cmd;
+  float pitch_speed_cmd;
+  
   float yaw_speed;
   float pitch_speed;
 
