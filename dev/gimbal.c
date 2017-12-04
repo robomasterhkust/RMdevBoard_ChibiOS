@@ -214,6 +214,9 @@ static THD_FUNCTION(gimbal_thread, p)
   _yaw_vel.error_int_max = 2000.0f,
   _pitch_vel.error_int_max = 2500.0f;
 
+  gimbal.yaw_speed_cmd = 0.0f;
+  gimbal.pitch_speed_cmd = 0.0f;
+
   static const char _yaw_vel_name[] =   "Gimbal Yaw Vel";
   static const char _pitch_vel_name[] = "Gimbal Pitch Vel";
 
@@ -247,7 +250,7 @@ static THD_FUNCTION(gimbal_thread, p)
     /**/
 
     gimbal.pitch_iq_cmd = gimbal_controlSpeed(&_pitch_vel,
-      gimbal.yaw_speed_cmd, gimbal.yaw_speed);
+      gimbal.pitch_speed_cmd, gimbal.pitch_speed);
     gimbal_addFF();
 
     /*output limit*/

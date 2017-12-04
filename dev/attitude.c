@@ -61,7 +61,10 @@ uint8_t attitude_update(PIMUStruct pIMU)
     for (i = 0; i < 4; i++)
       pIMU->qIMU[i] = q[i];
 
-    quarternion2euler(pIMU->qIMU, pIMU->euler_angle);
+    #ifdef  IMU_USE_EULER_ANGLE
+      quarternion2euler(pIMU->qIMU, pIMU->euler_angle);
+    #endif
+
     return IMU_OK;
   }
   else
