@@ -312,8 +312,7 @@ uint8_t imuInit(PIMUStruct pIMU, const IMUConfigStruct* const imu_conf)
   /*   configuring the sensor.           */
   imuTXData[0] = MPU6500_CONFIG;  // Start register address;
   imuTXData[1] = DLPF_41HZ;          // CONFIG register value DLPF_CFG;
-  // For 3600Hz gyro feedback, override DLPF by register 26 FCHOICE_B = 2b'10
-  imuTXData[2] = (uint8_t)(imu_conf->_gyroConf << 3U) | 0b10;          // GYRO_CONFIG register value
+  imuTXData[2] = (uint8_t)(imu_conf->_gyroConf << 3U);          // GYRO_CONFIG register value
   imuTXData[3] = (uint8_t)(imu_conf->_accelConf << 3U);          // ACCEL_CONFIG_1 register value
   imuTXData[4] = ADLPF_41HZ;          // ACCEL_CONFIG_2 register value
 
