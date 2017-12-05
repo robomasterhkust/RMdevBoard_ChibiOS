@@ -3,6 +3,9 @@
  * @file    gimbal.c
  * @brief   Gimbal controller, driver and interface
  */
+//#include "inc/gimbal.h"
+//#include <inc/gimbal.h>
+#include <inc/math_misc.h>
 #include "ch.h"
 #include "hal.h"
 
@@ -18,130 +21,129 @@
 
 static lpfilterStruct lp_yawAngle;
 static lpfilterStruct lp_pitchAngle;
-static GimbalStruct gimbal;
+static lpfilterStruct lp_gyro_z1;
+static lpfilterStruct lp_gyro_z2;
+static lpfilterStruct lp_gyro_y1;
+static lpfilterStruct lp_gyro_y2;
+static sosfilterStruct lp_butterworth_gyro_z;
+static sosfilterStruct lp_butterworth_gyro_y;
+GimbalStruct gimbal;
 
 static thread_reference_t gimbal_thread_handler = NULL;
 
-GimbalStruct* gimbal_get(void)
+GimbalStruct *gimbal_get(void)
 {
-  return &gimbal;
+    return &gimbal;
 }
 
 uint32_t gimbal_get_error(void)
 {
-  return gimbal.errorFlag;
+    return gimbal.errorFlag;
 }
 
 #ifdef GIMBAL_ENCODER_USE_SPEED
-  static int16_t yaw_speed_buffer[GIMBAL_SPEED_BUFFER_LEN];
-  static uint8_t yaw_speed_count_buffer[GIMBAL_SPEED_BUFFER_LEN];
-  static uint8_t yaw_count_sum;
-  static uint32_t yaw_speed_count;
-  static int16_t pitch_speed_buffer[GIMBAL_SPEED_BUFFER_LEN];
-  static uint8_t pitch_speed_count_buffer[GIMBAL_SPEED_BUFFER_LEN];
-  static uint8_t pitch_count_sum;
-  static uint32_t pitch_speed_count;
+static int16_t yaw_speed_buffer[GIMBAL_SPEED_BUFFER_LEN];
+static uint8_t yaw_speed_count_buffer[GIMBAL_SPEED_BUFFER_LEN];
+static uint8_t yaw_count_sum;
+static uint32_t yaw_speed_count;
+static int16_t pitch_speed_buffer[GIMBAL_SPEED_BUFFER_LEN];
+static uint8_t pitch_speed_count_buffer[GIMBAL_SPEED_BUFFER_LEN];
+static uint8_t pitch_count_sum;
+static uint32_t pitch_speed_count;
 #endif
 
 #define GIMBAL_MAX_ANGLE 5.02655f
 #define GIMBAL_MIN_ANGLE 1.25664f
 
-#define GIMBAL_ANGLE_PSC 7.6699e-4 //2*M_PI/0x1FFF
+#define GIMBAL_ANGLE_PSC 7.6699e-4f //2*M_PI/0x1FFF
 #define GIMBAL_CONNECTION_ERROR_COUNT 20U
+
 static void gimbal_encoderUpdate(void)
 {
-  if(gimbal._encoder_can[GIMBAL_YAW].updated)
-  {
-    //Check validiaty of can connection
-    gimbal._encoder_can[GIMBAL_YAW].updated = false;
+    if (gimbal._encoder_can[GIMBAL_YAW].updated) {
+        //Check validiaty of can connection
+        gimbal._encoder_can[GIMBAL_YAW].updated = false;
 
-    float angle_input = gimbal._encoder_can[GIMBAL_YAW].raw_angle*GIMBAL_ANGLE_PSC;
+        float angle_input = gimbal._encoder_can[GIMBAL_YAW].raw_angle * GIMBAL_ANGLE_PSC;
 
-    //Prevent zero-crossing
-    if(angle_input > GIMBAL_MAX_ANGLE && gimbal.yaw_angle < GIMBAL_MIN_ANGLE)
-      angle_input -= 2*M_PI;
-    else if(angle_input < GIMBAL_MIN_ANGLE && gimbal.yaw_angle > GIMBAL_MAX_ANGLE)
-      angle_input += 2*M_PI;
+        //Prevent zero-crossing
+        if (angle_input > GIMBAL_MAX_ANGLE && gimbal.yaw_angle < GIMBAL_MIN_ANGLE)
+            angle_input -= 2 * M_PI;
+        else if (angle_input < GIMBAL_MIN_ANGLE && gimbal.yaw_angle > GIMBAL_MAX_ANGLE)
+            angle_input += 2 * M_PI;
 
-    gimbal.yaw_angle = lpfilter_apply(&lp_yawAngle, angle_input);
-    gimbal.yaw_current = gimbal._encoder_can[GIMBAL_YAW].raw_current;
+        gimbal.yaw_angle = lpfilter_apply(&lp_yawAngle, angle_input);
+        gimbal.yaw_current = gimbal._encoder_can[GIMBAL_YAW].raw_current;
 
-    /* add FIR filter to encoder speed*/
-    #ifdef GIMBAL_ENCODER_USE_SPEED
-      yaw_count_sum += gimbal.yaw_wait_count;
-      yaw_count_sum -= yaw_speed_count_buffer[yaw_speed_count % GIMBAL_SPEED_BUFFER_LEN];
-      int16_t diff = gimbal._encoder_can[GIMBAL_YAW].raw_angle -
-        yaw_speed_buffer[yaw_speed_count % GIMBAL_SPEED_BUFFER_LEN];
-      //Detect zero-crossing scenerio
-      if(diff > 6000)
-        diff -= 8192;
-      else if(diff < -6000)
-        diff += 8192;
+        /* add FIR filter to encoder speed*/
+#ifdef GIMBAL_ENCODER_USE_SPEED
+        yaw_count_sum += gimbal.yaw_wait_count;
+        yaw_count_sum -= yaw_speed_count_buffer[yaw_speed_count % GIMBAL_SPEED_BUFFER_LEN];
+        int16_t diff = gimbal._encoder_can[GIMBAL_YAW].raw_angle -
+          yaw_speed_buffer[yaw_speed_count % GIMBAL_SPEED_BUFFER_LEN];
+        //Detect zero-crossing scenerio
+        if(diff > 6000)
+          diff -= 8192;
+        else if(diff < -6000)
+          diff += 8192;
 
-      gimbal.yaw_speed_enc = diff*GIMBAL_ANGLE_PSC * GIMBAL_CONTROL_FREQ/yaw_count_sum;
-      yaw_speed_buffer[yaw_speed_count % GIMBAL_SPEED_BUFFER_LEN] = gimbal._encoder_can[GIMBAL_YAW].raw_angle;
-      yaw_speed_count_buffer[yaw_speed_count % GIMBAL_SPEED_BUFFER_LEN] = gimbal.yaw_wait_count;
-      yaw_speed_count++;
-    #endif
+        gimbal.yaw_speed_enc = diff*GIMBAL_ANGLE_PSC * GIMBAL_CONTROL_FREQ/yaw_count_sum;
+        yaw_speed_buffer[yaw_speed_count % GIMBAL_SPEED_BUFFER_LEN] = gimbal._encoder_can[GIMBAL_YAW].raw_angle;
+        yaw_speed_count_buffer[yaw_speed_count % GIMBAL_SPEED_BUFFER_LEN] = gimbal.yaw_wait_count;
+        yaw_speed_count++;
+#endif
 
-    gimbal.yaw_wait_count = 1;
-  }
-  else
-  {
-    gimbal.yaw_wait_count++;
-    if(gimbal.yaw_wait_count > GIMBAL_CONNECTION_ERROR_COUNT)
-    {
-      gimbal.errorFlag |= GIMBAL_YAW_NOT_CONNECTED;
-      gimbal.yaw_wait_count = 1;
+        gimbal.yaw_wait_count = 1;
+    } else {
+        gimbal.yaw_wait_count++;
+        if (gimbal.yaw_wait_count > GIMBAL_CONNECTION_ERROR_COUNT) {
+            gimbal.errorFlag |= GIMBAL_YAW_NOT_CONNECTED;
+            gimbal.yaw_wait_count = 1;
+        }
     }
-  }
 
-  if(gimbal._encoder_can[GIMBAL_PITCH].updated)
-  {
-    //Check validiaty of can connection
-    gimbal._encoder_can[GIMBAL_PITCH].updated = false;
+    if (gimbal._encoder_can[GIMBAL_PITCH].updated) {
+        //Check validiaty of can connection
+        gimbal._encoder_can[GIMBAL_PITCH].updated = false;
 
-    float angle_input = gimbal._encoder_can[GIMBAL_PITCH].raw_angle*GIMBAL_ANGLE_PSC;
+        float angle_input = gimbal._encoder_can[GIMBAL_PITCH].raw_angle * GIMBAL_ANGLE_PSC;
 
-    //Prevent zero-crossing
-    if(angle_input > GIMBAL_MAX_ANGLE && gimbal.pitch_angle < GIMBAL_MIN_ANGLE)
-      angle_input -= 2*M_PI;
-    else if(angle_input < GIMBAL_MIN_ANGLE && gimbal.pitch_angle > GIMBAL_MAX_ANGLE)
-      angle_input += 2*M_PI;
+        //Prevent zero-crossing
+        if (angle_input > GIMBAL_MAX_ANGLE && gimbal.pitch_angle < GIMBAL_MIN_ANGLE)
+            angle_input -= 2 * M_PI;
+        else if (angle_input < GIMBAL_MIN_ANGLE && gimbal.pitch_angle > GIMBAL_MAX_ANGLE)
+            angle_input += 2 * M_PI;
 
-    gimbal.pitch_angle = lpfilter_apply(&lp_pitchAngle, angle_input);
-    gimbal.pitch_current = gimbal._encoder_can[GIMBAL_PITCH].raw_current;
+        gimbal.pitch_angle = lpfilter_apply(&lp_pitchAngle, angle_input);
+        gimbal.pitch_current = gimbal._encoder_can[GIMBAL_PITCH].raw_current;
 
-    /* add FIR filter to encoder speed*/
-    #ifdef GIMBAL_ENCODER_USE_SPEED
-      pitch_count_sum += gimbal.pitch_wait_count;
-      pitch_count_sum -= pitch_speed_count_buffer[pitch_speed_count % GIMBAL_SPEED_BUFFER_LEN];
+        /* add FIR filter to encoder speed*/
+#ifdef GIMBAL_ENCODER_USE_SPEED
+        pitch_count_sum += gimbal.pitch_wait_count;
+        pitch_count_sum -= pitch_speed_count_buffer[pitch_speed_count % GIMBAL_SPEED_BUFFER_LEN];
 
-      int16_t diff = gimbal._encoder_can[GIMBAL_PITCH].raw_angle -
-        pitch_speed_buffer[pitch_speed_count % GIMBAL_SPEED_BUFFER_LEN];
-      //Detect zero-crossing scenerio
-      if(diff > 4096)
-        diff -= 8192;
-      else if(diff < -4096)
-        diff += 8192;
+        int16_t diff = gimbal._encoder_can[GIMBAL_PITCH].raw_angle -
+          pitch_speed_buffer[pitch_speed_count % GIMBAL_SPEED_BUFFER_LEN];
+        //Detect zero-crossing scenerio
+        if(diff > 4096)
+          diff -= 8192;
+        else if(diff < -4096)
+          diff += 8192;
 
-      gimbal.pitch_speed_enc = diff*GIMBAL_ANGLE_PSC * GIMBAL_CONTROL_FREQ/pitch_count_sum;
-      pitch_speed_buffer[pitch_speed_count % GIMBAL_SPEED_BUFFER_LEN] = gimbal._encoder_can[GIMBAL_PITCH].raw_angle;
-      pitch_speed_count_buffer[pitch_speed_count % GIMBAL_SPEED_BUFFER_LEN] = gimbal.pitch_wait_count;
-      pitch_speed_count++;
-    #endif
+        gimbal.pitch_speed_enc = diff*GIMBAL_ANGLE_PSC * GIMBAL_CONTROL_FREQ/pitch_count_sum;
+        pitch_speed_buffer[pitch_speed_count % GIMBAL_SPEED_BUFFER_LEN] = gimbal._encoder_can[GIMBAL_PITCH].raw_angle;
+        pitch_speed_count_buffer[pitch_speed_count % GIMBAL_SPEED_BUFFER_LEN] = gimbal.pitch_wait_count;
+        pitch_speed_count++;
+#endif
 
-    gimbal.pitch_wait_count = 1;
-  }
-  else
-  {
-    gimbal.pitch_wait_count++;
-    if(gimbal.pitch_wait_count > GIMBAL_CONNECTION_ERROR_COUNT)
-    {
-      gimbal.errorFlag |= GIMBAL_PITCH_NOT_CONNECTED;
-      gimbal.pitch_wait_count = 1;
+        gimbal.pitch_wait_count = 1;
+    } else {
+        gimbal.pitch_wait_count++;
+        if (gimbal.pitch_wait_count > GIMBAL_CONNECTION_ERROR_COUNT) {
+            gimbal.errorFlag |= GIMBAL_PITCH_NOT_CONNECTED;
+            gimbal.pitch_wait_count = 1;
+        }
     }
-  }
 }
 
 /*
@@ -153,14 +155,15 @@ static void gimbal_encoderUpdate(void)
 static inline void gimbal_addFF(void)
 {
 //  gimbal.yaw_iq_cmd = gimbal.axis_ff_weight[GIMBAL_YAW];
-  float ff_pitch = norm_vector3_projection(gimbal._pIMU->accelData, gimbal.axis_ff_accel);
-  gimbal.pitch_iq_cmd += gimbal.axis_ff_weight[GIMBAL_PITCH] * ff_pitch;
+    float ff_pitch = norm_vector3_projection(gimbal._pIMU->accelData, gimbal.axis_ff_accel);
+    gimbal.pitch_iq_cmd += gimbal.axis_ff_weight[GIMBAL_PITCH] * ff_pitch;
 }
 
 
 static inline void gimbal_getSpeed(void)
 {
-  gimbal.pitch_speed = gimbal._pIMU->gyroData[Pitch];
+    gimbal.pitch_speed = gimbal._pIMU->gyroData[Pitch];
+    gimbal.yaw_speed = gimbal._pIMU->gyroData[Yaw];
 }
 
 /*NOTE Temporary for yaw controller*/
@@ -171,219 +174,281 @@ pid_controller_t _yaw_pos;
 
 #define GIMBAL_CONTROL_PERIOD_ST     US2ST(1000000U/GIMBAL_CONTROL_FREQ)
 static THD_WORKING_AREA(gimbal_thread_wa, 2048);
+
 static THD_FUNCTION(gimbal_thread, p)
 {
-  (void)p;
-  chRegSetThreadName("Gimbal controller");
+    (void) p;
+    chRegSetThreadName("Gimbal controller");
 
-  chSysLock();
-  chThdSuspendS(&gimbal_thread_handler);
-  chSysUnlock();
-
-  /*NOTE Temporary for yaw controller*/
-  float _error;
-  float _error_diff;
-  float _error_int = 0.0f;
-  const float _error_int_max = 1000.0f;
-  float _error_past[GIMBAL_POS_BUFFER_LEN][2];
-  uint8_t i;
-  for (i = 0; i < GIMBAL_POS_BUFFER_LEN; i++)
-  {
-    _error_past[i][0] = 0.0f;
-    _error_past[i][1] = 0.0f;
-  }
-  uint8_t _error_index = 0, _prev_index = 1;
-  /**/
-
-  pi_controller_t _yaw_vel;
-  pi_controller_t _pitch_vel;
-
-  static const char _yaw_vel_name[] =   "Gimbal Yaw Vel";
-  static const char _pitch_vel_name[] = "Gimbal Pitch Vel";
-//  params_set(&_yaw_vel,     0, 2, _yaw_vel_name,   subname_PI,      PARAM_PUBLIC);
-  params_set(&_pitch_vel,   1, 2, _pitch_vel_name, subname_PI,      PARAM_PUBLIC);
-
-  uint32_t tick = chVTGetSystemTimeX();
-  while(!chThdShouldTerminateX())
-  {
-    tick += GIMBAL_CONTROL_PERIOD_ST;
-    if(tick > chVTGetSystemTimeX())
-      chThdSleepUntil(tick);
-    else
-    {
-      tick = chVTGetSystemTimeX();
-      gimbal.errorFlag |= GIMBAL_CONTROL_LOSE_FRAME;
-    }
-
-    gimbal_encoderUpdate();
-    gimbal_getSpeed();
+    chSysLock();
+    chThdSuspendS(&gimbal_thread_handler);
+    chSysUnlock();
 
     /*NOTE Temporary for yaw controller*/
-    _error = gimbal.axis_init_pos[GIMBAL_YAW] - gimbal.yaw_angle;
-    _error_int += _error * _yaw_pos.ki;
-    _prev_index = (_error_index + 1) % 40;
-    _error_past[_error_index][GIMBAL_YAW] = _error;
-    _error_diff = _error - _error_past[_prev_index][GIMBAL_YAW];
-    _error_index = _prev_index;
-    if(_error_int > _error_int_max)
-      _error_int = _error_int_max;
-    else if(_error_int < -_error_int_max)
-      _error_int = -_error_int_max;
-    gimbal.yaw_iq_cmd = _error*_yaw_pos.kp  + _error_int + _error_diff *_yaw_pos.kd;
+    float _error;
+    float _error_diff;
+    float _error_int = 0.0f;
+    const float _error_int_max = 1000.0f;
+    float _error_past[GIMBAL_POS_BUFFER_LEN][2];
+    uint8_t i;
+    for (i = 0; i < GIMBAL_POS_BUFFER_LEN; i++) {
+        _error_past[i][0] = 0.0f;
+        _error_past[i][1] = 0.0f;
+    }
+    uint8_t _error_index = 0, _prev_index = 1;
     /**/
 
-    gimbal.pitch_iq_cmd = 0.0f;
-    gimbal_addFF();
+    pi_controller_t _yaw_vel;
+    pi_controller_t _pitch_vel;
 
-    /*output limit*/
-    if(gimbal.yaw_iq_cmd < GIMBAL_IQ_MAX && gimbal.yaw_iq_cmd > -GIMBAL_IQ_MAX)
-      gimbal.yaw_iq_output = gimbal.yaw_iq_cmd;
-    else if(gimbal.yaw_iq_cmd > GIMBAL_IQ_MAX)
-      gimbal.yaw_iq_output = GIMBAL_IQ_MAX;
-    else
-      gimbal.yaw_iq_output = -GIMBAL_IQ_MAX;
+    static const char _yaw_vel_name[] = "Gimbal Yaw Vel";
+    static const char _pitch_vel_name[] = "Gimbal Pitch Vel";
+//  params_set(&_yaw_vel,     0, 2, _yaw_vel_name,   subname_PI,      PARAM_PUBLIC);
+    params_set(&_pitch_vel, 1, 2, _pitch_vel_name, subname_PI, PARAM_PUBLIC);
 
-    if(gimbal.pitch_iq_cmd < GIMBAL_IQ_MAX && gimbal.pitch_iq_cmd > -GIMBAL_IQ_MAX)
-      gimbal.pitch_iq_output = gimbal.pitch_iq_cmd;
-    else if(gimbal.pitch_iq_cmd > GIMBAL_IQ_MAX)
-      gimbal.pitch_iq_output = GIMBAL_IQ_MAX;
-    else
-      gimbal.pitch_iq_output = -GIMBAL_IQ_MAX;
+    uint32_t tick = chVTGetSystemTimeX();
+    while (!chThdShouldTerminateX()) {
+        tick += GIMBAL_CONTROL_PERIOD_ST;
+        if (tick > chVTGetSystemTimeX())
+            chThdSleepUntil(tick);
+        else {
+            tick = chVTGetSystemTimeX();
+            gimbal.errorFlag |= GIMBAL_CONTROL_LOSE_FRAME;
+        }
 
-    gimbal_canUpdate();
-  }
+        gimbal_encoderUpdate();
+        gimbal_getSpeed();
+
+        /*NOTE Temporary for yaw controller*/
+        _error = gimbal.axis_init_pos[GIMBAL_YAW] - gimbal.yaw_angle;
+        _error_int += _error * _yaw_pos.ki;
+        _prev_index = (_error_index + 1) % 40;
+        _error_past[_error_index][GIMBAL_YAW] = _error;
+        _error_diff = _error - _error_past[_prev_index][GIMBAL_YAW];
+        _error_index = _prev_index;
+        if (_error_int > _error_int_max)
+            _error_int = _error_int_max;
+        else if (_error_int < -_error_int_max)
+            _error_int = -_error_int_max;
+        gimbal.yaw_iq_cmd = _error * _yaw_pos.kp + _error_int + _error_diff * _yaw_pos.kd;
+        /**/
+
+        gimbal.pitch_iq_cmd = 0.0f;
+        gimbal_addFF();
+
+        /*output limit*/
+        if (gimbal.yaw_iq_cmd < GIMBAL_IQ_MAX && gimbal.yaw_iq_cmd > -GIMBAL_IQ_MAX)
+            gimbal.yaw_iq_output = gimbal.yaw_iq_cmd;
+        else if (gimbal.yaw_iq_cmd > GIMBAL_IQ_MAX)
+            gimbal.yaw_iq_output = GIMBAL_IQ_MAX;
+        else
+            gimbal.yaw_iq_output = -GIMBAL_IQ_MAX;
+
+        if (gimbal.pitch_iq_cmd < GIMBAL_IQ_MAX && gimbal.pitch_iq_cmd > -GIMBAL_IQ_MAX)
+            gimbal.pitch_iq_output = gimbal.pitch_iq_cmd;
+        else if (gimbal.pitch_iq_cmd > GIMBAL_IQ_MAX)
+            gimbal.pitch_iq_output = GIMBAL_IQ_MAX;
+        else
+            gimbal.pitch_iq_output = -GIMBAL_IQ_MAX;
+
+        gimbal_canUpdate();
+    }
 }
 
 #define GIMBAL_INIT_MAX_ERROR    8.7266e-4
 #define GIMBAL_INIT_SCORE_FULL       1000U
 #define GIMBAL_INIT_TIMEOUT         10000U
 static THD_WORKING_AREA(gimbal_init_thread_wa, 2048);
+
 static THD_FUNCTION(gimbal_init_thread, p)
 {
-  (void)p;
-  chRegSetThreadName("Gimbal init thread");
+    (void) p;
+    chRegSetThreadName("Gimbal init thread");
 
-  float _error[2];
-  float _error_diff[2];
-  float _error_int[2] = {0.0f, 0.0f};
-  const float _error_int_max[2] = {1000.0f, 1500.0f};
-  const float _output_max = 2500.0f;
-  float _error_past[GIMBAL_POS_BUFFER_LEN][2];
-  uint8_t i;
-  for (i = 0; i < GIMBAL_POS_BUFFER_LEN; i++)
-  {
-    _error_past[i][0] = 0.0f;
-    _error_past[i][1] = 0.0f;
-  }
-  uint8_t _error_index = 0, _prev_index = 1;
+    float _error[2];
+    float _error_diff[2];
+    float _error_int[2] = {0.0f, 0.0f};
+    const float _error_int_max[2] = {1000.0f, 1500.0f};
+    const float _output_max = 2500.0f;
+    float _error_past[GIMBAL_POS_BUFFER_LEN][2];
+    uint8_t i;
+    for (i = 0; i < GIMBAL_POS_BUFFER_LEN; i++) {
+        _error_past[i][0] = 0.0f;
+        _error_past[i][1] = 0.0f;
+    }
+    uint8_t _error_index = 0, _prev_index = 1;
 
 //  pid_controller_t _yaw_pos;
-  pid_controller_t _pitch_pos;
+    pid_controller_t _pitch_pos;
 
-  const char yaw_pos_name[] =   "Gimbal Yaw Pos";
-  const char pitch_pos_name[] = "Gimbal Pitch Pos";
+    const char yaw_pos_name[] = "Gimbal Yaw Pos";
+    const char pitch_pos_name[] = "Gimbal Pitch Pos";
 
-  params_set(&_yaw_pos,   3, 3, yaw_pos_name,   subname_PID,   PARAM_PUBLIC);
-  params_set(&_pitch_pos, 4, 3, pitch_pos_name, subname_PID,   PARAM_PUBLIC);
+    params_set(&_yaw_pos, 3, 3, yaw_pos_name, subname_PID, PARAM_PUBLIC);
+    params_set(&_pitch_pos, 4, 3, pitch_pos_name, subname_PID, PARAM_PUBLIC);
 
-  uint16_t _init_score[2] = {0, 0};
-  uint16_t _init_time = 0;
-  uint16_t _wait_time = 0;
+    uint16_t _init_score[2] = {0, 0};
+    uint16_t _init_time = 0;
+    uint16_t _wait_time = 0;
 
-  while(true)
-  {
-    gimbal_encoderUpdate();
+    while (true) {
+        gimbal_encoderUpdate();
 
-    _error[GIMBAL_YAW] = gimbal.axis_init_pos[GIMBAL_YAW] - gimbal.yaw_angle;
-    _error[GIMBAL_PITCH] = gimbal.axis_init_pos[GIMBAL_PITCH] - gimbal.pitch_angle;
+        _error[GIMBAL_YAW] = gimbal.axis_init_pos[GIMBAL_YAW] - gimbal.yaw_angle;
+        _error[GIMBAL_PITCH] = gimbal.axis_init_pos[GIMBAL_PITCH] - gimbal.pitch_angle;
 
-    _error_int[GIMBAL_YAW] += _error[GIMBAL_YAW] * _yaw_pos.ki;
-    _error_int[GIMBAL_PITCH] += _error[GIMBAL_PITCH] * _pitch_pos.ki;
+        _error_int[GIMBAL_YAW] += _error[GIMBAL_YAW] * _yaw_pos.ki;
+        _error_int[GIMBAL_PITCH] += _error[GIMBAL_PITCH] * _pitch_pos.ki;
 
-    _prev_index = (_error_index + 1) % GIMBAL_POS_BUFFER_LEN;
+        _prev_index = (_error_index + 1) % GIMBAL_POS_BUFFER_LEN;
 
-    _error_past[_error_index][GIMBAL_PITCH] = _error[GIMBAL_PITCH];
-    _error_past[_error_index][GIMBAL_YAW] = _error[GIMBAL_YAW];
-    if(_init_time > GIMBAL_POS_BUFFER_LEN)
-    {
-      _error_diff[GIMBAL_PITCH] = _error[GIMBAL_PITCH] - _error_past[_prev_index][GIMBAL_PITCH];
-      _error_diff[GIMBAL_YAW]   = _error[GIMBAL_YAW]   - _error_past[_prev_index][GIMBAL_YAW];
+        _error_past[_error_index][GIMBAL_PITCH] = _error[GIMBAL_PITCH];
+        _error_past[_error_index][GIMBAL_YAW] = _error[GIMBAL_YAW];
+        if (_init_time > GIMBAL_POS_BUFFER_LEN) {
+            _error_diff[GIMBAL_PITCH] = _error[GIMBAL_PITCH] - _error_past[_prev_index][GIMBAL_PITCH];
+            _error_diff[GIMBAL_YAW] = _error[GIMBAL_YAW] - _error_past[_prev_index][GIMBAL_YAW];
+        } else {
+            _error_diff[GIMBAL_PITCH] = 0.0f;
+            _error_diff[GIMBAL_YAW] = 0.0f;
+        }
+        _error_index = _prev_index;
+
+        uint8_t i;
+        for (i = 0; i < 2; i++) {
+            if (_error_int[i] > _error_int_max[i])
+                _error_int[i] = _error_int_max[i];
+            else if (_error_int[i] < -_error_int_max[i])
+                _error_int[i] = -_error_int_max[i];
+        }
+
+        gimbal.yaw_iq_output =
+                _error[GIMBAL_YAW] * _yaw_pos.kp + _error_int[GIMBAL_YAW] + _error_diff[GIMBAL_YAW] * _yaw_pos.kd;
+        gimbal.pitch_iq_output =
+                _error[GIMBAL_PITCH] * _pitch_pos.kp + _error_int[GIMBAL_PITCH] +
+                _error_diff[GIMBAL_PITCH] * _pitch_pos.kd;
+
+        if (gimbal.yaw_iq_output > _output_max)
+            gimbal.yaw_iq_output = _output_max;
+        else if (gimbal.yaw_iq_output < -_output_max)
+            gimbal.yaw_iq_output = -_output_max;
+
+        if (gimbal.pitch_iq_output > _output_max)
+            gimbal.pitch_iq_output = _output_max;
+        else if (gimbal.pitch_iq_output < -_output_max)
+            gimbal.pitch_iq_output = -_output_max;
+
+        gimbal_canUpdate();
+
+        //evaluation of init status
+        for (i = 0; i < 2; i++) {
+            if (_error[i] < GIMBAL_INIT_MAX_ERROR && _error[i] > -GIMBAL_INIT_MAX_ERROR)
+                _init_score[i]++;
+            else if (_init_score[i] > 100U)
+                _init_score[i] -= 100;
+            else
+                _init_score[i] = 0;
+        }
+        if (_init_score[0] > GIMBAL_INIT_SCORE_FULL && _init_score[1] > GIMBAL_INIT_SCORE_FULL) {
+            if (gimbal._pIMU->inited == 1) {
+                attitude_imu_init((PIMUStruct)gimbal._pIMU);
+                gimbal._pIMU->inited = 2;
+            }
+            _wait_time++;
+            if (_wait_time > 500) {
+                /*exit this thread and start attitude control*/
+                chSysLock();
+                chThdResumeS(&gimbal_thread_handler, MSG_OK);
+                chThdExitS(MSG_OK);
+            }
+        } else if (_init_time++ > GIMBAL_INIT_TIMEOUT) {
+            gimbal.errorFlag |= GIMBAL_INITALIZATION_TIMEOUT;
+            gimbal.yaw_iq_output = 0.0f;
+            gimbal.pitch_iq_output = 0.0f;
+            gimbal_canUpdate();
+            chThdExit(MSG_OK);
+        }
+
+        chThdSleepMilliseconds(1);
     }
-    else
-    {
-      _error_diff[GIMBAL_PITCH] = 0.0f;
-      _error_diff[GIMBAL_YAW]   = 0.0f;
-    }
-    _error_index = _prev_index;
+}
 
-    uint8_t i;
-    for (i = 0; i < 2; i++)
-    {
-      if(_error_int[i] > _error_int_max[i])
-        _error_int[i] = _error_int_max[i];
-      else if(_error_int[i] < -_error_int_max[i])
-        _error_int[i] = -_error_int_max[i];
-    }
+/**
+ *  @author Beck Pang
+ *  @brief  build a cascaded gimbal controller, in Euler angle first
+ *          and then switch to Quaternion
+ */
+static THD_WORKING_AREA(gimbal_quaternion_thread_wa, 4096);
 
-    gimbal.yaw_iq_output =
-      _error[GIMBAL_YAW]*_yaw_pos.kp  + _error_int[GIMBAL_YAW] + _error_diff[GIMBAL_YAW]*_yaw_pos.kd;
-    gimbal.pitch_iq_output =
-      _error[GIMBAL_PITCH]*_pitch_pos.kp + _error_int[GIMBAL_PITCH] + _error_diff[GIMBAL_PITCH]*_pitch_pos.kd;
+static THD_FUNCTION(gimbal_quaternion_thread, p)
+{
+    (void) p;
+    chRegSetThreadName("Gimbal quaternion controller");
 
-    if(gimbal.yaw_iq_output > _output_max)
-      gimbal.yaw_iq_output = _output_max;
-    else if(gimbal.yaw_iq_output < -_output_max)
-      gimbal.yaw_iq_output = -_output_max;
+    arm_pid_instance_f32 yaw_position   = {0, 0, 0, {0}, 5, 0, 0};
+    arm_pid_instance_f32 yaw_velocity   = {0, 0, 0, {0}, 1000, 0, 0};
+    arm_pid_instance_f32 pitch_position = {0, 0, 0, {0}, 5, 0, 0};
+    arm_pid_instance_f32 pitch_velocity = {0, 0, 0, {0}, 1000, 0, 0};
 
-    if(gimbal.pitch_iq_output > _output_max)
-      gimbal.pitch_iq_output = _output_max;
-    else if(gimbal.pitch_iq_output < -_output_max)
-      gimbal.pitch_iq_output = -_output_max;
+    arm_pid_init_f32(&yaw_position, 0);
+    arm_pid_init_f32(&yaw_velocity, 0);
+    arm_pid_init_f32(&pitch_position, 0);
+    arm_pid_init_f32(&pitch_velocity, 0);
 
-    gimbal_canUpdate();
+    while(true) {
+        gimbal_encoderUpdate();
+        gimbal_getSpeed();
+        /**
+         * Version 1, cascaded pid with Euler angle
+         */
+        const float target_angle_yaw = 0.133f;
+        float yaw_velocity_target = arm_pid_f32(&yaw_position, target_angle_yaw - gimbal.yaw_angle);
+        gimbal.yaw_iq_output = arm_pid_f32(&yaw_velocity, yaw_velocity_target - gimbal.yaw_speed);
 
-    //evaluation of init status
-    for (i = 0; i < 2; i++)
-    {
-      if(_error[i] < GIMBAL_INIT_MAX_ERROR && _error[i] > -GIMBAL_INIT_MAX_ERROR)
-        _init_score[i]++;
-      else if(_init_score[i] > 100U)
-        _init_score[i] -= 100;
-      else
-        _init_score[i] = 0;
-    }
-    if(_init_score[0] > GIMBAL_INIT_SCORE_FULL && _init_score[1] > GIMBAL_INIT_SCORE_FULL)
-    {
-      if(gimbal._pIMU->inited == 1)
-      {
-        attitude_imu_init(gimbal._pIMU);
-        gimbal._pIMU->inited = 2;
-      }
-      _wait_time++;
-      if(_wait_time>500)
-      {
-        /*exit this thread and start attitude control*/
-        chSysLock();
-        chThdResumeS(&gimbal_thread_handler, MSG_OK);
-        chThdExitS(MSG_OK);
-      }
-    }
-    else if(_init_time++ > GIMBAL_INIT_TIMEOUT)
-    {
-      gimbal.errorFlag |= GIMBAL_INITALIZATION_TIMEOUT;
-      gimbal.yaw_iq_output = 0.0f;
-      gimbal.pitch_iq_output = 0.0f;
-      gimbal_canUpdate();
-      chThdExit(MSG_OK);
+        const float target_angle_pitch = 4.0f;
+        float pitch_velocity_target = arm_pid_f32(&pitch_position, target_angle_pitch - gimbal.pitch_angle);
+        gimbal.pitch_iq_output = arm_pid_f32(&pitch_velocity, pitch_velocity_target - gimbal.pitch_speed);
+        /**
+         * Version 2, cascaded pid with Quaternion
+         */
+//        float target_quaternion[4] = {1, 0, 0, 0};
+
+        can_motorSetCurrent(GIMBAL_CAN, GIMBAL_CAN_EID, gimbal.yaw_iq_output, gimbal.pitch_iq_output, 0, 0);
+        chThdSleepMilliseconds(1);
+
     }
 
-    chThdSleepMilliseconds(1);
-  }
+}
+
+static THD_WORKING_AREA(gimbal_current_update_wa, 2048);
+
+static THD_FUNCTION(gimbal_current_update, p)
+{
+    (void) p;
+    chRegSetThreadName("Gimbal current update");
+    const float _output_max = 2500.0f;
+
+    while(true) {
+        /**
+         * Update CAN bus
+         */
+        if (gimbal.yaw_iq_output > _output_max)
+            gimbal.yaw_iq_output = _output_max;
+        else if (gimbal.yaw_iq_output < -_output_max)
+            gimbal.yaw_iq_output = -_output_max;
+
+        if (gimbal.pitch_iq_output > _output_max)
+            gimbal.pitch_iq_output = _output_max;
+        else if (gimbal.pitch_iq_output < -_output_max)
+            gimbal.pitch_iq_output = -_output_max;
+
+//        can_motorSetCurrent(GIMBAL_CAN, GIMBAL_CAN_EID, 0, 0, 0, 0);
+        chThdSleepMilliseconds(1);
+    }
 }
 
 /* name of gimbal parameters*/
-static const char axis_ff_name[] =   "Gimbal Axis FF";
-static const char init_pos_name[] =  "Gimbal Init Pos";
+static const char axis_ff_name[] = "Gimbal Axis FF";
+static const char init_pos_name[] = "Gimbal Init Pos";
 
 static const char subname_axis[] = "Yaw_w Pitch_w Yaw_a Pitch_a";
 
@@ -395,32 +460,44 @@ static const char subname_axis[] = "Yaw_w Pitch_w Yaw_a Pitch_a";
  */
 void gimbal_init(void)
 {
-  memset(&gimbal, 0 ,sizeof(GimbalStruct));
-  gimbal._encoder_can = can_getGimbalMotor();
-  gimbal._pIMU = imu_get();
-  chThdSleepMilliseconds(3);
+    memset(&gimbal, 0, sizeof(GimbalStruct));
+    gimbal._encoder_can = can_getGimbalMotor();
+    gimbal._pIMU = imu_get();
+    chThdSleepMilliseconds(3);
 
-  gimbal.pitch_speed = 0.0f;
-  gimbal.yaw_speed = 0.0f;
+    gimbal.pitch_speed = 0.0f;
+    gimbal.yaw_speed = 0.0f;
 
-  gimbal.yaw_iq_cmd = 0.0f;
-  gimbal.pitch_iq_cmd = 0.0f;
-  gimbal.yaw_iq_output = 0.0f;
-  gimbal.pitch_iq_output = 0.0f;
+    gimbal.yaw_iq_cmd = 0.0f;
+    gimbal.pitch_iq_cmd = 0.0f;
+    gimbal.yaw_iq_output = 0.0f;
+    gimbal.pitch_iq_output = 0.0f;
 
-  lpfilter_init(&lp_yawAngle, GIMBAL_CONTROL_FREQ, GIMBAL_CUTOFF_FREQ);
-  lpfilter_init(&lp_pitchAngle, GIMBAL_CONTROL_FREQ, GIMBAL_CUTOFF_FREQ);
+    lpfilter_init(&lp_yawAngle, GIMBAL_CONTROL_FREQ, GIMBAL_CUTOFF_FREQ);
+    lpfilter_init(&lp_pitchAngle, GIMBAL_CONTROL_FREQ, GIMBAL_CUTOFF_FREQ);
 
-  gimbal_encoderUpdate();
+    // Initialize a 4th order butter worth filter
+    lpfilter_init_direct(&lp_gyro_z1, 1.0f, 2.0f, 1.0f, -1.365117237239315f, 0.477592250072526f);
+    lpfilter_init_direct(&lp_gyro_z2, 1.0f, 2.0f, 1.0f, -1.611727096457419f, 0.744520838205421f);
+    lp_butterworth_gyro_z.order = 4;
+    lp_butterworth_gyro_z.filter1 = &lp_gyro_z1;
+    lp_butterworth_gyro_z.filter2 = &lp_gyro_z2;
+    lp_butterworth_gyro_z.gain    = 9.334986129548306e-04f;
 
-  params_set(gimbal.axis_init_pos,  5, 2, init_pos_name,  subname_axis,    PARAM_PRIVATE);
-  params_set(gimbal.axis_ff_weight, 2, 4, axis_ff_name,   subname_axis,    PARAM_PRIVATE);
-  params_set(gimbal.axis_ff_accel, 6, 6, NULL,   NULL,    PARAM_PRIVATE);
+    gimbal_encoderUpdate();
 
-  chThdCreateStatic(gimbal_init_thread_wa, sizeof(gimbal_init_thread_wa),
-                    NORMALPRIO - 5, gimbal_init_thread, NULL);
-  chThdCreateStatic(gimbal_thread_wa, sizeof(gimbal_thread_wa),
-                    NORMALPRIO - 5, gimbal_thread, NULL);
+    params_set(gimbal.axis_init_pos, 5, 2, init_pos_name, subname_axis, PARAM_PRIVATE);
+    params_set(gimbal.axis_ff_weight, 2, 4, axis_ff_name, subname_axis, PARAM_PRIVATE);
+    params_set(gimbal.axis_ff_accel, 6, 6, NULL, NULL, PARAM_PRIVATE);
 
-  gimbal.inited = true;
+//    chThdCreateStatic(gimbal_init_thread_wa, sizeof(gimbal_init_thread_wa),
+//                      NORMALPRIO - 5, gimbal_init_thread, NULL);
+//    chThdCreateStatic(gimbal_thread_wa, sizeof(gimbal_thread_wa),
+//                      NORMALPRIO - 5, gimbal_thread, NULL);
+    chThdCreateStatic(gimbal_quaternion_thread_wa, sizeof(gimbal_quaternion_thread_wa),
+                      NORMALPRIO + 2, gimbal_quaternion_thread, NULL);
+//    chThdCreateStatic(gimbal_current_update_wa, sizeof(gimbal_current_update_wa),
+//                      NORMALPRIO + 1, gimbal_current_update, NULL);
+
+    gimbal.inited = true;
 }

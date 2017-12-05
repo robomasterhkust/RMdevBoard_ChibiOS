@@ -6,7 +6,7 @@
 #include "params.h"
 
 #define GIMBAL_CONTROL_FREQ 1000U
-#define GIMBAL_CUTOFF_FREQ    30U
+#define GIMBAL_CUTOFF_FREQ   500U
 //#define GIMBAL_ENCODER_USE_SPEED
 
 #define GIMBAL_CAN  &CAND1
