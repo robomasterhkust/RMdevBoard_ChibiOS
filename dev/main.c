@@ -17,7 +17,7 @@
 
 static BaseSequentialStream* chp = (BaseSequentialStream*)&SDU1;
 static const IMUConfigStruct imu1_conf =
-  {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_1000, MPU6500_AXIS_REV_Z};
+  {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_250, MPU6500_AXIS_REV_Z};
 
 PIMUStruct pIMU;
 
