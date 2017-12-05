@@ -163,6 +163,17 @@ static inline void gimbal_getSpeed(void)
   gimbal.pitch_speed = gimbal._pIMU->gyroData[Pitch];
 }
 
+static inline float gimbal_controlSpeed (pi_controller_t *const vel,
+                                        const float target_vel,
+                                        const float curr_vel)
+{
+  float error = target_vel - curr_vel;
+  bound(&(vel->error_int), vel->error_int_max);
+
+  float output = vel->kp * error + vel->error_int;
+  return output;
+}
+
 /*NOTE Temporary for yaw controller*/
 #define GIMBAL_POS_BUFFER_LEN 40U
 pid_controller_t _yaw_pos;
@@ -183,12 +194,11 @@ static THD_FUNCTION(gimbal_thread, p)
   /*NOTE Temporary for yaw controller*/
   float _error;
   float _error_diff;
-  float _error_int = 0.0f;
   const float _error_int_max = 1000.0f;
   float _error_past[GIMBAL_POS_BUFFER_LEN][2];
   uint8_t i;
   for (i = 0; i < GIMBAL_POS_BUFFER_LEN; i++)
-  {
+  {//  params_set(&_yaw_vel,     0, 2, _yaw_vel_name,   subname_PI,      PARAM_PUBLIC);
     _error_past[i][0] = 0.0f;
     _error_past[i][1] = 0.0f;
   }
@@ -198,8 +208,18 @@ static THD_FUNCTION(gimbal_thread, p)
   pi_controller_t _yaw_vel;
   pi_controller_t _pitch_vel;
 
+  _yaw_vel.error_int = 0.0f;
+  _pitch_vel.error_int = 0.0f;
+
+  _yaw_vel.error_int_max = 2000.0f,
+  _pitch_vel.error_int_max = 2500.0f;
+
+  gimbal.yaw_speed_cmd = 0.0f;
+  gimbal.pitch_speed_cmd = 0.0f;
+
   static const char _yaw_vel_name[] =   "Gimbal Yaw Vel";
   static const char _pitch_vel_name[] = "Gimbal Pitch Vel";
+
 //  params_set(&_yaw_vel,     0, 2, _yaw_vel_name,   subname_PI,      PARAM_PUBLIC);
   params_set(&_pitch_vel,   1, 2, _pitch_vel_name, subname_PI,      PARAM_PUBLIC);
 
@@ -220,35 +240,22 @@ static THD_FUNCTION(gimbal_thread, p)
 
     /*NOTE Temporary for yaw controller*/
     _error = gimbal.axis_init_pos[GIMBAL_YAW] - gimbal.yaw_angle;
-    _error_int += _error * _yaw_pos.ki;
+    _yaw_pos.error_int += _error * _yaw_pos.ki;
     _prev_index = (_error_index + 1) % 40;
     _error_past[_error_index][GIMBAL_YAW] = _error;
     _error_diff = _error - _error_past[_prev_index][GIMBAL_YAW];
     _error_index = _prev_index;
-    if(_error_int > _error_int_max)
-      _error_int = _error_int_max;
-    else if(_error_int < -_error_int_max)
-      _error_int = -_error_int_max;
-    gimbal.yaw_iq_cmd = _error*_yaw_pos.kp  + _error_int + _error_diff *_yaw_pos.kd;
+    bound(&_yaw_pos.error_int, _yaw_pos.error_int_max);
+    gimbal.yaw_iq_cmd = _error*_yaw_pos.kp  + _yaw_pos.error_int + _error_diff *_yaw_pos.kd;
     /**/
 
-    gimbal.pitch_iq_cmd = 0.0f;
+    gimbal.pitch_iq_cmd = gimbal_controlSpeed(&_pitch_vel,
+      gimbal.pitch_speed_cmd, gimbal.pitch_speed);
     gimbal_addFF();
 
     /*output limit*/
-    if(gimbal.yaw_iq_cmd < GIMBAL_IQ_MAX && gimbal.yaw_iq_cmd > -GIMBAL_IQ_MAX)
-      gimbal.yaw_iq_output = gimbal.yaw_iq_cmd;
-    else if(gimbal.yaw_iq_cmd > GIMBAL_IQ_MAX)
-      gimbal.yaw_iq_output = GIMBAL_IQ_MAX;
-    else
-      gimbal.yaw_iq_output = -GIMBAL_IQ_MAX;
-
-    if(gimbal.pitch_iq_cmd < GIMBAL_IQ_MAX && gimbal.pitch_iq_cmd > -GIMBAL_IQ_MAX)
-      gimbal.pitch_iq_output = gimbal.pitch_iq_cmd;
-    else if(gimbal.pitch_iq_cmd > GIMBAL_IQ_MAX)
-      gimbal.pitch_iq_output = GIMBAL_IQ_MAX;
-    else
-      gimbal.pitch_iq_output = -GIMBAL_IQ_MAX;
+    gimbal.yaw_iq_output = boundOutput(gimbal.yaw_iq_cmd, GIMBAL_IQ_MAX);
+    gimbal.pitch_iq_output = boundOutput(gimbal.pitch_iq_cmd, GIMBAL_IQ_MAX);
 
     gimbal_canUpdate();
   }
@@ -265,9 +272,7 @@ static THD_FUNCTION(gimbal_init_thread, p)
 
   float _error[2];
   float _error_diff[2];
-  float _error_int[2] = {0.0f, 0.0f};
   const float _error_int_max[2] = {1000.0f, 1500.0f};
-  const float _output_max = 2500.0f;
   float _error_past[GIMBAL_POS_BUFFER_LEN][2];
   uint8_t i;
   for (i = 0; i < GIMBAL_POS_BUFFER_LEN; i++)
@@ -280,11 +285,17 @@ static THD_FUNCTION(gimbal_init_thread, p)
 //  pid_controller_t _yaw_pos;
   pid_controller_t _pitch_pos;
 
+  _pitch_pos.error_int = 0.0f;
+  _yaw_pos.error_int = 0.0f;
+
+  _pitch_pos.error_int_max = 1500.0f;
+  _yaw_pos.error_int_max = 1000.0f;
+
   const char yaw_pos_name[] =   "Gimbal Yaw Pos";
   const char pitch_pos_name[] = "Gimbal Pitch Pos";
 
-  params_set(&_yaw_pos,   3, 3, yaw_pos_name,   subname_PID,   PARAM_PUBLIC);
-  params_set(&_pitch_pos, 4, 3, pitch_pos_name, subname_PID,   PARAM_PUBLIC);
+  params_set(&_yaw_pos,   3, 3, yaw_pos_name,   subname_PID,   PARAM_PRIVATE);
+  params_set(&_pitch_pos, 4, 3, pitch_pos_name, subname_PID,   PARAM_PRIVATE);
 
   uint16_t _init_score[2] = {0, 0};
   uint16_t _init_time = 0;
@@ -297,8 +308,8 @@ static THD_FUNCTION(gimbal_init_thread, p)
     _error[GIMBAL_YAW] = gimbal.axis_init_pos[GIMBAL_YAW] - gimbal.yaw_angle;
     _error[GIMBAL_PITCH] = gimbal.axis_init_pos[GIMBAL_PITCH] - gimbal.pitch_angle;
 
-    _error_int[GIMBAL_YAW] += _error[GIMBAL_YAW] * _yaw_pos.ki;
-    _error_int[GIMBAL_PITCH] += _error[GIMBAL_PITCH] * _pitch_pos.ki;
+    _yaw_pos.error_int += _error[GIMBAL_YAW] * _yaw_pos.ki;
+    _pitch_pos.error_int += _error[GIMBAL_PITCH] * _pitch_pos.ki;
 
     _prev_index = (_error_index + 1) % GIMBAL_POS_BUFFER_LEN;
 
@@ -316,29 +327,16 @@ static THD_FUNCTION(gimbal_init_thread, p)
     }
     _error_index = _prev_index;
 
-    uint8_t i;
-    for (i = 0; i < 2; i++)
-    {
-      if(_error_int[i] > _error_int_max[i])
-        _error_int[i] = _error_int_max[i];
-      else if(_error_int[i] < -_error_int_max[i])
-        _error_int[i] = -_error_int_max[i];
-    }
+    bound(&_pitch_pos.error_int, _pitch_pos.error_int_max);
+    bound(&_yaw_pos.error_int, _yaw_pos.error_int_max);
 
     gimbal.yaw_iq_output =
-      _error[GIMBAL_YAW]*_yaw_pos.kp  + _error_int[GIMBAL_YAW] + _error_diff[GIMBAL_YAW]*_yaw_pos.kd;
+      _error[GIMBAL_YAW]*_yaw_pos.kp  + _yaw_pos.error_int + _error_diff[GIMBAL_YAW]*_yaw_pos.kd;
     gimbal.pitch_iq_output =
-      _error[GIMBAL_PITCH]*_pitch_pos.kp + _error_int[GIMBAL_PITCH] + _error_diff[GIMBAL_PITCH]*_pitch_pos.kd;
+      _error[GIMBAL_PITCH]*_pitch_pos.kp + _pitch_pos.error_int + _error_diff[GIMBAL_PITCH]*_pitch_pos.kd;
 
-    if(gimbal.yaw_iq_output > _output_max)
-      gimbal.yaw_iq_output = _output_max;
-    else if(gimbal.yaw_iq_output < -_output_max)
-      gimbal.yaw_iq_output = -_output_max;
-
-    if(gimbal.pitch_iq_output > _output_max)
-      gimbal.pitch_iq_output = _output_max;
-    else if(gimbal.pitch_iq_output < -_output_max)
-      gimbal.pitch_iq_output = -_output_max;
+    bound(&gimbal.yaw_iq_output, GIMBAL_IQ_MAX);
+    bound(&gimbal.pitch_iq_output, GIMBAL_IQ_MAX);
 
     gimbal_canUpdate();
 

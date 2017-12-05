@@ -61,7 +61,14 @@ uint8_t attitude_update(PIMUStruct pIMU)
     for (i = 0; i < 4; i++)
       pIMU->qIMU[i] = q[i];
 
-    quarternion2euler(pIMU->qIMU, pIMU->euler_angle);
+    #ifdef  IMU_USE_EULER_ANGLE
+      quarternion2euler(pIMU->qIMU, pIMU->euler_angle);
+      pIMU->d_euler_angle[Pitch] = cosf(pIMU->euler_angle[Roll])*pIMU->gyroData[Y] -
+        sinf(pIMU->euler_angle[Roll]) * pIMU->gyroData[Z];
+      pIMU->d_euler_angle[Yaw] = (sinf(pIMU->euler_angle[Roll])*pIMU->gyroData[Y] +
+        cosf(pIMU->euler_angle[Roll]) * pIMU->gyroData[Z]) / cosf(pIMU->euler_angle[Pitch]);
+    #endif
+
     return IMU_OK;
   }
   else
