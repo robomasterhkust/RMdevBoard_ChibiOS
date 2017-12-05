@@ -5,12 +5,12 @@
 #define IMU_USE_EULER_ANGLE
 
 #include "params.h"
-
+/* TODO something wrong*/
 typedef enum {
-  X = 1U,
-  Y = 0U,
+  X = 0U,
+  Y = 1U,
   Z = 2U
-} mpu_axis_mask_t;
+} axis_mask_t;
 
 typedef enum {
   Roll = 0U,
@@ -73,11 +73,12 @@ typedef struct tagIMUStruct {
   float gyroFiltered[3];  /* Filtered gyro data.    */
 
   float qIMU[4];          /* Attitude quaternion of the IMU. */
-  float dqIMU[4];         /* Attitude quaternion changing rate of the IMU. */
 
   #ifdef  IMU_USE_EULER_ANGLE
     float euler_angle[3];      /* Euler angle of the IMU. */
     float d_euler_angle[3];    /* Euler angle changing rate of the IMU. */
+  #else
+    float dqIMU[4];         /* Attitude quaternion changing rate of the IMU. */
   #endif
 
   param_t _accelBias[3];    /* Accelerometer bias.             */

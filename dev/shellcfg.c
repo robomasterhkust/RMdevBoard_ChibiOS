@@ -52,9 +52,6 @@ static THD_FUNCTION(matlab_thread, p)
   (void)p;
   chRegSetThreadName("matlab tramsmitter");
 
-//  if((*SERIAL_DATA).state != SD_READY)
-//    sdStart(SERIAL_DATA, NULL);
-
   int32_t txbuf_d[16];
   float txbuf_f[16];
   BaseSequentialStream* chp = (BaseSequentialStream*)SERIAL_DATA;
@@ -74,12 +71,14 @@ static THD_FUNCTION(matlab_thread, p)
       tick = chVTGetSystemTimeX();
     }
 
-    txbuf_f[0] = gimbal->pitch_angle;
-    txbuf_f[1] = PIMU->accelData[X];
-    txbuf_f[2] = PIMU->accelData[Y];
-    txbuf_f[3] = PIMU->accelData[Z];
+    txbuf_f[0] = PIMU->gyroData[X];
+    txbuf_f[1] = PIMU->gyroData[Y];
+    txbuf_f[2] = PIMU->gyroData[Z];
+    txbuf_f[3] = PIMU->euler_angle[Roll];
+    txbuf_f[4] = PIMU->euler_angle[Pitch];
+    txbuf_f[5] = PIMU->euler_angle[Yaw];
 
-    transmit_matlab(chp, NULL, txbuf_f, 0, 4);
+    transmit_matlab(chp, NULL, txbuf_f, 0, 6);
   }
 }
 

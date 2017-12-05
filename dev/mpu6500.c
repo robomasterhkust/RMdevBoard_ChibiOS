@@ -16,6 +16,13 @@
 /* C libraries: */
 #include <string.h>
 
+/* Mechanical mounting orientation parameters*/
+typedef enum {
+  IMU_X = 1U,
+  IMU_Y = 0U,
+  IMU_Z = 2U
+} mpu_axis_mask_t;
+
 #define MPU6500_RX_BUF_SIZE       0x0E
 #define MPU6500_TX_BUF_SIZE       0x05
 
@@ -254,19 +261,19 @@ uint8_t imuGetDataRaw(PIMUStruct pIMU, float AccelRaw[3], float GyroRaw[3])
   imuData[3] = (int16_t)((imuRXData[ 8]<<8) | imuRXData[ 9]); /* Gyro X  */
   imuData[4] = (int16_t)((imuRXData[10]<<8) | imuRXData[11]); /* Gyro Y  */
   imuData[5] = (int16_t)((imuRXData[12]<<8) | imuRXData[13]); /* Gyro Z  */
-  imuData[6] = (int16_t)((imuRXData[6 ]<<8) | imuRXData[7 ]); /* Temperature */
+  imuData[6] = (int16_t)((imuRXData[ 6]<<8) | imuRXData[ 7]); /* Temperature */
 
   /* X: */
-  AccelRaw[X] = (float)imuData[0] * pIMU->_accel_psc;
-  GyroRaw[X]  = (float)imuData[3] * pIMU->_gyro_psc;
+  AccelRaw[X] = (float)imuData[IMU_X] * pIMU->_accel_psc;
+  GyroRaw[X]  = (float)imuData[IMU_X + 3] * pIMU->_gyro_psc;
 
   /* Y: */
-  AccelRaw[Y] = (float)imuData[1] * pIMU->_accel_psc;
-  GyroRaw[Y]  = (float)imuData[4] * pIMU->_gyro_psc;
+  AccelRaw[Y] = (float)imuData[IMU_Y] * pIMU->_accel_psc;
+  GyroRaw[Y]  = (float)imuData[IMU_Y + 3] * pIMU->_gyro_psc;
 
   /* Z: */
-  AccelRaw[Z] = (float)imuData[2] * pIMU->_accel_psc;
-  GyroRaw[Z]  = (float)imuData[5] * pIMU->_gyro_psc;
+  AccelRaw[Z] = (float)imuData[IMU_Z] * pIMU->_accel_psc;
+  GyroRaw[Z]  = (float)imuData[IMU_Z + 3] * pIMU->_gyro_psc;
 
   return IMU_OK;
 }
