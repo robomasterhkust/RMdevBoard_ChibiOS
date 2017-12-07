@@ -73,15 +73,16 @@ typedef struct{
     float pitch_speed_enc;
   #endif
 
+  float yaw_atti_cmd;
+  float pitch_atti_cmd;
   float yaw_speed_cmd;
   float pitch_speed_cmd;
-  
   float yaw_speed;
   float pitch_speed;
 
   /*Mechanical parameters*/
-  param_t axis_init_pos[2];
-  param_t axis_ff_weight[4];
+  param_t axis_init_pos[3];
+  param_t axis_ff_weight[6];
   /*first three subparams: pitch axis accelerometer maximum in XYZ
   last three subparams: yaw axis accelerometer maximum in XYZ when pitch at maximum*/
   param_t axis_ff_accel[6];
