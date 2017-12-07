@@ -79,7 +79,8 @@ int main(void) {
   params_init();
   can_processInit();
   RC_init();
-  gimbal_init();
+//  gimbal_init();
+     gimbal_sys_iden_init();
 
   //tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
 

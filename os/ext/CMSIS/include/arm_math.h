@@ -287,7 +287,7 @@
  */
 #ifndef _ARM_MATH_H
 #define _ARM_MATH_H
-
+#define ARM_MATH_CM4
 #define __CMSIS_GENERIC         /* disable NVIC and Systick functions */
 
 #if defined(ARM_MATH_CM7)

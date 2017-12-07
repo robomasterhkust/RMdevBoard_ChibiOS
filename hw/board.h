@@ -55,6 +55,7 @@
  */
 #define STM32F427xx
 #define BOARD_OTG_NOVBUSSENS
+#include "stm32f4xx.h"
 
 /*
  * IO pins assignments.
