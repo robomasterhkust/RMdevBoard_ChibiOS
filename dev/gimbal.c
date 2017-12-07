@@ -144,23 +144,11 @@ static void gimbal_encoderUpdate(void)
   }
 }
 
-/*
- *  @brief      Utilize the gimbal dynamic model and add a feed-forward output
- *  @NOTE       Requires accelerometer raw data
- *
- *  @not-api
- */
-static inline void gimbal_addFF(void)
-{
-//  gimbal.yaw_iq_cmd = gimbal.axis_ff_weight[GIMBAL_YAW];
-  float ff_pitch = norm_vector3_projection(gimbal._pIMU->accelData, gimbal.axis_ff_accel);
-  gimbal.pitch_iq_cmd += gimbal.axis_ff_weight[GIMBAL_PITCH] * ff_pitch;
-}
-
-
 static inline void gimbal_getSpeed(void)
 {
-  gimbal.pitch_speed = gimbal._pIMU->gyroData[Pitch];
+  gimbal.pitch_speed = gimbal._pIMU->gyroData[Y];
+  gimbal.yaw_speed = gimbal._pIMU->gyroData[Z] * cosf(gimbal.axis_ff_weight[5]) -
+    gimbal._pIMU->gyroData[X] * sinf(gimbal.axis_ff_weight[5]);
 }
 
 static inline float gimbal_controlSpeed (pi_controller_t *const vel,
@@ -168,17 +156,26 @@ static inline float gimbal_controlSpeed (pi_controller_t *const vel,
                                         const float curr_vel)
 {
   float error = target_vel - curr_vel;
+  vel->error_int += error * vel->ki;
   bound(&(vel->error_int), vel->error_int_max);
 
   float output = vel->kp * error + vel->error_int;
   return output;
 }
 
-/*NOTE Temporary for yaw controller*/
-#define GIMBAL_POS_BUFFER_LEN 40U
-pid_controller_t _yaw_pos;
+static inline float gimbal_controlAttitude (pid_controller_t *const atti,
+                                            const float target_atti,
+                                            const float curr_atti,
+                                            const float curr_atti_d)
+{
+  float error = target_atti - curr_atti;
+  atti->error_int += error * atti->ki;
+  bound(&(atti->error_int), atti->error_int_max);
 
-/**/
+  //PI-D attitude controller
+  float output = atti->kp * error + atti->error_int - atti->kd * curr_atti_d;
+  return output;
+}
 
 #define GIMBAL_CONTROL_PERIOD_ST     US2ST(1000000U/GIMBAL_CONTROL_FREQ)
 static THD_WORKING_AREA(gimbal_thread_wa, 2048);
@@ -191,39 +188,41 @@ static THD_FUNCTION(gimbal_thread, p)
   chThdSuspendS(&gimbal_thread_handler);
   chSysUnlock();
 
-  /*NOTE Temporary for yaw controller*/
-  float _error;
-  float _error_diff;
-  const float _error_int_max = 1000.0f;
-  float _error_past[GIMBAL_POS_BUFFER_LEN][2];
-  uint8_t i;
-  for (i = 0; i < GIMBAL_POS_BUFFER_LEN; i++)
-  {//  params_set(&_yaw_vel,     0, 2, _yaw_vel_name,   subname_PI,      PARAM_PUBLIC);
-    _error_past[i][0] = 0.0f;
-    _error_past[i][1] = 0.0f;
-  }
-  uint8_t _error_index = 0, _prev_index = 1;
-  /**/
-
   pi_controller_t _yaw_vel;
   pi_controller_t _pitch_vel;
+  pid_controller_t _yaw_atti;
+  pid_controller_t _pitch_atti;
 
   _yaw_vel.error_int = 0.0f;
   _pitch_vel.error_int = 0.0f;
+  _yaw_atti.error_int = 0.0f;
+  _pitch_atti.error_int = 0.0f;
 
-  _yaw_vel.error_int_max = 2000.0f,
+  _yaw_vel.error_int_max = 2000.0f;
   _pitch_vel.error_int_max = 2500.0f;
+  _yaw_atti.error_int_max = 4.0f;
+  _pitch_atti.error_int_max = 4.0f;
 
   gimbal.yaw_speed_cmd = 0.0f;
   gimbal.pitch_speed_cmd = 0.0f;
+  gimbal.yaw_atti_cmd = 0.0f;
+  gimbal.pitch_atti_cmd = 0.436f;
 
-  static const char _yaw_vel_name[] =   "Gimbal Yaw Vel";
-  static const char _pitch_vel_name[] = "Gimbal Pitch Vel";
+  const char _yaw_vel_name[] =   "Gimbal Yaw Vel";
+  const char _pitch_vel_name[] = "Gimbal Pitch Vel";
+  const char _yaw_atti_name[] =   "Gimbal Yaw Atti";
+  const char _pitch_atti_name[] = "Gimbal Pitch Atti";
 
-//  params_set(&_yaw_vel,     0, 2, _yaw_vel_name,   subname_PI,      PARAM_PUBLIC);
+  params_set(&_yaw_vel,     0, 2, _yaw_vel_name,   subname_PI,      PARAM_PUBLIC);
   params_set(&_pitch_vel,   1, 2, _pitch_vel_name, subname_PI,      PARAM_PUBLIC);
 
+  params_set(&_yaw_atti,     7, 3, _yaw_atti_name,   subname_PID,      PARAM_PUBLIC);
+  params_set(&_pitch_atti,   8, 3, _pitch_atti_name, subname_PID,      PARAM_PUBLIC);
+
   uint32_t tick = chVTGetSystemTimeX();
+  float pitch_atti_out,yaw_atti_out;
+  float sinroll, cosroll, cospitch;
+
   while(!chThdShouldTerminateX())
   {
     tick += GIMBAL_CONTROL_PERIOD_ST;
@@ -238,20 +237,64 @@ static THD_FUNCTION(gimbal_thread, p)
     gimbal_encoderUpdate();
     gimbal_getSpeed();
 
-    /*NOTE Temporary for yaw controller*/
-    _error = gimbal.axis_init_pos[GIMBAL_YAW] - gimbal.yaw_angle;
-    _yaw_pos.error_int += _error * _yaw_pos.ki;
-    _prev_index = (_error_index + 1) % 40;
-    _error_past[_error_index][GIMBAL_YAW] = _error;
-    _error_diff = _error - _error_past[_prev_index][GIMBAL_YAW];
-    _error_index = _prev_index;
-    bound(&_yaw_pos.error_int, _yaw_pos.error_int_max);
-    gimbal.yaw_iq_cmd = _error*_yaw_pos.kp  + _yaw_pos.error_int + _error_diff *_yaw_pos.kd;
-    /**/
+    yaw_atti_out = gimbal_controlAttitude(&_yaw_atti,
+                                      gimbal.yaw_atti_cmd,
+                                      gimbal._pIMU->euler_angle[Yaw],
+                                      gimbal._pIMU->d_euler_angle[Yaw]);
+    pitch_atti_out = gimbal_controlAttitude(&_pitch_atti,
+                                      gimbal.pitch_atti_cmd,
+                                      gimbal._pIMU->euler_angle[Pitch],
+                                      gimbal._pIMU->d_euler_angle[Pitch]);
+    /*
+     *  Jacobian output mixer
+     *  wy = cos(roll)*pitch' + cos(pitch)*sin(roll)*yaw'
+     *  wz = -sin(roll)*pitch' + cos(roll)*cos(pitch)*yaw'
+     *  wyaw = wz / cos(theta)
+     */
+    float yaw_theta1 = gimbal.pitch_angle - gimbal.axis_ff_weight[3];
+    float yaw_theta3 = yaw_theta1 + gimbal.axis_ff_weight[5];
+    float yaw_theta4 = gimbal._pIMU->euler_angle[Pitch] - yaw_theta1;
 
+    sinroll = sinf(gimbal._pIMU->euler_angle[Roll]);
+    cosroll = cosf(gimbal._pIMU->euler_angle[Roll]);
+    cospitch = cosf(gimbal._pIMU->euler_angle[Pitch]);
+
+    //TODO Yaw mixer is not aligned
+    gimbal.yaw_speed_cmd = -sinroll * pitch_atti_out + cospitch * cosroll * yaw_atti_out;
+    gimbal.pitch_speed_cmd = cosroll * pitch_atti_out + cospitch * sinroll * yaw_atti_out;
+
+    gimbal.yaw_iq_cmd = gimbal_controlSpeed(&_yaw_vel,
+      gimbal.yaw_speed_cmd, gimbal.yaw_speed);
     gimbal.pitch_iq_cmd = gimbal_controlSpeed(&_pitch_vel,
       gimbal.pitch_speed_cmd, gimbal.pitch_speed);
-    gimbal_addFF();
+
+    /*
+     *  @brief      Utilize the gimbal kinamatics model and add a feed-forward output
+     *  @NOTE       Requires accelerometer raw data
+     */
+    float ff_pitch = norm_vector3_projection(gimbal._pIMU->accelData, gimbal.axis_ff_accel);
+    gimbal.pitch_iq_cmd += gimbal.axis_ff_weight[GIMBAL_PITCH] * ff_pitch;
+
+    /*the reference acceleration vector is calculated in this way
+     * RefX = G * cos(tan-1(M2*cos(theta)/M1)) * cos(theta + pitch0)
+     * RefY = G * sin(tan-1(M2*cos(theta)/M1))
+     * RefZ = G * cos(tan-1(M2*cos(theta)/M1)) * sin(theta + pitch0)
+     * useful simplification : cos(tan-1(x)) = 1/sqrt(1+x^2)
+     *                         sin(tan-1(x)) = x/sqrt(1+x^2)
+     */
+    float yaw_theta2 = gimbal.axis_ff_weight[4]*cosf(yaw_theta1) / gimbal.axis_ff_weight[GIMBAL_YAW];
+    float temp = sqrtf(1 + yaw_theta2 * yaw_theta2);
+
+    float a_ref[3];
+    a_ref[X] = -(GRAV / temp) * cosf(yaw_theta3);
+    a_ref[Y] = -(GRAV * yaw_theta2) / temp;
+    a_ref[Z] = -(GRAV / temp) * sinf(yaw_theta3);
+    float ff_yaw = norm_vector3_projection(gimbal._pIMU->accelData, a_ref);
+    gimbal.yaw_iq_cmd +=
+      (gimbal.axis_ff_weight[GIMBAL_YAW] + gimbal.axis_ff_weight[4] * cosf(yaw_theta1)) * ff_yaw;
+
+    //Scale down gimbal yaw power according to pitch angle
+    gimbal.yaw_iq_cmd -= cosf(yaw_theta1) * gimbal.axis_init_pos[2] * gimbal.yaw_iq_cmd;
 
     /*output limit*/
     gimbal.yaw_iq_output = boundOutput(gimbal.yaw_iq_cmd, GIMBAL_IQ_MAX);
@@ -264,6 +307,7 @@ static THD_FUNCTION(gimbal_thread, p)
 #define GIMBAL_INIT_MAX_ERROR    8.7266e-4
 #define GIMBAL_INIT_SCORE_FULL       1000U
 #define GIMBAL_INIT_TIMEOUT         10000U
+#define GIMBAL_POS_BUFFER_LEN 40U
 static THD_WORKING_AREA(gimbal_init_thread_wa, 2048);
 static THD_FUNCTION(gimbal_init_thread, p)
 {
@@ -282,7 +326,7 @@ static THD_FUNCTION(gimbal_init_thread, p)
   }
   uint8_t _error_index = 0, _prev_index = 1;
 
-//  pid_controller_t _yaw_pos;
+  pid_controller_t _yaw_pos;
   pid_controller_t _pitch_pos;
 
   _pitch_pos.error_int = 0.0f;
@@ -294,8 +338,8 @@ static THD_FUNCTION(gimbal_init_thread, p)
   const char yaw_pos_name[] =   "Gimbal Yaw Pos";
   const char pitch_pos_name[] = "Gimbal Pitch Pos";
 
-  params_set(&_yaw_pos,   3, 3, yaw_pos_name,   subname_PID,   PARAM_PRIVATE);
-  params_set(&_pitch_pos, 4, 3, pitch_pos_name, subname_PID,   PARAM_PRIVATE);
+  params_set(&_yaw_pos,   3, 3, yaw_pos_name,   subname_PID,   PARAM_PUBLIC);
+  params_set(&_pitch_pos, 4, 3, pitch_pos_name, subname_PID,   PARAM_PUBLIC);
 
   uint16_t _init_score[2] = {0, 0};
   uint16_t _init_time = 0;
@@ -358,7 +402,7 @@ static THD_FUNCTION(gimbal_init_thread, p)
         gimbal._pIMU->inited = 2;
       }
       _wait_time++;
-      if(_wait_time>500)
+      if(_wait_time>200)
       {
         /*exit this thread and start attitude control*/
         chSysLock();
@@ -380,10 +424,12 @@ static THD_FUNCTION(gimbal_init_thread, p)
 }
 
 /* name of gimbal parameters*/
-static const char axis_ff_name[] =   "Gimbal Axis FF";
-static const char init_pos_name[] =  "Gimbal Init Pos";
-
-static const char subname_axis[] = "Yaw_w Pitch_w Yaw_a Pitch_a";
+static const char axis_ff_name[]  = "Gimbal Axis FF";
+static const char init_pos_name[] = "Gimbal Init Pos";
+static const char accl_name[]     = "Gimbal FF Accl";
+static const char subname_axis[]  = "Yaw Pitch Yaw_SD";
+static const char subname_ff[]    = "Yaw_w1 Pitch_w Yaw_a Pitch_a Yaw_w2 Yaw_th";
+static const char subname_accl[]  = "YawX YawY YawZ PitchX PitchY PitchZ";
 
 /*
  *  @brief      Initialize the gimbal motor driver
@@ -411,9 +457,9 @@ void gimbal_init(void)
 
   gimbal_encoderUpdate();
 
-  params_set(gimbal.axis_init_pos,  5, 2, init_pos_name,  subname_axis,    PARAM_PRIVATE);
-  params_set(gimbal.axis_ff_weight, 2, 4, axis_ff_name,   subname_axis,    PARAM_PRIVATE);
-  params_set(gimbal.axis_ff_accel, 6, 6, NULL,   NULL,    PARAM_PRIVATE);
+  params_set(gimbal.axis_init_pos,  5, 3, init_pos_name,  subname_axis,    PARAM_PUBLIC);
+  params_set(gimbal.axis_ff_weight, 2, 6, axis_ff_name,   subname_ff,      PARAM_PUBLIC);
+  params_set(gimbal.axis_ff_accel,  6, 6, accl_name,      subname_accl,    PARAM_PUBLIC);
 
   chThdCreateStatic(gimbal_init_thread_wa, sizeof(gimbal_init_thread_wa),
                     NORMALPRIO - 5, gimbal_init_thread, NULL);
