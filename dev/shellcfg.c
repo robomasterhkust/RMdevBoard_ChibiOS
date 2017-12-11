@@ -96,8 +96,9 @@ void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
   chprintf(chp,"AccelY: %f\r\n",PIMU->accelData[Y]);
   chprintf(chp,"AccelZ: %f\r\n",PIMU->accelData[Z]);
 
-//  chprintf(chp,"Gimbal Pitch: %f\r\n",gimbal->pitch_angle);
-//  chprintf(chp,"Gimbal Yaw: %f\r\n",gimbal->yaw_angle);
+  chprintf(chp,"Gimbal Pitch: %f\r\n",gimbal->pitch_angle);
+  chprintf(chp,"Gimbal Yaw: %f\r\n",gimbal->yaw_angle);
+  chprintf(chp,"IMU Pitch: %f\r\n",PIMU->euler_angle[Pitch]);
 }
 
 /**
