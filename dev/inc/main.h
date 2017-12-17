@@ -15,6 +15,7 @@
 #include "params.h"
 
 #include "mpu6500.h"
+#include "ist8310.h"
 #include "attitude.h"
 #include "calibrate_sensor.h"
 

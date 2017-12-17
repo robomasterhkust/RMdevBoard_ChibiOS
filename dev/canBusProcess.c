@@ -2,6 +2,7 @@
  * Edward ZHANG, 20171101
  * @file    canBusProcess.c
  * @brief   CAN driver configuration file
+ * @reference   RM2017_Archive
  */
 #include "ch.h"
 #include "hal.h"

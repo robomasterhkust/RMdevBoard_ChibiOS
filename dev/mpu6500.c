@@ -1,8 +1,7 @@
 /**
- * This is device realize "read through write" paradigm. This is not
- * standard, but most of I2C devices use this paradigm.
- * You must write to device reading address, send restart to bus,
- * and then begin reading process.
+ * Edward ZHANG, 201709??
+ * @file    mpu6500.c
+ * @brief   mpu6500 six-axis imu driver
  */
 
 #include "ch.h"
@@ -57,8 +56,6 @@ typedef enum {
 #define MPU6500_SENSOR_SLEEP      0x40
 #define MPU6500_AUTO_SELECT_CLK   0x01
 
-#define MPU6500_SPI_READ          0x80
-
 typedef enum{
   DLPF_250HZ  =  0,
   DLPF_184HZ  =  1,
@@ -86,7 +83,7 @@ static const SPIConfig MPU6500_SPI_cfg =
   GPIOF,
   GPIOF_SPI5_IMU_NSS,
   SPI_CR1_BR_2 | SPI_CR1_BR_1 | SPI_CR1_MSTR |
-  SPI_CR1_CPHA | SPI_CR1_CPOL
+  SPI_CR1_CPHA | SPI_CR1_CPOL //Set CPHA and CPOL to be 1
 };
 
 /* IMU data structure. */
@@ -108,8 +105,8 @@ static uint8_t imuTXData[MPU6500_TX_BUF_SIZE];
 
 /**
  * @brief  Initialization function of IMU data structure.
- * @param  pIMU - pointer to IMU data structure;
- * @param  fAddrLow - IMU address pin A0 is pulled low flag.
+ * @param  pIMU       pointer to IMU data structure;
+ * @param  imu_conf   IMU Initialization structure
  */
 static void imuStructureInit(PIMUStruct pIMU, IMUConfigStruct* imu_conf)
 {

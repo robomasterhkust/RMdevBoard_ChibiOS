@@ -129,7 +129,7 @@
 
 #define GPIOE_PIN0                  0U
 #define GPIOE_PIN1                  1U
-#define GPIOE_PIN2                  2U
+#define GPIOE_IST8310_RST                  2U
 #define GPIOE_PIN3                  3U
 #define GPIOE_SPI4_NSS              4U
 #define GPIOE_SPI4_MISO             5U
@@ -767,7 +767,7 @@
  */
 #define VAL_GPIOE_MODER             (PIN_MODE_INPUT(GPIOE_PIN0) |           \
                                      PIN_MODE_INPUT(GPIOE_PIN1) |           \
-                                     PIN_MODE_INPUT(GPIOE_PIN2) |           \
+                                     PIN_MODE_OUTPUT(GPIOE_IST8310_RST) |           \
                                      PIN_MODE_INPUT(GPIOE_PIN3) |        \
                                      PIN_MODE_OUTPUT(GPIOE_SPI4_NSS) |           \
                                      PIN_MODE_ALTERNATE(GPIOE_SPI4_MISO) |           \
@@ -783,7 +783,7 @@
                                      PIN_MODE_INPUT(GPIOE_PIN15))
 #define VAL_GPIOE_OTYPER            (PIN_OTYPE_PUSHPULL(GPIOE_PIN0) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOE_PIN1) |       \
-                                     PIN_OTYPE_PUSHPULL(GPIOE_PIN2) |       \
+                                     PIN_OTYPE_PUSHPULL(GPIOE_IST8310_RST) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOE_PIN3) |     \
                                      PIN_OTYPE_PUSHPULL(GPIOE_SPI4_NSS) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOE_SPI4_MISO) |       \
@@ -799,7 +799,7 @@
                                      PIN_OTYPE_PUSHPULL(GPIOE_PIN15))
 #define VAL_GPIOE_OSPEEDR           (PIN_OSPEED_HIGH(GPIOE_PIN0) |          \
                                      PIN_OSPEED_HIGH(GPIOE_PIN1) |          \
-                                     PIN_OSPEED_HIGH(GPIOE_PIN2) |          \
+                                     PIN_OSPEED_HIGH(GPIOE_IST8310_RST) |          \
                                      PIN_OSPEED_HIGH(GPIOE_PIN3) |        \
                                      PIN_OSPEED_HIGH(GPIOE_SPI4_NSS) |          \
                                      PIN_OSPEED_HIGH(GPIOE_SPI4_MISO) |          \
@@ -815,7 +815,7 @@
                                      PIN_OSPEED_HIGH(GPIOE_PIN15))
 #define VAL_GPIOE_PUPDR             (PIN_PUPDR_FLOATING(GPIOE_PIN0) |       \
                                      PIN_PUPDR_FLOATING(GPIOE_PIN1) |       \
-                                     PIN_PUPDR_FLOATING(GPIOE_PIN2) |       \
+                                     PIN_PUPDR_FLOATING(GPIOE_IST8310_RST) |       \
                                      PIN_PUPDR_FLOATING(GPIOE_PIN3) |     \
                                      PIN_PUPDR_PULLUP(GPIOE_SPI4_NSS) |       \
                                      PIN_PUPDR_PULLDOWN(GPIOE_SPI4_MISO) |       \
@@ -831,7 +831,7 @@
                                      PIN_PUPDR_FLOATING(GPIOE_PIN15))
 #define VAL_GPIOE_ODR               (PIN_ODR_HIGH(GPIOE_PIN0) |             \
                                      PIN_ODR_HIGH(GPIOE_PIN1) |             \
-                                     PIN_ODR_HIGH(GPIOE_PIN2) |             \
+                                     PIN_ODR_LOW(GPIOE_IST8310_RST) |             \
                                      PIN_ODR_HIGH(GPIOE_PIN3) |           \
                                      PIN_ODR_HIGH(GPIOE_SPI4_NSS) |             \
                                      PIN_ODR_HIGH(GPIOE_SPI4_MISO) |             \
@@ -847,7 +847,7 @@
                                      PIN_ODR_HIGH(GPIOE_PIN15))
 #define VAL_GPIOE_AFRL              (PIN_AFIO_AF(GPIOE_PIN0, 0U) |          \
                                      PIN_AFIO_AF(GPIOE_PIN1, 0U) |          \
-                                     PIN_AFIO_AF(GPIOE_PIN2, 0U) |          \
+                                     PIN_AFIO_AF(GPIOE_IST8310_RST, 0U) |          \
                                      PIN_AFIO_AF(GPIOE_PIN3, 0U) |        \
                                      PIN_AFIO_AF(GPIOE_SPI4_NSS, 5U) |          \
                                      PIN_AFIO_AF(GPIOE_SPI4_MISO, 5U) |          \
