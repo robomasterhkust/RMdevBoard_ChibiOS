@@ -14,6 +14,7 @@
     limitations under the License.
 */
 #include "main.h"
+#include "pwm.h"
 
 static BaseSequentialStream* chp = (BaseSequentialStream*)&SDU1;
 static const IMUConfigStruct imu1_conf =
@@ -56,6 +57,8 @@ static THD_FUNCTION(Attitude_thread, p)
   }
 }
 
+
+
 /*
  * Application entry point.
  */
@@ -81,6 +84,7 @@ int main(void) {
   RC_init();
 //  gimbal_init();
      gimbal_sys_iden_init();
+  pwm_shooter_init();
 
   //tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
 
