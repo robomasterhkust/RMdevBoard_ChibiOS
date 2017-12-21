@@ -98,6 +98,7 @@ int main(void) {
   while (true)
   {
     chThdSleepMilliseconds(500);
+    can_motorSetCurrent(&CAND1, 0x200, 32767,32767, 32767, 32767);
   }
 
   return 0;
