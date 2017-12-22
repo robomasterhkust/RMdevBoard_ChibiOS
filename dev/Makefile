@@ -104,6 +104,7 @@ include $(CHIBIOS)/os/rt/rt.mk
 include $(CHIBIOS)/os/rt/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
 # Other files (optional).
 #include $(CHIBIOS)/test/rt/test.mk
+include $(CHIBIOS)/dsp/dsp.mk
 
 # Define linker script file here
 LDSCRIPT= $(STARTUPLD)/STM32F429xI.ld
@@ -118,15 +119,17 @@ CSRC = $(STARTUPSRC) \
        $(PLATFORMSRC) \
        $(BOARDSRC) \
        $(TESTSRC) \
+       $(MATHSRC) \
 			 $(CHIBIOS)/os/various/shell.c \
        $(CHIBIOS)/os/various/evtimer.c \
        $(CHIBIOS)/os/various/syscalls.c \
 			 $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
        $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
        main.c shellcfg.c flash.c tft_display.c \
-			 mpu6500.c attitude.c ist8310.c math_misc.c \
-			 canBusProcess.c dbus.c gimbal.c params.c usbcfg.c \
-			 calibrate_sensor.c
+			 mpu6500.c attitude.c math_misc.c \
+			 canBusProcess.c dbus.c params.c usbcfg.c \
+			 calibrate_sensor.c gimbal_sys_iden.c shoot_pwm.c\
+			 pwm_struct.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -158,6 +161,7 @@ ASMSRC = $(STARTUPASM) $(PORTASM) $(OSALASM)
 #define SERIAL_DATA      &SDU1
 INCDIR = $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          $(HALINC) $(PLATFORMINC) $(BOARDINC) $(TESTINC) \
+         $(CHIBIOS)/dev \
          $(CHIBIOS)/os/various \
 				 $(CHIBIOS)/os/hal/lib/streams \
 				 inc -lm
