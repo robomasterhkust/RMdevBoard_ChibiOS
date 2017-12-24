@@ -80,6 +80,8 @@ int main(void) {
 
   palSetPad(GPIOE, GPIOE_LED_R);
   palSetPad(GPIOF, GPIOF_LED_G);
+  palSetPad(GPIOA, GPIOA_LED_Y);
+  palSetPad(GPIOA, GPIOA_LED_B);
 
   shellStart();
   params_init();
