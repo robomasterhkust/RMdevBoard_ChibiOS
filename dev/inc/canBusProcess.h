@@ -49,11 +49,5 @@ void can_motorSetCurrent(CANDriver *const CANx,
   const int16_t cm3_iq,
   const int16_t cm4_iq);
 
-void can_motorTrySetCurrent(CANDriver *const CANx,
-  const uint16_t EID,
-  const int16_t cm1_iq,
-  const int16_t cm2_iq,
-  const int16_t cm3_iq,
-  const int16_t cm4_iq);
 
 #endif
