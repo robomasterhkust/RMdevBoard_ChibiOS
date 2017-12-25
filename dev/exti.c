@@ -4,6 +4,8 @@
  *  Created on: 24 Dec 2017
  *      Author: Alex Wong
  *
+ *  Configures External Interrupt Functionality
+ *
  */
 
 #include "ch.h"
@@ -12,11 +14,13 @@
 #include "canBusProcess.h"
 #include "can.h"
 
+//comment out the line below to disable motor testing
 #define MOTOR_TEST
 
 /*
- * Turns on all chassis motor when MotorOn is TRUE
- * Thread normally suspended
+ * Turns on all chassis motor for 1 sec when MotorOn is TRUE
+ * Thread normally suspended, resumes when shield button is pushed
+ * For power module development only
  */
 
 thread_reference_t button_thread_ref = NULL;
@@ -74,6 +78,10 @@ static void extcb10(EXTDriver *extp, expchannel_t channel) {
   #endif
 
 }
+
+/*
+ * Refer to STM32F4 datasheet about EXTI channel configurations
+ */
 
 static const EXTConfig extcfg = {
   {
