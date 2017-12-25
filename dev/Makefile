@@ -126,7 +126,7 @@ CSRC = $(STARTUPSRC) \
        main.c shellcfg.c flash.c tft_display.c \
 			 mpu6500.c attitude.c ist8310.c math_misc.c \
 			 canBusProcess.c dbus.c gimbal.c params.c usbcfg.c \
-			 calibrate_sensor.c
+			 calibrate_sensor.c exti.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.

@@ -62,6 +62,8 @@ static THD_FUNCTION(Attitude_thread, p)
   }
 }
 
+
+
 /*
  * Application entry point.
  */
@@ -80,14 +82,18 @@ int main(void) {
 
   palSetPad(GPIOE, GPIOE_LED_R);
   palSetPad(GPIOF, GPIOF_LED_G);
-  palSetPad(GPIOA, GPIOA_LED_Y);
-  palSetPad(GPIOA, GPIOA_LED_B);
+  palClearPad(GPIOA, GPIOA_LED_Y);
+  palClearPad(GPIOA, GPIOA_LED_B);
+
 
   shellStart();
   params_init();
   can_processInit();
   RC_init();
   gimbal_init();
+
+  extiinit();
+
 
   //tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
 
@@ -99,8 +105,10 @@ int main(void) {
 
   while (true)
   {
+
     chThdSleepMilliseconds(500);
-    can_motorSetCurrent(&CAND1, 0x200, 32767,32767, 32767, 32767);
+    //can_motorSetCurrent(&CAND1, 0x200, 0, 0, 0, 0);
+
   }
 
   return 0;

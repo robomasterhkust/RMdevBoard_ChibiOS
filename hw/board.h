@@ -154,7 +154,7 @@
 #define GPIOF_SPI5_IMU_SCK          7U
 #define GPIOF_SPI5_IMU_MISO         8U
 #define GPIOF_SPI5_IMU_MOSI         9U
-#define GPIOF_PIN10                 10U
+#define GPIOF_SKEY                  10U
 #define GPIOF_PIN11                 11U
 #define GPIOF_PIN12                 12U
 #define GPIOF_PIN13                 13U
@@ -890,7 +890,7 @@
                                      PIN_MODE_ALTERNATE(GPIOF_SPI5_IMU_SCK) |           \
                                      PIN_MODE_ALTERNATE(GPIOF_SPI5_IMU_MISO) |           \
                                      PIN_MODE_ALTERNATE(GPIOF_SPI5_IMU_MOSI) |           \
-                                     PIN_MODE_INPUT(GPIOF_PIN10) |          \
+                                     PIN_MODE_INPUT(GPIOF_SKEY) |          \
                                      PIN_MODE_INPUT(GPIOF_PIN11) |          \
                                      PIN_MODE_INPUT(GPIOF_PIN12) |          \
                                      PIN_MODE_INPUT(GPIOF_PIN13) |          \
@@ -906,7 +906,7 @@
                                      PIN_OTYPE_PUSHPULL(GPIOF_SPI5_IMU_SCK) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOF_SPI5_IMU_MISO) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOF_SPI5_IMU_MOSI) |       \
-                                     PIN_OTYPE_PUSHPULL(GPIOF_PIN10) |      \
+                                     PIN_OTYPE_PUSHPULL(GPIOF_SKEY) |      \
                                      PIN_OTYPE_PUSHPULL(GPIOF_PIN11) |      \
                                      PIN_OTYPE_PUSHPULL(GPIOF_PIN12) |      \
                                      PIN_OTYPE_PUSHPULL(GPIOF_PIN13) |      \
@@ -922,7 +922,7 @@
                                      PIN_OSPEED_HIGH(GPIOF_SPI5_IMU_SCK) |          \
                                      PIN_OSPEED_HIGH(GPIOF_SPI5_IMU_MISO) |          \
                                      PIN_OSPEED_HIGH(GPIOF_SPI5_IMU_MOSI) |          \
-                                     PIN_OSPEED_HIGH(GPIOF_PIN10) |         \
+                                     PIN_OSPEED_HIGH(GPIOF_SKEY) |         \
                                      PIN_OSPEED_HIGH(GPIOF_PIN11) |         \
                                      PIN_OSPEED_HIGH(GPIOF_PIN12) |         \
                                      PIN_OSPEED_HIGH(GPIOF_PIN13) |         \
@@ -938,7 +938,7 @@
                                      PIN_PUPDR_PULLUP(GPIOF_SPI5_IMU_SCK) |       \
                                      PIN_PUPDR_PULLDOWN(GPIOF_SPI5_IMU_MISO) |       \
                                      PIN_PUPDR_PULLDOWN(GPIOF_SPI5_IMU_MOSI) |       \
-                                     PIN_PUPDR_FLOATING(GPIOF_PIN10) |      \
+                                     PIN_PUPDR_PULLUP(GPIOF_SKEY) |      \
                                      PIN_PUPDR_FLOATING(GPIOF_PIN11) |      \
                                      PIN_PUPDR_FLOATING(GPIOF_PIN12) |      \
                                      PIN_PUPDR_FLOATING(GPIOF_PIN13) |      \
@@ -954,7 +954,7 @@
                                      PIN_ODR_HIGH(GPIOF_SPI5_IMU_SCK) |             \
                                      PIN_ODR_HIGH(GPIOF_SPI5_IMU_MISO) |             \
                                      PIN_ODR_HIGH(GPIOF_SPI5_IMU_MOSI) |             \
-                                     PIN_ODR_HIGH(GPIOF_PIN10) |            \
+                                     PIN_ODR_HIGH(GPIOF_SKEY) |            \
                                      PIN_ODR_HIGH(GPIOF_PIN11) |            \
                                      PIN_ODR_HIGH(GPIOF_PIN12) |            \
                                      PIN_ODR_HIGH(GPIOF_PIN13) |            \
@@ -970,7 +970,7 @@
                                      PIN_AFIO_AF(GPIOF_SPI5_IMU_SCK, 5U))
 #define VAL_GPIOF_AFRH              (PIN_AFIO_AF(GPIOF_SPI5_IMU_MISO, 5U) |          \
                                      PIN_AFIO_AF(GPIOF_SPI5_IMU_MOSI, 5U) |          \
-                                     PIN_AFIO_AF(GPIOF_PIN10, 0U) |         \
+                                     PIN_AFIO_AF(GPIOF_SKEY, 0U) |         \
                                      PIN_AFIO_AF(GPIOF_PIN11, 0U) |         \
                                      PIN_AFIO_AF(GPIOF_PIN12, 0U) |         \
                                      PIN_AFIO_AF(GPIOF_PIN13, 0U) |         \
