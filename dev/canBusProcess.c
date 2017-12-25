@@ -149,46 +149,6 @@ void can_motorSetCurrent(CANDriver *const CANx,
     canTransmit(CANx, CAN_ANY_MAILBOX, &txmsg, MS2ST(100));
 }
 
-/*
- * @brief              Send motor current cmd using CAN driver I Function, for ISR
- *                     and critical zone use only
- * @param[in] cand     Pointer to CANDriver object we are currently using
- * @param[in] cmx_iq   Current (Torque) cmd of motor
- *
- * Alex Wong
- *
- */
-void can_motorTrySetCurrent(CANDriver *const CANx,
-  const uint16_t EID,
-  const int16_t cm1_iq,
-  const int16_t cm2_iq,
-  const int16_t cm3_iq,
-  const int16_t cm4_iq)
-{
-    CANTxFrame txmsg;
-
-    txmsg.IDE = CAN_IDE_STD;
-    txmsg.EID = EID;
-    txmsg.RTR = CAN_RTR_DATA;
-    txmsg.DLC = 0x08;
-
-    //chSysLock();
-    txmsg.data8[0] = (uint8_t)(cm1_iq >> 8);
-    txmsg.data8[1] = (uint8_t)cm1_iq;
-
-    txmsg.data8[2] = (uint8_t)(cm2_iq >> 8);
-    txmsg.data8[3] = (uint8_t)cm2_iq;
-
-    txmsg.data8[4] = (uint8_t)(cm3_iq >> 8);
-    txmsg.data8[5] = (uint8_t)cm3_iq;
-
-    txmsg.data8[6] = (uint8_t)(cm4_iq >> 8);
-    txmsg.data8[7] = (uint8_t)cm4_iq;
-    //chSysUnlock();
-
-    canTryTransmitI(CANx, CAN_ANY_MAILBOX, &txmsg);
-}
-
 
 void can_processInit(void)
 {

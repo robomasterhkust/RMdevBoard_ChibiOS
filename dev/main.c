@@ -107,7 +107,6 @@ int main(void) {
   {
 
     chThdSleepMilliseconds(500);
-    //can_motorSetCurrent(&CAND1, 0x200, 0, 0, 0, 0);
 
   }
 
