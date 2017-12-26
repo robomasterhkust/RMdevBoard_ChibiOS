@@ -94,9 +94,7 @@ int main(void) {
 //  gimbal_init();
      gimbal_sys_iden_init();
   pwm_shooter_init();
-
   extiinit();
-
 
   //tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
 

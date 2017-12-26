@@ -45,6 +45,33 @@
 #define LEDB_OFF()      (palSetPad(GPIOA, GPIOA_LED_B))
 #define LEDB_TOGGLE()   (palTogglePad(GPIOA, GPIOA_LED_B))
 
+#define LEDB_ON()       (palClearPad(GPIOA, GPIOA_TIM2_CH3))
+#define LEDB_OFF()      (palSetPad(GPIOA, GPIOA_TIM2_CH3))
+#define LEDB_TOGGLE()   (palTogglePad(GPIOA, GPIOA_TIM2_CH3))
+#define LEDO_ON()       (palClearPad(GPIOA, GPIOA_TIM2_CH2))
+#define LEDO_OFF()      (palSetPad(GPIOA, GPIOA_TIM2_CH2))
+#define LEDO_TOGGLE()   (palTogglePad(GPIOA, GPIOA_TIM2_CH2))
+
+//Sets of command for Pneumatics Output
+#define PN1_ON()        (palSetPad(GPIOD, GPIOD_PNEUMATICS1))
+#define PN2_ON()        (palSetPad(GPIOD, GPIOD_PNEUMATICS2))
+#define PN3_ON()        (palSetPad(GPIOH, GPIOH_PNEUMATICS3))
+#define PN4_ON()        (palSetPad(GPIOH, GPIOH_PNEUMATICS4))
+#define PN5_ON()        (palSetPad(GPIOH, GPIOH_PNEUMATICS5))
+#define PN6_ON()        (palSetPad(GPIOI, GPIOI_PNEUMATICS6))
+#define PN1_OFF()       (palClearPad(GPIOD, GPIOD_PNEUMATICS1))
+#define PN2_OFF()       (palClearPad(GPIOD, GPIOD_PNEUMATICS2))
+#define PN3_OFF()       (palClearPad(GPIOH, GPIOH_PNEUMATICS3))
+#define PN4_OFF()       (palClearPad(GPIOH, GPIOH_PNEUMATICS4))
+#define PN5_OFF()       (palClearPad(GPIOH, GPIOH_PNEUMATICS5))
+#define PN6_OFF()       (palClearPad(GPIOI, GPIOI_PNEUMATICS6))
+#define PN1_TOGGLE()    (palTogglePad(GPIOD, GPIOD_PNEUMATICS1))
+#define PN2_TOGGLE()    (palTogglePad(GPIOD, GPIOD_PNEUMATICS2))
+#define PN3_TOGGLE()    (palTogglePad(GPIOH, GPIOH_PNEUMATICS3))
+#define PN4_TOGGLE()    (palTogglePad(GPIOH, GPIOH_PNEUMATICS4))
+#define PN5_TOGGLE()    (palTogglePad(GPIOH, GPIOH_PNEUMATICS5))
+#define PN6_TOGGLE()    (palTogglePad(GPIOI, GPIOI_PNEUMATICS6))
+
 /**
  * @brief   Enables the PAL subsystem.
  */
