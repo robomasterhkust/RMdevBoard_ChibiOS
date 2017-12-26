@@ -20,6 +20,9 @@ static BaseSequentialStream* chp = (BaseSequentialStream*)&SDU1;
 static const IMUConfigStruct imu1_conf =
   {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_250, MPU6500_AXIS_REV_Z};
 
+static const magConfigStruct mag1_conf =
+  {IST8310_ADDR_FLOATING, 200, IST8310_AXIS_REV_NO};
+
 PIMUStruct pIMU;
 
 #define MPU6500_UPDATE_PERIOD_US 1000000U/MPU6500_UPDATE_FREQ
@@ -31,8 +34,10 @@ static THD_FUNCTION(Attitude_thread, p)
   (void)p;
 
   imuInit(pIMU, &imu1_conf);
+  ist8310_init(&mag1_conf);
 
   uint32_t tick = chVTGetSystemTimeX();
+
   while(true)
   {
     tick += US2ST(MPU6500_UPDATE_PERIOD_US);
@@ -45,6 +50,7 @@ static THD_FUNCTION(Attitude_thread, p)
     }
 
     imuGetData(pIMU);
+    ist8310_update();
     if(pIMU->inited == 2)
       attitude_update(pIMU);
 
@@ -77,6 +83,9 @@ int main(void) {
 
   palSetPad(GPIOE, GPIOE_LED_R);
   palSetPad(GPIOF, GPIOF_LED_G);
+  palClearPad(GPIOA, GPIOA_LED_Y);
+  palClearPad(GPIOA, GPIOA_LED_B);
+
 
   shellStart();
   params_init();
@@ -85,6 +94,9 @@ int main(void) {
 //  gimbal_init();
      gimbal_sys_iden_init();
   pwm_shooter_init();
+
+  extiinit();
+
 
   //tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
 
@@ -96,7 +108,9 @@ int main(void) {
 
   while (true)
   {
-    chThdSleepSeconds(1);
+
+    chThdSleepMilliseconds(500);
+
   }
 
   return 0;

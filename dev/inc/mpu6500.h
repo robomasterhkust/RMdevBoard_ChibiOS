@@ -50,6 +50,55 @@ typedef enum {
   IMU_LOSE_FRAME = 1<<31
 } imu_att_error_t;
 
+typedef enum {
+  MPU6500_I2CMST_CLK_348K = 0,
+  MPU6500_I2CMST_CLK_333K = 1,
+  MPU6500_I2CMST_CLK_320K = 2,
+  MPU6500_I2CMST_CLK_308K = 3,
+  MPU6500_I2CMST_CLK_296K = 4,
+  MPU6500_I2CMST_CLK_286K = 5,
+  MPU6500_I2CMST_CLK_276K = 6,
+  MPU6500_I2CMST_CLK_267K = 7,
+  MPU6500_I2CMST_CLK_258K = 8,
+  MPU6500_I2CMST_CLK_500K = 9,
+  MPU6500_I2CMST_CLK_471K = 10,
+  MPU6500_I2CMST_CLK_444K = 11,
+  MPU6500_I2CMST_CLK_421K = 12,
+  MPU6500_I2CMST_CLK_400K = 13,
+  MPU6500_I2CMST_CLK_381K = 14,
+  MPU6500_I2CMST_CLK_364K = 15
+} mpu_i2cmst_clk_t;
+
+#define MPU6500_I2C_MSTR_EN          0x80
+#define MPU6500_I2C_MSTR_BYTE_SWAP   0x40
+#define MPU6500_I2C_MSTR_REG_DIS     0x20
+#define MPU6500_I2C_MSTR_GRP         0x10
+
+#define MPU6500_SPI_READ             0x80
+#define MPU6500_I2C_MSTR_READ        0x80
+
+#define MPU6500_EXT_SENS_DATA        0x49
+#define MPU6500_USER_CFG             0x6A
+#define MPU6500_I2C_MST_CTRL         0x24
+#define MPU6500_I2C_SLV0_ADDR        0x25
+#define MPU6500_I2C_SLV0_REG         0x26
+#define MPU6500_I2C_SLV0_CTRL        0x27
+#define MPU6500_I2C_SLV0_DO          0x63
+#define MPU6500_I2C_SLV1_ADDR        0x28
+#define MPU6500_I2C_SLV1_REG         0x29
+#define MPU6500_I2C_SLV1_CTRL        0x2A
+#define MPU6500_I2C_SLV1_DO          0x64
+#define MPU6500_I2C_SLV2_ADDR        0x2B
+#define MPU6500_I2C_SLV2_REG         0x2C
+#define MPU6500_I2C_SLV2_CTRL        0x2D
+#define MPU6500_I2C_SLV2_DO          0x65
+#define MPU6500_I2C_SLV3_ADDR        0x2E
+#define MPU6500_I2C_SLV3_REG         0x2F
+#define MPU6500_I2C_SLV3_CTRL        0x30
+#define MPU6500_I2C_SLV3_DO          0x66
+
+#define MPU6500_USER_I2C_MST         0x20
+
 #define IMU_ERROR_COUNT    1U
 #define IMU_WARNING_COUNT  1U
 static const char imu_error_messages[][IMU_ERROR_COUNT] =
@@ -85,7 +134,7 @@ typedef struct tagIMUStruct {
   param_t _accelT[3][3];    /* Accelerometer rotational bias matrix       */
   param_t _gyroBias[3];     /* Gyroscope bias.                 */
 
-  uint8_t _axis_rev[3];
+  bool  _axis_rev[3];
   float _accel_psc;
   float _gyro_psc;
 
