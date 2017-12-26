@@ -8,6 +8,14 @@
 #define FLT_EPSILON        1.1920929e-07F
 #define M_PI_2_F    (float)(M_PI/2)
 
+/**
+ * @source pixhawk/src/lib/mathlib/math/filter/LowPassFilter2p.cpp
+ *
+ * Data structure for a IIR second-order sections form filter
+ * b_0 + b_1 * z^-1 + b_2 * z^-2
+ * -----------------------------
+ *   1 + a_1 * z^-1 + a_2 * z^-2
+ */
 typedef struct {
   float a1;
   float a2;

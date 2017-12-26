@@ -55,6 +55,7 @@
  */
 #define STM32F427xx
 #define BOARD_OTG_NOVBUSSENS
+#include "stm32f4xx.h"
 
 /*
  * IO pins assignments.
@@ -753,7 +754,7 @@
  * PE4  - PIN4                      (input floating).
  * PE5  - PIN5                      (input floating).
  * PE6  - PIN6                      (input floating).
- * PE7  - PIN7                      (input floating).
+ * PE7  - PIN7                      (LED TIM1-ETR).
  * PE8  - PIN8                      (input floating).
  * PE9  - PIN9                      (input floating).
  * PE10 - PIN10                     (input floating).
@@ -850,7 +851,7 @@
                                      PIN_AFIO_AF(GPIOE_SPI4_NSS, 5U) |          \
                                      PIN_AFIO_AF(GPIOE_SPI4_MISO, 5U) |          \
                                      PIN_AFIO_AF(GPIOE_SPI4_MOSI, 5U) |          \
-                                     PIN_AFIO_AF(GPIOE_LED_R, 0U))
+                                     PIN_AFIO_AF(GPIOE_LED_R, 1U))
 #define VAL_GPIOE_AFRH              (PIN_AFIO_AF(GPIOE_PIN8, 0U) |          \
                                      PIN_AFIO_AF(GPIOE_PIN9, 0U) |          \
                                      PIN_AFIO_AF(GPIOE_PIN10, 0U) |         \
@@ -1233,12 +1234,12 @@
  */
 #define VAL_GPIOI_MODER             (PIN_MODE_INPUT(GPIOI_PIN0) |           \
                                      PIN_MODE_INPUT(GPIOI_PIN1) |           \
-                                     PIN_MODE_INPUT(GPIOI_PIN2) |           \
+                                     PIN_MODE_ALTERNATE(GPIOI_PIN2) |           \
                                      PIN_MODE_INPUT(GPIOI_PIN3) |           \
                                      PIN_MODE_INPUT(GPIOI_PIN4) |           \
-                                     PIN_MODE_INPUT(GPIOI_PIN5) |           \
-                                     PIN_MODE_INPUT(GPIOI_PIN6) |           \
-                                     PIN_MODE_INPUT(GPIOI_PIN7) |           \
+                                     PIN_MODE_ALTERNATE(GPIOI_PIN5) |           \
+                                     PIN_MODE_ALTERNATE(GPIOI_PIN6) |           \
+                                     PIN_MODE_ALTERNATE(GPIOI_PIN7) |           \
                                      PIN_MODE_INPUT(GPIOI_PIN8) |           \
                                      PIN_MODE_INPUT(GPIOI_PIN9) |           \
                                      PIN_MODE_INPUT(GPIOI_PIN10) |          \
@@ -1313,12 +1314,12 @@
                                      PIN_ODR_HIGH(GPIOI_PIN15))
 #define VAL_GPIOI_AFRL              (PIN_AFIO_AF(GPIOI_PIN0, 0U) |          \
                                      PIN_AFIO_AF(GPIOI_PIN1, 0U) |          \
-                                     PIN_AFIO_AF(GPIOI_PIN2, 0U) |          \
+                                     PIN_AFIO_AF(GPIOI_PIN2, 3U) |          \
                                      PIN_AFIO_AF(GPIOI_PIN3, 0U) |          \
                                      PIN_AFIO_AF(GPIOI_PIN4, 0U) |          \
-                                     PIN_AFIO_AF(GPIOI_PIN5, 0U) |          \
-                                     PIN_AFIO_AF(GPIOI_PIN6, 0U) |          \
-                                     PIN_AFIO_AF(GPIOI_PIN7, 0U))
+                                     PIN_AFIO_AF(GPIOI_PIN5, 3U) |          \
+                                     PIN_AFIO_AF(GPIOI_PIN6, 3U) |          \
+                                     PIN_AFIO_AF(GPIOI_PIN7, 3U))
 #define VAL_GPIOI_AFRH              (PIN_AFIO_AF(GPIOI_PIN8, 0U) |          \
                                      PIN_AFIO_AF(GPIOI_PIN9, 0U) |          \
                                      PIN_AFIO_AF(GPIOI_PIN10, 0U) |         \
