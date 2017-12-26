@@ -149,6 +149,7 @@ void can_motorSetCurrent(CANDriver *const CANx,
     canTransmit(CANx, CAN_ANY_MAILBOX, &txmsg, MS2ST(100));
 }
 
+
 void can_processInit(void)
 {
   memset((void *)gimbal_encoder,  0, sizeof(GimbalEncoder_canStruct) *GIMBAL_MOTOR_NUM);

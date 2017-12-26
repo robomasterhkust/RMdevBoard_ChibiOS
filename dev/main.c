@@ -83,6 +83,9 @@ int main(void) {
 
   palSetPad(GPIOE, GPIOE_LED_R);
   palSetPad(GPIOF, GPIOF_LED_G);
+  palClearPad(GPIOA, GPIOA_LED_Y);
+  palClearPad(GPIOA, GPIOA_LED_B);
+
 
   shellStart();
   params_init();
@@ -91,6 +94,7 @@ int main(void) {
 //  gimbal_init();
      gimbal_sys_iden_init();
   pwm_shooter_init();
+  extiinit();
 
   //tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
 
@@ -102,7 +106,9 @@ int main(void) {
 
   while (true)
   {
+
     chThdSleepMilliseconds(500);
+
   }
 
   return 0;

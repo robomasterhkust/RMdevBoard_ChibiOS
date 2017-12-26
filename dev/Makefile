@@ -126,10 +126,10 @@ CSRC = $(STARTUPSRC) \
 			 $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
        $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
        main.c shellcfg.c flash.c tft_display.c \
-			 mpu6500.c attitude.c math_misc.c \
-			 canBusProcess.c dbus.c params.c usbcfg.c \
-			 calibrate_sensor.c gimbal_sys_iden.c shoot_pwm.c\
-			 pwm_struct.c
+       mpu6500.c attitude.c ist8310.c math_misc.c \
+       canBusProcess.c dbus.c gimbal.c params.c usbcfg.c \
+       calibrate_sensor.c gimbal_sys_iden.c shoot_pwm.c \
+       exti.c pwm_struct.c
 
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
