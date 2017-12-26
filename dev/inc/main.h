@@ -21,6 +21,8 @@
 
 #include "gimbal.h"
 
+#include "exti.h"
+
 void shellStart(void);
 
 #endif
