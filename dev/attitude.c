@@ -1,3 +1,10 @@
+/**
+ * Edward ZHANG, 20170910
+ * @file        attitude.c
+ * @brief       Attitude estimator using quaternion and complementary filter
+ * @reference   PX4  src/lib/ecl/attitude_estimator_q.cpp
+ */
+
 #include "ch.h"
 #include "hal.h"
 
