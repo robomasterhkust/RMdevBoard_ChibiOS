@@ -1,6 +1,10 @@
 #ifndef _CAN_BUS_PROCESS_H_
 #define _CAN_BUS_PROCESS_H_
 
+#include "stdint.h"
+#include "stdbool.h"
+#include "can_lld.h"
+#include "string.h"
 #define GIMBAL_MOTOR_NUM  2U
 #define CHASSIS_MOTOR_NUM 4U
 /* CAN Bus 1 or 2 */

@@ -131,6 +131,7 @@ CSRC = $(STARTUPSRC) \
 			 calibrate_sensor.c gimbal_sys_iden.c shoot_pwm.c\
 			 pwm_struct.c
 
+
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CPPSRC =

@@ -57,7 +57,7 @@ static THD_FUNCTION(matlab_thread, p)
   BaseSequentialStream* chp = (BaseSequentialStream*)SERIAL_DATA;
 
   PIMUStruct PIMU = imu_get();
-  GimbalStruct* gimbal = gimbal_get();
+//  GimbalStruct* gimbal = gimbal_get();
 
   uint32_t tick = chVTGetSystemTimeX();
   const uint16_t period = US2ST(1000000/HOST_TRANSMIT_FREQ);
@@ -90,7 +90,7 @@ void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
 {
   (void) argc,argv;
   PIMUStruct PIMU = imu_get();
-  GimbalStruct* gimbal = gimbal_get();
+//  GimbalStruct* gimbal = gimbal_get();
 
   chprintf(chp,"AccelX: %f\r\n",PIMU->accelData[X]);
   chprintf(chp,"AccelY: %f\r\n",PIMU->accelData[Y]);

@@ -67,6 +67,7 @@ typedef struct{
   float pitch_angle;
   float yaw_current;
   float pitch_current;
+    uint32_t timestamp;
 
   #ifdef GIMBAL_ENCODER_USE_SPEED
     float yaw_speed_enc;
@@ -98,7 +99,9 @@ typedef struct{
 }  GimbalStruct;
 
 GimbalStruct* gimbal_get(void);
+GimbalStruct* gimbal_get_sys_iden(void);
 uint32_t gimbal_get_error(void);
 void gimbal_init(void);
+void gimbal_sys_iden_init(void);
 
 #endif
