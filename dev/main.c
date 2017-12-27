@@ -14,13 +14,12 @@
     limitations under the License.
 */
 #include "main.h"
+#include "pwm.h"
+#include "imu_temp.c"
 
 static BaseSequentialStream* chp = (BaseSequentialStream*)&SDU1;
 static const IMUConfigStruct imu1_conf =
-  {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_1000, MPU6500_AXIS_REV_Z};
-
-static const magConfigStruct mag1_conf =
-  {IST8310_ADDR_FLOATING, 200, IST8310_AXIS_REV_NO};
+  {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_250, MPU6500_AXIS_REV_Z};
 
 PIMUStruct pIMU;
 
@@ -33,10 +32,8 @@ static THD_FUNCTION(Attitude_thread, p)
   (void)p;
 
   imuInit(pIMU, &imu1_conf);
-  ist8310_init(&mag1_conf);
 
   uint32_t tick = chVTGetSystemTimeX();
-
   while(true)
   {
     tick += US2ST(MPU6500_UPDATE_PERIOD_US);
@@ -49,7 +46,6 @@ static THD_FUNCTION(Attitude_thread, p)
     }
 
     imuGetData(pIMU);
-    ist8310_update();
     if(pIMU->inited == 2)
       attitude_update(pIMU);
 
@@ -59,6 +55,25 @@ static THD_FUNCTION(Attitude_thread, p)
       chThdSuspendS(&(pIMU->imu_Thd));
       chSysUnlock();
     }
+  }
+}
+
+static THD_WORKING_AREA(Pneumatics_thread_wa, 4096);
+static THD_FUNCTION(Pneumatics_thread, p)
+{
+  chRegSetThreadName("Pneumatics");
+
+  (void)p;
+
+  while(true)
+  {
+    PN1_TOGGLE();
+    PN2_TOGGLE();
+    PN3_TOGGLE();
+    PN4_TOGGLE();
+    PN5_TOGGLE();
+    PN6_TOGGLE();
+    chThdSleepSeconds(2);
   }
 }
 
@@ -80,13 +95,19 @@ int main(void) {
 
   palSetPad(GPIOE, GPIOE_LED_R);
   palSetPad(GPIOF, GPIOF_LED_G);
+  LEDB_OFF();
+  LEDO_OFF();
 
   shellStart();
   params_init();
   can_processInit();
   RC_init();
-  gimbal_init();
-
+  //  gimbal_init();
+  gimbal_sys_iden_init();
+  //pwm_shooter_init();
+  pwm3init();
+  pwm4init();
+  pwm8init();
   //tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
 
   pIMU = imu_get();
@@ -94,10 +115,18 @@ int main(void) {
   chThdCreateStatic(Attitude_thread_wa, sizeof(Attitude_thread_wa),
   NORMALPRIO + 5,
                     Attitude_thread, NULL);
+//  chThdCreateStatic(Pneumatics_thread_wa, sizeof(Pneumatics_thread_wa),
+//    NORMALPRIO,
+//                      Pneumatics_thread, NULL);
 
+  chThdCreateStatic(Temperature_thread_wa, sizeof(Temperature_thread_wa),
+    NORMALPRIO,
+                      Temperature_thread, NULL);
   while (true)
   {
-    chThdSleepMilliseconds(500);
+//    LEDO_TOGGLE();
+//    LEDB_TOGGLE();
+    chThdSleepSeconds(1);
   }
 
   return 0;

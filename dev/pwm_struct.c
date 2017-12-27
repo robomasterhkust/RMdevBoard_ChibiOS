@@ -77,6 +77,8 @@ void pwm3init(void){
   // Channel 1 is for the buzzer
   // Channel 2 is for the IMU heating element
   pwmStart(&PWMD3, &pwm3cfg);
+  pwmEnableChannel(&PWMD3, 0, PWM_PERCENTAGE_TO_WIDTH(&PWMD3, 00));
+  pwmDisableChannel(&PWMD3, 0);
 }
 
 void pwm4init(void){

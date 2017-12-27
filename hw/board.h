@@ -298,8 +298,8 @@
  * PA14 - SWCLK                     (alternate 0).
  * PA15 - PIN15                     (input pullup).
  */
-#define VAL_GPIOA_MODER             (PIN_MODE_ALTERNATE(GPIOA_TIM2_CH1) |         \
-                                     PIN_MODE_ALTERNATE(GPIOA_TIM2_CH2) |           \
+#define VAL_GPIOA_MODER             (PIN_MODE_INPUT(GPIOA_TIM2_CH1) |         \
+                                     PIN_MODE_OUTPUT(GPIOA_TIM2_CH2) |           \
                                      PIN_MODE_OUTPUT(GPIOA_TIM2_CH3) |           \
                                      PIN_MODE_OUTPUT(GPIOA_TIM2_CH4) |           \
                                      PIN_MODE_INPUT(GPIOA_PIN4) |       \
@@ -365,7 +365,7 @@
 #define VAL_GPIOA_ODR               (PIN_ODR_HIGH(GPIOA_TIM2_CH1) |           \
                                      PIN_ODR_LOW(GPIOA_TIM2_CH2) |             \
                                      PIN_ODR_LOW(GPIOA_TIM2_CH3) |             \
-                                     PIN_ODR_HIGH(GPIOA_TIM2_CH4) |             \
+                                     PIN_ODR_LOW(GPIOA_TIM2_CH4) |             \
                                      PIN_ODR_HIGH(GPIOA_PIN4) |             \
                                      PIN_ODR_HIGH(GPIOA_PIN5) |              \
                                      PIN_ODR_HIGH(GPIOA_PIN6) |              \

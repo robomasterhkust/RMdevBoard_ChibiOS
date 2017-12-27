@@ -1,7 +1,8 @@
 /**
- * Edward ZHANG, 201709??
- * @file    mpu6500.c
- * @brief   mpu6500 six-axis imu driver
+ * This is device realize "read through write" paradigm. This is not
+ * standard, but most of I2C devices use this paradigm.
+ * You must write to device reading address, send restart to bus,
+ * and then begin reading process.
  */
 
 #include "ch.h"
@@ -56,6 +57,10 @@ typedef enum {
 #define MPU6500_SENSOR_SLEEP      0x40
 #define MPU6500_AUTO_SELECT_CLK   0x01
 
+#define MPU6500_SPI_READ          0x80
+
+#define TEMP_OFFSET               0
+
 typedef enum{
   DLPF_250HZ  =  0,
   DLPF_184HZ  =  1,
@@ -83,11 +88,17 @@ static const SPIConfig MPU6500_SPI_cfg =
   GPIOF,
   GPIOF_SPI5_IMU_NSS,
   SPI_CR1_BR_2 | SPI_CR1_BR_1 | SPI_CR1_MSTR |
-  SPI_CR1_CPHA | SPI_CR1_CPOL //Set CPHA and CPOL to be 1
+  SPI_CR1_CPHA | SPI_CR1_CPOL
 };
 
 /* IMU data structure. */
 IMUStruct g_IMU1;
+
+static lpfilterStruct lp_gyro_x;
+static lpfilterStruct lp_gyro_y;
+static lpfilterStruct lp_gyro_z;
+#define GYRO_SAMPLE_FREQ   8000U
+#define GYRO_CUTOFF_FREQ    500U
 
 PIMUStruct imu_get(void)
 {
@@ -105,8 +116,8 @@ static uint8_t imuTXData[MPU6500_TX_BUF_SIZE];
 
 /**
  * @brief  Initialization function of IMU data structure.
- * @param  pIMU       pointer to IMU data structure;
- * @param  imu_conf   IMU Initialization structure
+ * @param  pIMU - pointer to IMU data structure;
+ * @param  fAddrLow - IMU address pin A0 is pulled low flag.
  */
 static void imuStructureInit(PIMUStruct pIMU, IMUConfigStruct* imu_conf)
 {
@@ -263,15 +274,20 @@ uint8_t imuGetDataRaw(PIMUStruct pIMU, float AccelRaw[3], float GyroRaw[3])
   /* X: */
   AccelRaw[X] = (float)imuData[IMU_X] * pIMU->_accel_psc;
   GyroRaw[X]  = (float)imuData[IMU_X + 3] * pIMU->_gyro_psc;
+  GyroRaw[X]  = lpfilter_apply(&lp_gyro_x, GyroRaw[X]);
 
   /* Y: */
   AccelRaw[Y] = (float)imuData[IMU_Y] * pIMU->_accel_psc;
   GyroRaw[Y]  = (float)imuData[IMU_Y + 3] * pIMU->_gyro_psc;
+  GyroRaw[Y]  = lpfilter_apply(&lp_gyro_y, GyroRaw[Y]);
 
   /* Z: */
   AccelRaw[Z] = (float)imuData[IMU_Z] * pIMU->_accel_psc;
   GyroRaw[Z]  = (float)imuData[IMU_Z + 3] * pIMU->_gyro_psc;
+  GyroRaw[Z]  = lpfilter_apply(&lp_gyro_z, GyroRaw[Z]);
 
+  /* temperature */
+  pIMU->temperature = (((float)imuData[6] - TEMP_OFFSET)/333.87) + 21;
   return IMU_OK;
 }
 
@@ -315,7 +331,7 @@ uint8_t imuInit(PIMUStruct pIMU, const IMUConfigStruct* const imu_conf)
   /* - SLEEP flag must be cleared before */
   /*   configuring the sensor.           */
   imuTXData[0] = MPU6500_CONFIG;  // Start register address;
-  imuTXData[1] = DLPF_41HZ;          // CONFIG register value DLPF_CFG;
+  imuTXData[1] = DLPF_3600HZ;          // CONFIG register value DLPF_CFG;
   imuTXData[2] = (uint8_t)(imu_conf->_gyroConf << 3U);          // GYRO_CONFIG register value
   imuTXData[3] = (uint8_t)(imu_conf->_accelConf << 3U);          // ACCEL_CONFIG_1 register value
   imuTXData[4] = ADLPF_41HZ;          // ACCEL_CONFIG_2 register value
@@ -325,6 +341,11 @@ uint8_t imuInit(PIMUStruct pIMU, const IMUConfigStruct* const imu_conf)
   spiSend(pIMU->_imu_spi, 5, imuTXData);
   spiUnselect(pIMU->_imu_spi);
   spiReleaseBus(pIMU->_imu_spi);
+
+  /* Add software 2rd order Butterworth filter for gyro */
+  lpfilter_init(&lp_gyro_x, GYRO_SAMPLE_FREQ, GYRO_CUTOFF_FREQ);
+  lpfilter_init(&lp_gyro_y, GYRO_SAMPLE_FREQ, GYRO_CUTOFF_FREQ);
+  lpfilter_init(&lp_gyro_z, GYRO_SAMPLE_FREQ, GYRO_CUTOFF_FREQ);
 
   pIMU->_tprev = chVTGetSystemTimeX();
   pIMU->inited = 1;

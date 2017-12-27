@@ -39,12 +39,12 @@
 #define LEDR_OFF()      (palSetPad(GPIOE, GPIOE_LED_R))
 #define LEDR_TOGGLE()   (palTogglePad(GPIOE, GPIOE_LED_R))
 
-#define LEDB_ON()       (palClearPad(GPIOA, GPIOA_TIM2_CH3))
-#define LEDB_OFF()      (palSetPad(GPIOA, GPIOA_TIM2_CH3))
-#define LEDB_TOGGLE()   (palTogglePad(GPIOA, GPIOA_TIM2_CH3))
-#define LEDO_ON()       (palClearPad(GPIOA, GPIOA_TIM2_CH2))
-#define LEDO_OFF()      (palSetPad(GPIOA, GPIOA_TIM2_CH2))
-#define LEDO_TOGGLE()   (palTogglePad(GPIOA, GPIOA_TIM2_CH2))
+#define LEDB_ON()       (palSetPad(GPIOA, GPIOA_TIM2_CH4))
+#define LEDB_OFF()      (palClearPad(GPIOA, GPIOA_TIM2_CH4))
+#define LEDB_TOGGLE()   (palTogglePad(GPIOA, GPIOA_TIM2_CH4))
+#define LEDO_ON()       (palSetPad(GPIOA, GPIOA_TIM2_CH3))
+#define LEDO_OFF()      (palClearPad(GPIOA, GPIOA_TIM2_CH3))
+#define LEDO_TOGGLE()   (palTogglePad(GPIOA, GPIOA_TIM2_CH3))
 
 //Sets of command for Pneumatics Output
 #define PN1_ON()        (palSetPad(GPIOD, GPIOD_PNEUMATICS1))
