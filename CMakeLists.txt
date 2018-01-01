@@ -15,7 +15,7 @@ add_custom_target(Ozone COMMAND make -C ${RMdevBoard_ChibiOS_SOURCE_DIR}/dev
 
 include_directories(dev)
 include_directories(dev/inc)
-file(GLOB_RECURSE USER_SRC "dev/*.c")
+file(GLOB_RECURSE USER_SRC "dev/*.c" "dev/shoot_pwm.c")
 
 # include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.mk
 file(GLOB_RECURSE STARTUP_SRC "os/common/ports/ARMCMx/compilers/GCC/crt1.c" "os/common/ports/ARMCMx/compilers/GCC/vectors.c")
@@ -97,7 +97,7 @@ file(GLOB_RECURSE SHELL_SRC "os/various/shell.c" "os/various/evtimer.c" "os/vari
         "os/hal/lib/streams/memstreams.c" "os/hal/lib/streams/chprintf.c")
 include_directories(os/various os/hal/lib/streams)
 
-add_library(USER ${USER_SRC} dev/gimbal_sys_iden.c)
+add_library(USER ${USER_SRC})
 add_library(STARTUP ${STARTUP_SRC} os/common/ports/ARMCMx/compilers/GCC/crt0_v7m.s)
 add_library(HAL ${HAL_SRC})
 add_library(PLATFORM ${PLATFORM_SRC})

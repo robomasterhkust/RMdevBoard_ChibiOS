@@ -21,12 +21,12 @@ static uint8_t rx_start_flag = 1;
  */
 static void decryptDBUS(void)
 {
-  RC_Ctl.rc.channel0 = ((rxbuf[0]) | (rxbuf[1]<<8)) & 0x07FF;
-	RC_Ctl.rc.channel1 = ((rxbuf[1]>>3) | (rxbuf[2]<<5)) & 0x07FF;
-	RC_Ctl.rc.channel2 = ((rxbuf[2]>>6) | (rxbuf[3]<<2) | ((uint32_t)rxbuf[4]<<10)) & 0x07FF;
-	RC_Ctl.rc.channel3 = ((rxbuf[4]>>1) | (rxbuf[5]<<7)) & 0x07FF;
-  RC_Ctl.rc.s1  = ((rxbuf[5] >> 4)& 0x000C) >> 2;                         //!< Switch left
-  RC_Ctl.rc.s2  = ((rxbuf[5] >> 4)& 0x0003);
+  RC_Ctl.rc.channel0 = ((rxbuf[0]) | (rxbuf[1] << 8)) & 0x07FF;
+  RC_Ctl.rc.channel1 = ((rxbuf[1] >> 3) | (rxbuf[2] << 5)) & 0x07FF;
+  RC_Ctl.rc.channel2 = ((rxbuf[2] >> 6) | (rxbuf[3] << 2) | ((uint32_t) rxbuf[4] << 10)) & 0x07FF;
+  RC_Ctl.rc.channel3 = ((rxbuf[4] >> 1) | (rxbuf[5] << 7)) & 0x07FF;
+  RC_Ctl.rc.s1 = ((rxbuf[5] >> 4) & 0x000C) >> 2;                         //!< Switch left
+  RC_Ctl.rc.s2 = ((rxbuf[5] >> 4) & 0x0003);
 }
 
 /*
@@ -34,13 +34,11 @@ static void decryptDBUS(void)
  */
 static void rxend(UARTDriver *uartp) {
 
-  if(rx_start_flag)
-  {
+  if (rx_start_flag) {
     chSysLockFromISR();
     chThdResumeI(&uart_dbus_thread_handler, MSG_OK);
     chSysUnlockFromISR();
-  }
-  else
+  } else
     rx_start_flag = 1;
 }
 
@@ -48,11 +46,11 @@ static void rxend(UARTDriver *uartp) {
  * UART driver configuration structure.
  */
 static UARTConfig uart_cfg = {
-  NULL,NULL,rxend,NULL,NULL,
-  100000,
-  USART_CR1_PCE,
-  0,
-  0
+        NULL, NULL, rxend, NULL, NULL,
+        100000,
+        USART_CR1_PCE,
+        0,
+        0
 };
 
 #define  DBUS_INIT_WAIT_TIME_MS      4U
@@ -72,8 +70,7 @@ static THD_FUNCTION(uart_dbus_thread, p)
   systime_t timeout = MS2ST(DBUS_INIT_WAIT_TIME_MS);
   uint32_t count = 0;
 
-  while(!chThdShouldTerminateX())
-  {
+  while (!chThdShouldTerminateX()) {
     uartStopReceive(UART_DBUS);
     uartStartReceive(UART_DBUS, DBUS_BUFFER_SIZE, rxbuf);
 
@@ -81,24 +78,19 @@ static THD_FUNCTION(uart_dbus_thread, p)
     rxmsg = chThdSuspendTimeoutS(&uart_dbus_thread_handler, timeout);
     chSysUnlock();
 
-    if(rxmsg == MSG_OK)
-    {
-      if(!rxflag)
-      {
+    if (rxmsg == MSG_OK) {
+      if (!rxflag) {
         timeout = MS2ST(DBUS_WAIT_TIME_MS);
         rxflag = true;
-      }
-      else
+      } else
         decryptDBUS();
-    }
-    else
-    {
+    } else {
       rxflag = false;
       timeout = MS2ST(DBUS_INIT_WAIT_TIME_MS);
     }
 
     //Control the flashing of green LED
-    if((!(count % 25) && !rxflag) || !(count% 75))
+    if ((!(count % 25) && !rxflag) || !(count % 75))
       LEDG_TOGGLE();
     count++;
 

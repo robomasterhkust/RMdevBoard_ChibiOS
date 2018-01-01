@@ -90,7 +90,7 @@ void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
 {
   (void) argc,argv;
   PIMUStruct PIMU = imu_get();
-//  GimbalStruct* gimbal = gimbal_get();
+    GimbalStruct *gimbal = gimbal_get();
 
   chprintf(chp,"AccelX: %f\r\n",PIMU->accelData[X]);
   chprintf(chp,"AccelY: %f\r\n",PIMU->accelData[Y]);

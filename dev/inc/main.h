@@ -23,6 +23,8 @@
 
 #include "exti.h"
 
+#include "shoot_pwm.h"
+
 void shellStart(void);
 
 #endif

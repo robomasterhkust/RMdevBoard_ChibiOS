@@ -125,7 +125,14 @@ static THD_FUNCTION(gimbal_control, p)
     }
 }
 
+volatile float gain = 500.0f;
+volatile long long current_time_ms;
+volatile float stop_time_table[31];
+volatile float current_time;
+volatile float test_time;
 volatile double excitation;
+volatile int n;
+uint32_t clock_counter = 0;
 /**
  * Create excitement signal with N frequency, P period in each frequency
  * N = 30 from the matlab generation
@@ -135,8 +142,9 @@ static THD_FUNCTION(gimbal_sys_iden, p)
     (void)p;
     chRegSetThreadName("gimbal system identification");
 
-    float gain = 1.0f;
-    int P = 20;
+//    float gain = 5.0f;
+    int P = 5;
+    int N = 30;
 
     // Hardcoded sweeping frequency from 1Hz to 500Hz in log space
     float freq_log_space[30] = {1.0f,	1.23899037094209f,	1.53509713928722f,	1.90197057403762f,	    \
@@ -145,38 +153,45 @@ static THD_FUNCTION(gimbal_sys_iden, p)
     20.0886631533056f,	24.8896602120448f,	30.8380493387440f,	38.2080461893409f,	47.3394013211040f,	\
     58.6530624030112f,	72.6705795435965f,	90.0381483052973f,	111.556398767719f,	138.217303890180f,	\
     171.249908617510f,	212.176987801808f,	262.885244821938f,	325.712286997135f,	403.554387286977f,	500.0f};
-    float stop_time_table[30] = {0};
-    stop_time_table[0] = P * (1 / freq_log_space[0]);
-    for (int i = 0; i < 30; ++i) {
-        stop_time_table[i] = stop_time_table[i-1] + P * (1 / freq_log_space[i]);
+//    float stop_time_table[30] = {0};
+    stop_time_table[0] = 0;
+    for (int i = 1; i < N + 1; ++i) {
+        stop_time_table[i] = stop_time_table[i - 1] + P * (1 / freq_log_space[i - 1]) * i;
     }
 
     int wait_period = 5;
     chThdSleep(GIMBAL_CONTROL_PERIOD_NEXT * wait_period);
 
-    unsigned long start_time_us = ST2US( chVTGetSystemTimeX() );
-    int n = 0; // the number of frequency
+    long long int start_time_ms = (long long int) ST2MS(chVTGetSystemTimeX());
+    n = 1; // the number of frequency
 
     uint32_t tick = chVTGetSystemTimeX();
 
     while (!chThdShouldTerminateX())
     {
-        unsigned long current_time_us = ST2US( chVTGetSystemTimeX() ) - start_time_us;
-        float current_time = current_time_us / 1000000.0f;
-        if (current_time > stop_time_table[n+1]) {
-            n++;
+        long long int current_time_ms_ns = ((long long int) ST2MS(chVTGetSystemTimeX()) - start_time_ms);
+        if (current_time_ms > current_time_ms_ns) {
+            clock_counter++;
+        }
+        current_time_ms = current_time_ms_ns;
+        current_time =
+                (current_time_ms + (clock_counter * (0xFFFFFFFF - CH_CFG_ST_FREQUENCY + 1UL) / CH_CFG_ST_FREQUENCY)) /
+                1000.0f;
+        if (n < N) {
+            if (current_time > stop_time_table[n]) {
+                n++;
+            }
         }
 
-        float period_time = current_time - stop_time_table[n];
+        float period_time = current_time - stop_time_table[n - 1];
         float frequency = freq_log_space[n];
-        excitation = gain * sin(2 * M_PI * frequency * period_time);
+        test_time = (float) (2 * M_PI * frequency * period_time);
+        excitation = gain * sinf((float) (2 * M_PI * frequency * period_time));
+        gimbal.yaw_iq_output += excitation;
 
         tick += GIMBAL_CONTROL_PERIOD_NEXT;
         if (tick > chVTGetSystemTimeX()){
             chThdSleepUntil(tick);
-        }
-        else {
-            tick = chVTGetSystemTimeX();
         }
     }
 }
@@ -217,8 +232,8 @@ void gimbal_sys_iden_init(void)
     chThdCreateStatic(gimbal_control_wa, sizeof(gimbal_control_wa),
                         NORMALPRIO - 5, gimbal_control, NULL);
 
-//    chThdCreateStatic(gimbal_sys_iden_wa, sizeof(gimbal_sys_iden_wa),
-//                        NORMALPRIO - 5, gimbal_sys_iden, NULL);
+    chThdCreateStatic(gimbal_sys_iden_wa, sizeof(gimbal_sys_iden_wa),
+                      NORMALPRIO - 5, gimbal_sys_iden, NULL);
 
     gimbal.inited = true;
 }

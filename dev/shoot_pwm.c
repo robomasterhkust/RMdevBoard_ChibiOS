@@ -5,6 +5,7 @@
 #include "stdint.h"
 #include "ch.h"
 #include "hal.h"
+#include "shoot_pwm.h"
 
 /**
  * 2017/12/17 PWM test
