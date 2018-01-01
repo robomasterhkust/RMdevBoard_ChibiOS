@@ -261,6 +261,7 @@ static THD_FUNCTION(gimbal_thread, p)
 
     //TODO Yaw mixer is not aligned
     gimbal.yaw_speed_cmd = -sinroll * pitch_atti_out + cospitch * cosroll * yaw_atti_out;
+    gimbal.yaw_speed_cmd /= cosf(yaw_theta1);
     gimbal.pitch_speed_cmd = cosroll * pitch_atti_out + cospitch * sinroll * yaw_atti_out;
 
     gimbal.yaw_iq_cmd = gimbal_controlSpeed(&_yaw_vel,
@@ -275,7 +276,8 @@ static THD_FUNCTION(gimbal_thread, p)
     float ff_pitch = norm_vector3_projection(gimbal._pIMU->accelData, gimbal.axis_ff_accel);
     gimbal.pitch_iq_cmd += gimbal.axis_ff_weight[GIMBAL_PITCH] * ff_pitch;
 
-    /*the reference acceleration vector is calculated in this way
+    /*
+     * the reference acceleration vector is calculated in this way
      * RefX = G * cos(tan-1(M2*cos(theta)/M1)) * cos(theta + pitch0)
      * RefY = G * sin(tan-1(M2*cos(theta)/M1))
      * RefZ = G * cos(tan-1(M2*cos(theta)/M1)) * sin(theta + pitch0)

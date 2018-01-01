@@ -2,6 +2,7 @@
  * Edward ZHANG, 20171101
  * @file    canBusProcess.c
  * @brief   CAN driver configuration file
+ * @reference   RM2017_Archive
  */
 #include "ch.h"
 #include "hal.h"
@@ -147,6 +148,7 @@ void can_motorSetCurrent(CANDriver *const CANx,
 
     canTransmit(CANx, CAN_ANY_MAILBOX, &txmsg, MS2ST(100));
 }
+
 
 void can_processInit(void)
 {

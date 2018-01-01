@@ -1,3 +1,9 @@
+/**
+ * Edward ZHANG, Terry ZENG, 201709??
+ * @file    dbus.c
+ * @brief   Dbus driver and decoder
+ */
+
 #include "ch.h"
 #include "hal.h"
 

@@ -1,3 +1,10 @@
+/**
+ * Edward ZHANG, 201710??
+ * @file        calibrate_sensor.c
+ * @brief       Sensor calibration functions
+ * @reference   PX4
+ */
+
 #include "ch.h"
 #include "hal.h"
 #include "math_misc.h"

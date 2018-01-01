@@ -1,3 +1,9 @@
+/**
+ * Edward ZHANG, 20171111
+ * @file    param.c
+ * @brief   parameter tuning and management interface
+ */
+
 #include "ch.h"
 #include "hal.h"
 

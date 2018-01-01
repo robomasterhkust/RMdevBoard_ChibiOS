@@ -38,6 +38,12 @@
 #define LEDR_ON()       (palClearPad(GPIOE, GPIOE_LED_R))
 #define LEDR_OFF()      (palSetPad(GPIOE, GPIOE_LED_R))
 #define LEDR_TOGGLE()   (palTogglePad(GPIOE, GPIOE_LED_R))
+#define LEDY_ON()       (palClearPad(GPIOA, GPIOA_LED_Y))
+#define LEDY_OFF()      (palSetPad(GPIOA, GPIOA_LED_Y))
+#define LEDY_TOGGLE()   (palTogglePad(GPIOA, GPIOA_LED_Y))
+#define LEDB_ON()       (palClearPad(GPIOA, GPIOA_LED_B))
+#define LEDB_OFF()      (palSetPad(GPIOA, GPIOA_LED_B))
+#define LEDB_TOGGLE()   (palTogglePad(GPIOA, GPIOA_LED_B))
 
 /**
  * @brief   Enables the PAL subsystem.
@@ -71,7 +77,7 @@
  * @brief   Enables the EXT subsystem.
  */
 #if !defined(HAL_USE_EXT) || defined(__DOXYGEN__)
-#define HAL_USE_EXT                 FALSE
+#define HAL_USE_EXT                 TRUE
 #endif
 
 /**
