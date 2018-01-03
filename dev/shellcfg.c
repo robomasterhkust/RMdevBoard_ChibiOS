@@ -161,6 +161,14 @@ void cmd_calibrate(BaseSequentialStream * chp, int argc, char *argv[])
     chprintf(chp,"Calibration: gyro, accl, adi\r\n");
 }
 
+void cmd_temp(BaseSequentialStream * chp, int argc, char *argv[])
+{
+  (void) argc,argv;
+  PIMUStruct _pimu = imu_get();
+
+  chprintf(chp,"Temperature: %f\f\n", _pimu->temperature);
+}
+
 /**
  * @brief array of shell commands, put the corresponding command and functions below
  * {"command", callback_function}
@@ -170,6 +178,7 @@ static const ShellCommand commands[] =
   {"test", cmd_test},
   {"data", cmd_data},
   {"cal", cmd_calibrate},
+  {"temp", cmd_temp},
   {NULL, NULL}
 };
 
