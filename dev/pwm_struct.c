@@ -112,6 +112,6 @@ void pwm8init(void){
 
 void pwm12init(void){
   pwmStart(&PWMD12, &pwm12cfg);
-  pwmEnableChannel(&PWMD12, 0, PWM_PERCENTAGE_TO_WIDTH(&PWMD12, 5000));
-  pwmEnableChannel(&PWMD12, 1, PWM_PERCENTAGE_TO_WIDTH(&PWMD12, 5000));
+  //pwmEnableChannel(&PWMD12, 0, PWM_PERCENTAGE_TO_WIDTH(&PWMD12, 5000));
+  //pwmEnableChannel(&PWMD12, 1, PWM_PERCENTAGE_TO_WIDTH(&PWMD12, 5000));
 }
