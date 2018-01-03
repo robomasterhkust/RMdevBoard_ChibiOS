@@ -185,10 +185,10 @@
 #define GPIOH_PIN3                  3U
 #define GPIOH_PIN4                  4U
 #define GPIOH_PIN5                  5U
-#define GPIOH_PIN6                  6U
+#define GPIOH_TIM12_CH1             6U
 #define GPIOH_PIN7                  7U
 #define GPIOH_PIN8                  8U
-#define GPIOH_PIN9                  9U
+#define GPIOH_TIM12_CH2             9U
 #define GPIOH_PNEUMATICS3           10U
 #define GPIOH_PNEUMATICS4           11U
 #define GPIOH_PNEUMATICS5           12U
@@ -767,7 +767,7 @@
  */
 #define VAL_GPIOE_MODER             (PIN_MODE_INPUT(GPIOE_PIN0) |           \
                                      PIN_MODE_INPUT(GPIOE_PIN1) |           \
-                                     PIN_MODE_INPUT(GPIOE_PIN2) |           \
+                                     PIN_MODE_INPUT(GPIOE_IST8310_RST) |           \
                                      PIN_MODE_INPUT(GPIOE_PIN3) |        \
                                      PIN_MODE_OUTPUT(GPIOE_SPI4_NSS) |           \
                                      PIN_MODE_ALTERNATE(GPIOE_SPI4_MISO) |           \
@@ -783,7 +783,7 @@
                                      PIN_MODE_INPUT(GPIOE_PIN15))
 #define VAL_GPIOE_OTYPER            (PIN_OTYPE_PUSHPULL(GPIOE_PIN0) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOE_PIN1) |       \
-                                     PIN_OTYPE_PUSHPULL(GPIOE_PIN2) |       \
+                                     PIN_OTYPE_PUSHPULL(GPIOE_IST8310_RST) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOE_PIN3) |     \
                                      PIN_OTYPE_PUSHPULL(GPIOE_SPI4_NSS) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOE_SPI4_MISO) |       \
@@ -799,7 +799,7 @@
                                      PIN_OTYPE_PUSHPULL(GPIOE_PIN15))
 #define VAL_GPIOE_OSPEEDR           (PIN_OSPEED_HIGH(GPIOE_PIN0) |          \
                                      PIN_OSPEED_HIGH(GPIOE_PIN1) |          \
-                                     PIN_OSPEED_HIGH(GPIOE_PIN2) |          \
+                                     PIN_OSPEED_HIGH(GPIOE_IST8310_RST) |          \
                                      PIN_OSPEED_HIGH(GPIOE_PIN3) |        \
                                      PIN_OSPEED_HIGH(GPIOE_SPI4_NSS) |          \
                                      PIN_OSPEED_HIGH(GPIOE_SPI4_MISO) |          \
@@ -815,7 +815,7 @@
                                      PIN_OSPEED_HIGH(GPIOE_PIN15))
 #define VAL_GPIOE_PUPDR             (PIN_PUPDR_FLOATING(GPIOE_PIN0) |       \
                                      PIN_PUPDR_FLOATING(GPIOE_PIN1) |       \
-                                     PIN_PUPDR_FLOATING(GPIOE_PIN2) |       \
+                                     PIN_PUPDR_FLOATING(GPIOE_IST8310_RST) |       \
                                      PIN_PUPDR_FLOATING(GPIOE_PIN3) |     \
                                      PIN_PUPDR_PULLUP(GPIOE_SPI4_NSS) |       \
                                      PIN_PUPDR_PULLDOWN(GPIOE_SPI4_MISO) |       \
@@ -831,7 +831,7 @@
                                      PIN_PUPDR_FLOATING(GPIOE_PIN15))
 #define VAL_GPIOE_ODR               (PIN_ODR_HIGH(GPIOE_PIN0) |             \
                                      PIN_ODR_HIGH(GPIOE_PIN1) |             \
-                                     PIN_ODR_HIGH(GPIOE_PIN2) |             \
+                                     PIN_ODR_HIGH(GPIOE_IST8310_RST) |             \
                                      PIN_ODR_HIGH(GPIOE_PIN3) |           \
                                      PIN_ODR_HIGH(GPIOE_SPI4_NSS) |             \
                                      PIN_ODR_HIGH(GPIOE_SPI4_MISO) |             \
@@ -847,7 +847,7 @@
                                      PIN_ODR_HIGH(GPIOE_PIN15))
 #define VAL_GPIOE_AFRL              (PIN_AFIO_AF(GPIOE_PIN0, 0U) |          \
                                      PIN_AFIO_AF(GPIOE_PIN1, 0U) |          \
-                                     PIN_AFIO_AF(GPIOE_PIN2, 0U) |          \
+                                     PIN_AFIO_AF(GPIOE_IST8310_RST, 0U) |          \
                                      PIN_AFIO_AF(GPIOE_PIN3, 0U) |        \
                                      PIN_AFIO_AF(GPIOE_SPI4_NSS, 5U) |          \
                                      PIN_AFIO_AF(GPIOE_SPI4_MISO, 5U) |          \
@@ -1122,10 +1122,10 @@
                                      PIN_MODE_INPUT(GPIOH_PIN3) |           \
                                      PIN_MODE_INPUT(GPIOH_PIN4) |           \
                                      PIN_MODE_INPUT(GPIOH_PIN5) |           \
-                                     PIN_MODE_INPUT(GPIOH_PIN6) |           \
+                                     PIN_MODE_ALTERNATE(GPIOH_TIM12_CH1) |           \
                                      PIN_MODE_INPUT(GPIOH_PIN7) |           \
                                      PIN_MODE_INPUT(GPIOH_PIN8) |           \
-                                     PIN_MODE_INPUT(GPIOH_PIN9) |           \
+                                     PIN_MODE_ALTERNATE(GPIOH_TIM12_CH2) |           \
                                      PIN_MODE_OUTPUT(GPIOH_PNEUMATICS3) |          \
                                      PIN_MODE_OUTPUT(GPIOH_PNEUMATICS4) |          \
                                      PIN_MODE_OUTPUT(GPIOH_PNEUMATICS5) |          \
@@ -1138,10 +1138,10 @@
                                      PIN_OTYPE_PUSHPULL(GPIOH_PIN3) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOH_PIN4) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOH_PIN5) |       \
-                                     PIN_OTYPE_PUSHPULL(GPIOH_PIN6) |       \
+                                     PIN_OTYPE_PUSHPULL(GPIOH_TIM12_CH1) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOH_PIN7) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOH_PIN8) |       \
-                                     PIN_OTYPE_PUSHPULL(GPIOH_PIN9) |       \
+                                     PIN_OTYPE_PUSHPULL(GPIOH_TIM12_CH2) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOH_PNEUMATICS3) |      \
                                      PIN_OTYPE_PUSHPULL(GPIOH_PNEUMATICS4) |      \
                                      PIN_OTYPE_PUSHPULL(GPIOH_PNEUMATICS5) |      \
@@ -1154,10 +1154,10 @@
                                      PIN_OSPEED_HIGH(GPIOH_PIN3) |          \
                                      PIN_OSPEED_HIGH(GPIOH_PIN4) |          \
                                      PIN_OSPEED_HIGH(GPIOH_PIN5) |          \
-                                     PIN_OSPEED_HIGH(GPIOH_PIN6) |          \
+                                     PIN_OSPEED_HIGH(GPIOH_TIM12_CH1) |          \
                                      PIN_OSPEED_HIGH(GPIOH_PIN7) |          \
                                      PIN_OSPEED_HIGH(GPIOH_PIN8) |          \
-                                     PIN_OSPEED_HIGH(GPIOH_PIN9) |          \
+                                     PIN_OSPEED_HIGH(GPIOH_TIM12_CH2) |          \
                                      PIN_OSPEED_HIGH(GPIOH_PNEUMATICS3) |         \
                                      PIN_OSPEED_HIGH(GPIOH_PNEUMATICS4) |         \
                                      PIN_OSPEED_HIGH(GPIOH_PNEUMATICS5) |         \
@@ -1170,10 +1170,10 @@
                                      PIN_PUPDR_FLOATING(GPIOH_PIN3) |       \
                                      PIN_PUPDR_FLOATING(GPIOH_PIN4) |       \
                                      PIN_PUPDR_FLOATING(GPIOH_PIN5) |       \
-                                     PIN_PUPDR_FLOATING(GPIOH_PIN6) |       \
+                                     PIN_PUPDR_PULLDOWN(GPIOH_TIM12_CH1) |       \
                                      PIN_PUPDR_FLOATING(GPIOH_PIN7) |       \
                                      PIN_PUPDR_FLOATING(GPIOH_PIN8) |       \
-                                     PIN_PUPDR_FLOATING(GPIOH_PIN9) |       \
+                                     PIN_PUPDR_PULLDOWN(GPIOH_TIM12_CH2) |       \
                                      PIN_PUPDR_PULLDOWN(GPIOH_PNEUMATICS3) |      \
                                      PIN_PUPDR_PULLDOWN(GPIOH_PNEUMATICS4) |      \
                                      PIN_PUPDR_PULLDOWN(GPIOH_PNEUMATICS5) |      \
@@ -1186,10 +1186,10 @@
                                      PIN_ODR_HIGH(GPIOH_PIN3) |             \
                                      PIN_ODR_HIGH(GPIOH_PIN4) |             \
                                      PIN_ODR_HIGH(GPIOH_PIN5) |             \
-                                     PIN_ODR_HIGH(GPIOH_PIN6) |             \
+                                     PIN_ODR_LOW(GPIOH_TIM12_CH1) |             \
                                      PIN_ODR_HIGH(GPIOH_PIN7) |             \
                                      PIN_ODR_HIGH(GPIOH_PIN8) |             \
-                                     PIN_ODR_HIGH(GPIOH_PIN9) |             \
+                                     PIN_ODR_LOW(GPIOH_TIM12_CH2) |             \
                                      PIN_ODR_LOW(GPIOH_PNEUMATICS3) |            \
                                      PIN_ODR_LOW(GPIOH_PNEUMATICS4) |            \
                                      PIN_ODR_LOW(GPIOH_PNEUMATICS5) |            \
@@ -1202,10 +1202,10 @@
                                      PIN_AFIO_AF(GPIOH_PIN3, 0U) |          \
                                      PIN_AFIO_AF(GPIOH_PIN4, 0U) |          \
                                      PIN_AFIO_AF(GPIOH_PIN5, 0U) |          \
-                                     PIN_AFIO_AF(GPIOH_PIN6, 0U) |          \
+                                     PIN_AFIO_AF(GPIOH_TIM12_CH1, 9U) |          \
                                      PIN_AFIO_AF(GPIOH_PIN7, 0U))
 #define VAL_GPIOH_AFRH              (PIN_AFIO_AF(GPIOH_PIN8, 0U) |          \
-                                     PIN_AFIO_AF(GPIOH_PIN9, 0U) |          \
+                                     PIN_AFIO_AF(GPIOH_TIM12_CH2, 9U) |          \
                                      PIN_AFIO_AF(GPIOH_PNEUMATICS3, 0U) |         \
                                      PIN_AFIO_AF(GPIOH_PNEUMATICS4, 0U) |         \
                                      PIN_AFIO_AF(GPIOH_PNEUMATICS5, 0U) |         \
@@ -1235,7 +1235,6 @@
  */
 #define VAL_GPIOI_MODER             (PIN_MODE_OUTPUT(GPIOI_PNEUMATICS6) |           \
                                      PIN_MODE_INPUT(GPIOI_PIN1) |           \
-
                                      PIN_MODE_ALTERNATE(GPIOI_TIM8_CH4) |           \
                                      PIN_MODE_INPUT(GPIOI_PIN3) |           \
                                      PIN_MODE_INPUT(GPIOI_PIN4) |           \
