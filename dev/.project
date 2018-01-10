@@ -27,12 +27,12 @@
 		<link>
 			<name>board</name>
 			<type>2</type>
-			<location>C:/Users/nameless/Documents/3300Proj/hw</location>
+			<location>D:/Github/RMdevBoard_ChibiOS/hw</location>
 		</link>
 		<link>
 			<name>os</name>
 			<type>2</type>
-			<location>C:/Users/nameless/Documents/3300Proj/os</location>
+			<location>D:/Github/RMdevBoard_ChibiOS/os</location>
 		</link>
 	</linkedResources>
 </projectDescription>

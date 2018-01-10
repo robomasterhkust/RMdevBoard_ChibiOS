@@ -57,7 +57,7 @@ static THD_FUNCTION(matlab_thread, p)
   BaseSequentialStream* chp = (BaseSequentialStream*)SERIAL_DATA;
 
   PIMUStruct PIMU = imu_get();
-  GimbalStruct* gimbal = gimbal_get();
+//  GimbalStruct* gimbal = gimbal_get();
 
   uint32_t tick = chVTGetSystemTimeX();
   const uint16_t period = US2ST(1000000/HOST_TRANSMIT_FREQ);
@@ -90,15 +90,15 @@ void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
 {
   (void) argc,argv;
   PIMUStruct PIMU = imu_get();
-  GimbalStruct* gimbal = gimbal_get();
+//  GimbalStruct* gimbal = gimbal_get();
 
   chprintf(chp,"AccelX: %f\r\n",PIMU->accelData[X]);
   chprintf(chp,"AccelY: %f\r\n",PIMU->accelData[Y]);
   chprintf(chp,"AccelZ: %f\r\n",PIMU->accelData[Z]);
 
-  chprintf(chp,"Gimbal Pitch: %f\r\n",gimbal->pitch_angle);
-  chprintf(chp,"Gimbal Yaw: %f\r\n",gimbal->yaw_angle);
-  chprintf(chp,"IMU Pitch: %f\r\n",PIMU->euler_angle[Pitch]);
+  //chprintf(chp,"Gimbal Pitch: %f\r\n",gimbal->pitch_angle);
+ // chprintf(chp,"Gimbal Yaw: %f\r\n",gimbal->yaw_angle);
+ // chprintf(chp,"IMU Pitch: %f\r\n",PIMU->euler_angle[Pitch]);
 }
 
 /**
@@ -161,6 +161,26 @@ void cmd_calibrate(BaseSequentialStream * chp, int argc, char *argv[])
     chprintf(chp,"Calibration: gyro, accl, adi\r\n");
 }
 
+extern PWMDriver PWMD12;
+
+void cmd_temp(BaseSequentialStream * chp, int argc, char *argv[])
+{
+  (void) argc,argv;
+  uint32_t tick = chVTGetSystemTimeX();
+  tick += US2ST(5U);
+
+//  while(1){ // you can uncomment this so that it continuously send the data out.
+              // this is useful in tuning the Temperature PID
+      PIMUStruct _pimu = imu_get();
+//      pTPIDStruct _tempPID = TPID_get();
+      chprintf(chp,"%f\n", _pimu->temperature);
+//      chprintf(chp,"Temperature: %f\f\n", _pimu->temperature);
+//      chprintf(chp,"PID_value: %i\i\n", _tempPID->PID_Value);
+//      chThdSleep(MS2ST(500));
+//  }
+
+}
+
 /**
  * @brief array of shell commands, put the corresponding command and functions below
  * {"command", callback_function}
@@ -170,6 +190,7 @@ static const ShellCommand commands[] =
   {"test", cmd_test},
   {"data", cmd_data},
   {"cal", cmd_calibrate},
+  {"temp", cmd_temp},
   {NULL, NULL}
 };
 
