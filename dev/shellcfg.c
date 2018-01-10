@@ -168,18 +168,17 @@ void cmd_temp(BaseSequentialStream * chp, int argc, char *argv[])
   (void) argc,argv;
   uint32_t tick = chVTGetSystemTimeX();
   tick += US2ST(5U);
-//  if(PWMD12.state == PWM_STOP){
-//
-//  }else{
-  while(1){
+
+//  while(1){ // you can uncomment this so that it continuously send the data out.
+              // this is useful in tuning the Temperature PID
       PIMUStruct _pimu = imu_get();
 //      pTPIDStruct _tempPID = TPID_get();
       chprintf(chp,"%f\n", _pimu->temperature);
 //      chprintf(chp,"Temperature: %f\f\n", _pimu->temperature);
 //      chprintf(chp,"PID_value: %i\i\n", _tempPID->PID_Value);
-      chThdSleep(MS2ST(500));
-  }
+//      chThdSleep(MS2ST(500));
 //  }
+
 }
 
 /**

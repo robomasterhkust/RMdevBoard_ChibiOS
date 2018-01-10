@@ -12,7 +12,6 @@
 extern PWMDriver PWMD12;
 
 #define TEMP_THRESHOLD 62
-#define TEMPERATURE_UPDATE_FREQ 200000U
 #define TEMPERATURE_UPDATE_PERIOD_US 1U
 
 TPIDStruct tempPID1;
@@ -69,13 +68,6 @@ static THD_FUNCTION(Temperature_thread, p)
   PIMUStruct pIMU = imu_get();
   pTPIDStruct tempPID = TPID_get();
   tempPID_Init(tempPID, &tpid1_conf);
-//  uint32_t tick = chVTGetSystemTimeX();
-
-//  pwmEnableChannel(&PWMD3, 1, PWM_PERCENTAGE_TO_WIDTH(&PWMD3, 10000));
-//  while(pIMU->temperature < 60){
-//    imuGetData(pIMU);
-//    chThdSleep(MS2ST(10));
-//  }
   pwmEnableChannel(&PWMD3, 1, PWM_PERCENTAGE_TO_WIDTH(&PWMD3, 0));
   uint32_t tick = chVTGetSystemTimeX();
 
@@ -92,20 +84,7 @@ static THD_FUNCTION(Temperature_thread, p)
 
     imuGetData(pIMU);
     int PWM_Output = tempPID_Update(tempPID, pIMU);
-//    int PWM_Output = 0;
-    // Safety Measure if TEMP > 47 stop the output
-
-//    if(PWMD12.state == PWM_STOP){
-////      pwmEnableChannel(&PWMD3, 1, PWM_PERCENTAGE_TO_WIDTH(&PWMD3, 9000));
-//    }else{
-//      if(pIMU->temperature > 47){
-////      pwmEnableChannel(&PWMD3, 1, PWM_PERCENTAGE_TO_WIDTH(&PWMD3, 0));
-//        pwmDisableChannel(&PWMD3, 1);
-//      }
-//      else{
-        pwmEnableChannel(&PWMD3, 1, PWM_PERCENTAGE_TO_WIDTH(&PWMD3, PWM_Output));
-//      }
-//    }
+    pwmEnableChannel(&PWMD3, 1, PWM_PERCENTAGE_TO_WIDTH(&PWMD3, PWM_Output));
   }
 }
 
