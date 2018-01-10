@@ -161,12 +161,24 @@ void cmd_calibrate(BaseSequentialStream * chp, int argc, char *argv[])
     chprintf(chp,"Calibration: gyro, accl, adi\r\n");
 }
 
+extern PWMDriver PWMD12;
+
 void cmd_temp(BaseSequentialStream * chp, int argc, char *argv[])
 {
   (void) argc,argv;
-  PIMUStruct _pimu = imu_get();
+  uint32_t tick = chVTGetSystemTimeX();
+  tick += US2ST(5U);
 
-  chprintf(chp,"Temperature: %f\f\n", _pimu->temperature);
+//  while(1){ // you can uncomment this so that it continuously send the data out.
+              // this is useful in tuning the Temperature PID
+      PIMUStruct _pimu = imu_get();
+//      pTPIDStruct _tempPID = TPID_get();
+      chprintf(chp,"%f\n", _pimu->temperature);
+//      chprintf(chp,"Temperature: %f\f\n", _pimu->temperature);
+//      chprintf(chp,"PID_value: %i\i\n", _tempPID->PID_Value);
+//      chThdSleep(MS2ST(500));
+//  }
+
 }
 
 /**
