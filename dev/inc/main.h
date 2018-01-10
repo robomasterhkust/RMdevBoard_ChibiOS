@@ -22,6 +22,7 @@
 #include "gimbal.h"
 
 #include "exti.h"
+#include "imu_temp.h"
 
 void shellStart(void);
 
