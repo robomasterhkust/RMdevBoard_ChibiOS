@@ -11,25 +11,16 @@
 
 extern PWMDriver PWMD12;
 
-#define TEMP_THRESHOLD 40
+#define TEMP_THRESHOLD 62
 #define TEMPERATURE_UPDATE_FREQ 200000U
-#define TEMPERATURE_UPDATE_PERIOD_US 5U //1000000U/TEMPERATURE_UPDATE_FREQ
-
-//static struct tempPID_Tag{
-//  int Kp;
-//  int Ki;
-//  int Kd;
-//  float Error_Integral;
-//  float Previous_Error;
-//  int PID_Value;
-//}*tempStruct, tempPID;
+#define TEMPERATURE_UPDATE_PERIOD_US 1U
 
 TPIDStruct tempPID1;
 
 static const TPIDConfigStruct tpid1_conf = {
-                                            3500,   //Kp
-                                            1000,      //Ki
-                                            0       //Kd
+                                            3500.0f,   //Kp
+                                            0.075f,      //Ki
+                                            0.0f       //Kd
 };
 
 pTPIDStruct TPID_get(void){
@@ -48,10 +39,10 @@ void tempPID_Init(pTPIDStruct tempPID, const TPIDConfigStruct* const tpid_conf){
 int tempPID_Update(pTPIDStruct tempPID, PIMUStruct pIMU){
   float Error = TEMP_THRESHOLD - pIMU->temperature;
   tempPID->Error_Integral = tempPID->Error_Integral + Error;
-  if(tempPID->Error_Integral > 2500)
-    tempPID->Error_Integral = 2500;
-  else if(tempPID->Error_Integral < -2500)
-    tempPID->Error_Integral = -2500;
+  if(tempPID->Error_Integral > 2200)
+    tempPID->Error_Integral = 2200;
+  else if(tempPID->Error_Integral < -2200)
+    tempPID->Error_Integral = -2200;
 
   float Error_Derivative = Error - tempPID->Previous_Error;
   tempPID->Previous_Error = Error;
@@ -78,20 +69,15 @@ static THD_FUNCTION(Temperature_thread, p)
   PIMUStruct pIMU = imu_get();
   pTPIDStruct tempPID = TPID_get();
   tempPID_Init(tempPID, &tpid1_conf);
-  uint32_t tick = chVTGetSystemTimeX();
+//  uint32_t tick = chVTGetSystemTimeX();
 
-  pwmEnableChannel(&PWMD3, 1, PWM_PERCENTAGE_TO_WIDTH(&PWMD3, 0));
-
-//  while(chVTTimeElapsedSinceX(tick) < S2ST(10)){
-//    if(pIMU->temperature > 40.0){
-//      pwmEnableChannel(&PWMD3, 1, PWM_PERCENTAGE_TO_WIDTH(&PWMD3, 0));
-//    }else{
-//      pwmEnableChannel(&PWMD3, 1, PWM_PERCENTAGE_TO_WIDTH(&PWMD3, 10000));
-//    }
-//   chThdSleep(MS2ST(10));
+//  pwmEnableChannel(&PWMD3, 1, PWM_PERCENTAGE_TO_WIDTH(&PWMD3, 10000));
+//  while(pIMU->temperature < 60){
+//    imuGetData(pIMU);
+//    chThdSleep(MS2ST(10));
 //  }
-
-//  tick = chVTGetSystemTimeX();
+  pwmEnableChannel(&PWMD3, 1, PWM_PERCENTAGE_TO_WIDTH(&PWMD3, 0));
+  uint32_t tick = chVTGetSystemTimeX();
 
   while(true)
   {
@@ -106,6 +92,7 @@ static THD_FUNCTION(Temperature_thread, p)
 
     imuGetData(pIMU);
     int PWM_Output = tempPID_Update(tempPID, pIMU);
+//    int PWM_Output = 0;
     // Safety Measure if TEMP > 47 stop the output
 
 //    if(PWMD12.state == PWM_STOP){

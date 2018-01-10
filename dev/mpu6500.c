@@ -283,7 +283,9 @@ uint8_t imuGetDataRaw(PIMUStruct pIMU, float AccelRaw[3], float GyroRaw[3])
   GyroRaw[Z]  = (float)imuData[IMU_Z + 3] * pIMU->_gyro_psc;
   GyroRaw[Z]  = lpfilter_apply(&lp_gyro_z, GyroRaw[Z]);
 
+  /* temperature: */
   pIMU->temperature = (((float)imuData[6] - TEMP_OFFSET)/333.87) + 21;
+
   return IMU_OK;
 }
 

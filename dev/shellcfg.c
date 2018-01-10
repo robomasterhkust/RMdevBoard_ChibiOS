@@ -171,10 +171,14 @@ void cmd_temp(BaseSequentialStream * chp, int argc, char *argv[])
 //  if(PWMD12.state == PWM_STOP){
 //
 //  }else{
+  while(1){
       PIMUStruct _pimu = imu_get();
-      //pTPIDStruct _tempPID = TPID_get();
-      chprintf(chp,"Temperature: %f\f\n", _pimu->temperature);
-      //chprintf(chp,"PID_value: %i\i\n", _tempPID->PID_Value);
+//      pTPIDStruct _tempPID = TPID_get();
+      chprintf(chp,"%f\n", _pimu->temperature);
+//      chprintf(chp,"Temperature: %f\f\n", _pimu->temperature);
+//      chprintf(chp,"PID_value: %i\i\n", _tempPID->PID_Value);
+      chThdSleep(MS2ST(500));
+  }
 //  }
 }
 

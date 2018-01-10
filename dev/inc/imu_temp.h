@@ -9,9 +9,9 @@
 #define _IMU_TEMP_H_
 
 typedef struct tagTPIDStruct{
-  uint32_t Kp;
-  uint32_t Ki;
-  uint32_t Kd;
+  float Kp;
+  float Ki;
+  float Kd;
   float Error_Integral;
   float Previous_Error;
   int PID_Value;
