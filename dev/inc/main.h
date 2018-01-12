@@ -20,6 +20,7 @@
 #include "calibrate_sensor.h"
 
 #include "gimbal.h"
+#include "chassis.h"
 
 #include "exti.h"
 #include "imu_temp.h"
