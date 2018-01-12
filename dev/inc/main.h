@@ -22,6 +22,7 @@
 #include "gimbal.h"
 
 #include "exti.h"
+#include "judge.h"
 
 void shellStart(void);
 
