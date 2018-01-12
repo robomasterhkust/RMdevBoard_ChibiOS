@@ -166,8 +166,8 @@ extern PWMDriver PWMD12;
 void cmd_temp(BaseSequentialStream * chp, int argc, char *argv[])
 {
   (void) argc,argv;
-  uint32_t tick = chVTGetSystemTimeX();
-  tick += US2ST(5U);
+//  uint32_t tick = chVTGetSystemTimeX();
+//  tick += US2ST(5U);
 
 //  while(1){ // you can uncomment this so that it continuously send the data out.
               // this is useful in tuning the Temperature PID
@@ -181,6 +181,38 @@ void cmd_temp(BaseSequentialStream * chp, int argc, char *argv[])
 
 }
 
+void cmd_dbus(BaseSequentialStream * chp, int argc, char *argv[])
+{
+  (void) argc,argv;
+//  uint32_t tick = chVTGetSystemTimeX();
+//  tick += US2ST(5U);
+
+  while(1){ // you can uncomment this so that it continuously send the data out.
+              // this is useful in tuning the Temperature PID
+//      PIMUStruct _pimu = imu_get();
+      RC_Ctl_t* _pRC = RC_get();
+      uint16_t* _pdrive = get_drive();
+//      pTPIDStruct _tempPID = TPID_get();
+      chprintf(chp,"rc.channel0:%i\n",(int)_pRC->rc.channel0);
+
+      chprintf(chp,"rc.channel1:%i\n",  (int)_pRC->rc.channel1);
+
+      chprintf(chp,"rc.channel2:%i\n",(int)_pRC->rc.channel2);
+
+      chprintf(chp,"rc.channel3:%i\n",  (int)_pRC->rc.channel3);
+
+      chprintf(chp,"rc.s1: %i\n",(int)_pRC->rc.s1);
+
+      chprintf(chp,"rc.s2: %i\n",(int)_pRC->rc.s2);
+
+      chprintf(chp,"drive: %i\n", (int)*_pdrive);
+//      chprintf(chp,"Temperature: %f\f\n", _pimu->temperature);
+//      chprintf(chp,"PID_value: %i\i\n", _tempPID->PID_Value);
+      chThdSleep(MS2ST(250));
+  }
+}
+
+
 /**
  * @brief array of shell commands, put the corresponding command and functions below
  * {"command", callback_function}
@@ -191,6 +223,7 @@ static const ShellCommand commands[] =
   {"data", cmd_data},
   {"cal", cmd_calibrate},
   {"temp", cmd_temp},
+  {"dbus", cmd_dbus},
   {NULL, NULL}
 };
 
