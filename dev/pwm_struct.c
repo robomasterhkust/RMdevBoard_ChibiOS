@@ -34,10 +34,10 @@ static void pwm3c1cb(PWMDriver *pwmp) {
 // E.g. the function name means PWM 3 CONFIGURATION
 static PWMConfig pwm3cfg = {
         100000,   /* 1MHz PWM clock frequency.   */
-        1000,      /* Initial PWM period 1ms.       */
+        100,      /* Initial PWM period 1ms.       */
         pwm3pcb,       /* Periodic call back */
         {
-                {PWM_OUTPUT_ACTIVE_HIGH, pwm3c1cb}, /* {<pwm_initialisation_status>, <callback function of the channel> */
+                {PWM_OUTPUT_DISABLED, pwm3c1cb}, /* {<pwm_initialisation_status>, <callback function of the channel> */
                 {PWM_OUTPUT_ACTIVE_HIGH, NULL},
                 {PWM_OUTPUT_DISABLED, NULL},
                 {PWM_OUTPUT_DISABLED, NULL}

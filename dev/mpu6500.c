@@ -56,6 +56,8 @@ typedef enum {
 #define MPU6500_SENSOR_SLEEP      0x40
 #define MPU6500_AUTO_SELECT_CLK   0x01
 
+#define TEMP_OFFSET               0
+
 typedef enum{
   DLPF_250HZ  =  0,
   DLPF_184HZ  =  1,
@@ -280,6 +282,9 @@ uint8_t imuGetDataRaw(PIMUStruct pIMU, float AccelRaw[3], float GyroRaw[3])
   AccelRaw[Z] = (float)imuData[IMU_Z] * pIMU->_accel_psc;
   GyroRaw[Z]  = (float)imuData[IMU_Z + 3] * pIMU->_gyro_psc;
   GyroRaw[Z]  = lpfilter_apply(&lp_gyro_z, GyroRaw[Z]);
+
+  /* temperature: */
+  pIMU->temperature = (((float)imuData[6] - TEMP_OFFSET)/333.87) + 21;
 
   return IMU_OK;
 }
