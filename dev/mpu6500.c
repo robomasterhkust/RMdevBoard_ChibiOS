@@ -111,6 +111,15 @@ static int16_t imuData[7];
 static uint8_t imuRXData[MPU6500_RX_BUF_SIZE];
 static uint8_t imuTXData[MPU6500_TX_BUF_SIZE];
 
+static const char accelBiasName[] = "accelBias";
+static const char gyroBiasName[] = "gyroBias";
+static const char accelTName1[] = "accelT1";
+static const char accelTName2[] = "accelT2";
+
+static const char axisName[] = "X Y Z";
+static const char accelTNameSub1[] = "1 2 3 4 5 6";
+static const char accelTNameSub2[] = "7 8 9";
+
 /**
  * @brief  Initialization function of IMU data structure.
  * @param  pIMU       pointer to IMU data structure;
@@ -124,10 +133,10 @@ static void imuStructureInit(PIMUStruct pIMU, IMUConfigStruct* imu_conf)
 
   pIMU->_imu_spi = imu_conf->_imu_spi;
 
-  params_set(pIMU->_accelBias, 31, 3, NULL, NULL, PARAM_PRIVATE);
-  params_set(pIMU->_gyroBias, 30, 3, NULL, NULL, PARAM_PRIVATE);
-  if(params_set(pIMU->_accelT[0], 29, 6, NULL, NULL, PARAM_PRIVATE) ||
-     params_set(pIMU->_accelT[2], 28, 3, NULL, NULL, PARAM_PRIVATE))
+  params_set(pIMU->_accelBias, 31, 3, accelBiasName, axisName, PARAM_PRIVATE);
+  params_set(pIMU->_gyroBias, 30, 3, gyroBiasName, axisName, PARAM_PRIVATE);
+  if(params_set(pIMU->_accelT[0], 29, 6, accelTName1, accelTNameSub1, PARAM_PRIVATE) ||
+     params_set(pIMU->_accelT[2], 28, 3, accelTName2, accelTNameSub2, PARAM_PRIVATE))
   {
     pIMU->_accelT[0][0] = 1.0f;
     pIMU->_accelT[1][1] = 1.0f;

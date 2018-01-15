@@ -340,8 +340,8 @@ static THD_FUNCTION(gimbal_init_thread, p)
   const char yaw_pos_name[] =   "Gimbal Yaw Pos";
   const char pitch_pos_name[] = "Gimbal Pitch Pos";
 
-  params_set(&_yaw_pos,   3, 3, yaw_pos_name,   subname_PID,   PARAM_PUBLIC);
-  params_set(&_pitch_pos, 4, 3, pitch_pos_name, subname_PID,   PARAM_PUBLIC);
+  params_set(&_yaw_pos,   3, 3, yaw_pos_name,   subname_PID,   PARAM_PRIVATE);
+  params_set(&_pitch_pos, 4, 3, pitch_pos_name, subname_PID,   PARAM_PRIVATE);
 
   uint16_t _init_score[2] = {0, 0};
   uint16_t _init_time = 0;
@@ -459,9 +459,9 @@ void gimbal_init(void)
 
   gimbal_encoderUpdate();
 
-  params_set(gimbal.axis_init_pos,  5, 3, init_pos_name,  subname_axis,    PARAM_PUBLIC);
-  params_set(gimbal.axis_ff_weight, 2, 6, axis_ff_name,   subname_ff,      PARAM_PUBLIC);
-  params_set(gimbal.axis_ff_accel,  6, 6, accl_name,      subname_accl,    PARAM_PUBLIC);
+  params_set(gimbal.axis_init_pos,  5, 3, init_pos_name,  subname_axis,    PARAM_PRIVATE);
+  params_set(gimbal.axis_ff_weight, 2, 6, axis_ff_name,   subname_ff,      PARAM_PRIVATE);
+  params_set(gimbal.axis_ff_accel,  6, 6, accl_name,      subname_accl,    PARAM_PRIVATE);
 
   chThdCreateStatic(gimbal_init_thread_wa, sizeof(gimbal_init_thread_wa),
                     NORMALPRIO - 5, gimbal_init_thread, NULL);
