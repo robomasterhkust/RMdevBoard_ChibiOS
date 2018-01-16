@@ -5,18 +5,25 @@
  *      Author: ASUS
  */
 #include "chassis.h"
-
+#include "chassis_pid.h"
 #define chassis_canUpdate()   \
   (can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID, \
     0, 0, 0, 0))
 
 // Variables
-int16_t front_right;
-int16_t back_right;
-int16_t front_left;
-int16_t back_left;
+volatile int32_t front_right = 0;
+volatile int32_t back_right = 0;
+volatile int32_t front_left = 0;
+volatile int32_t back_left=0;
+float input_front_right =0;
+float input_back_right =0;
+float input_front_left=0;
+float input_back_left=0;
 
-
+PIDparameter FR_wheel={0,0,0,0,0,0};
+PIDparameter FL_wheel={0,0,0,0,0,0};
+PIDparameter BR_wheel={0,0,0,0,0,0};
+PIDparameter BL_wheel={0,0,0,0,0,0};
 // MATH function
 float map(float x, float in_min, float in_max, float out_min, float out_max)
 {
@@ -36,46 +43,42 @@ void drive_init(void){
 //*********************************************
 
 // function ported from INTERNAL: needs further testing
-//void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1)
-//{
-//    // Set dead-zone to 6% range to provide smoother control
-//    float THRESHOLD = (RC_CH_VALUE_MAX - RC_CH_VALUE_MIN)*3/100;
-//
-//    // Create "dead-zone" for drive
-//    if(ABS(RX_X2 - RC_CH_VALUE_OFFSET) < THRESHOLD)  RX_X2 = RC_CH_VALUE_OFFSET;
-//
-//    // Create "dead-zone" for strafe
-//    if(ABS(RX_Y1 - RC_CH_VALUE_OFFSET) < THRESHOLD)  RX_Y1 = RC_CH_VALUE_OFFSET;
-//
-//    // Create "dead-zone" for rotate
-//    if(ABS(RX_X1 - RC_CH_VALUE_OFFSET) < THRESHOLD) RX_X1 = RC_CH_VALUE_OFFSET;
-//
-//    //Remote Control Commands, Mapped to match min and max RPM
-//    int16_t drive  = (int16_t)map(RX_X2, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
-//    int16_t strafe = (int16_t)map(RX_Y1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
-//    int16_t rotate = -(int16_t)map(RX_X1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
-//
-//    // For later coordinate with Gimbal
-//    int rotate_feedback = 0;
-//
-//    front_right = (-1*drive + strafe + rotate) + rotate_feedback;   // CAN ID: 0x201
-//    back_right = (drive + strafe + rotate) + rotate_feedback;       // CAN ID: 0x202
-//    front_left = (drive - strafe + rotate) + rotate_feedback;       // CAN ID: 0x203
-//    back_left = (-1*drive - strafe + rotate) + rotate_feedback;     // CAN ID: 0x204
-//
-//    // Set a scaling factor to allow different speed modes, controlled by the left switch
-//    // POSITION(value) = mode: UP(1) = fast, MIDDLE(3) = normal, DOWN(2) = slow
-//    float k = 2*(RC_Ctl.rc.s2 == 1) + 0.8*(RC_Ctl.rc.s2 == 3) + 0.2*(RC_Ctl.rc.s2 == 2);
-//
-//    //Calculate PID current output from received speed data
-//    int16_t RPM1 = PID_output (k * front_right, &CM1Encoder, &CM1PID);
-//    int16_t RPM2 = PID_output (k * back_right, &CM2Encoder, &CM2PID);
-//    int16_t RPM3 = PID_output (k * front_left, &CM3Encoder, &CM3PID);
-//    int16_t RPM4 = PID_output (k * back_left, &CM4Encoder, &CM4PID);
-//
-//    //Update using CAN bus chassis function (provided by Alex Wong)
-//    Chassis_Set_Speed(RPM1, RPM2, RPM3, RPM4);
-//}
+void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1)
+{
+    // Set dead-zone to 6% range to provide smoother control
+    float THRESHOLD = (RC_CH_VALUE_MAX - RC_CH_VALUE_MIN)*3/100;
+
+    // Create "dead-zone" for drive
+    if(ABS(RX_X2 - RC_CH_VALUE_OFFSET) < THRESHOLD)  RX_X2 = RC_CH_VALUE_OFFSET;
+
+    // Create "dead-zone" for strafe
+    if(ABS(RX_Y1 - RC_CH_VALUE_OFFSET) < THRESHOLD)  RX_Y1 = RC_CH_VALUE_OFFSET;
+
+    // Create "dead-zone" for rotate
+    if(ABS(RX_X1 - RC_CH_VALUE_OFFSET) < THRESHOLD) RX_X1 = RC_CH_VALUE_OFFSET;
+
+    //Remote Control Commands, Mapped to match min and max RPM
+    int16_t drive  = (int16_t)map(RX_X2, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
+    int16_t strafe = (int16_t)map(RX_Y1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
+    int16_t rotate = -(int16_t)map(RX_X1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
+
+    // For later coordinate with Gimbal
+    int rotate_feedback = 0;
+
+    front_right = (-1*drive + strafe + rotate) + rotate_feedback;   // CAN ID: 0x201
+    back_right = (drive + strafe + rotate) + rotate_feedback;       // CAN ID: 0x202
+    front_left = (drive - strafe + rotate) + rotate_feedback;       // CAN ID: 0x203
+    back_left = (-1*drive - strafe + rotate) + rotate_feedback;     // CAN ID: 0x204
+
+    input_front_right = speedPID(front_right,0,&FR_wheel);
+    input_back_right = speedPID(back_right,1,&BR_wheel);
+    input_back_left = speedPID(back_left,2,&BL_wheel);
+    input_front_left = speedPID(front_left,3,&FL_wheel);
+
+    //Update using CAN bus chassis function (provided by Alex Wong)
+    can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID,input_front_right, input_back_right, input_front_left, input_back_left);
+
+}
 
 //*******************************************************
 
@@ -88,9 +91,8 @@ static THD_FUNCTION(chassis_control, p)
     RC_Ctl_t* pRC = RC_get();
 
     while(1){
-      drive  = (int16_t)map(pRC->rc.channel0, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
-      can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID, \
-          drive, drive, drive, drive);
+
+      drive_kinematics(pRC -> rc.channel0,pRC -> rc.channel1,pRC -> rc.channel2);
       chThdSleepMilliseconds(10);
     }
 }
