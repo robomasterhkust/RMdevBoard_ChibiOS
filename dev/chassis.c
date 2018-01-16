@@ -10,20 +10,21 @@
   (can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID, \
     0, 0, 0, 0))
 
-// Variables
-volatile int32_t front_right = 0;
-volatile int32_t back_right = 0;
-volatile int32_t front_left = 0;
-volatile int32_t back_left=0;
-float input_front_right =0;
-float input_back_right =0;
-float input_front_left=0;
-float input_back_left=0;
 
-PIDparameter FR_wheel={0,0,0,0,0,0};
-PIDparameter FL_wheel={0,0,0,0,0,0};
-PIDparameter BR_wheel={0,0,0,0,0,0};
-PIDparameter BL_wheel={0,0,0,0,0,0};
+int16_t FR;
+int16_t BR;
+int16_t FL;
+int16_t BL;
+
+volatile int16_t   front_right ; // CAN ID: 0x201
+volatile int16_t   back_right  ;  // CAN ID: 0x202
+volatile int16_t   front_left  ;  // CAN ID: 0x203
+volatile int16_t   back_left   ; // CAN ID: 0x204
+
+extern PID CM1PID;
+extern PID CM2PID;
+extern PID CM3PID;
+extern PID CM4PID;
 // MATH function
 float map(float x, float in_min, float in_max, float out_min, float out_max)
 {
@@ -42,7 +43,35 @@ void drive_init(void){
 }
 //*********************************************
 
-// function ported from INTERNAL: needs further testing
+
+
+//*******************************************************
+
+static THD_WORKING_AREA(chassis_control_wa, 2048);
+static THD_FUNCTION(chassis_control, p)
+{
+    (void)p;
+    chRegSetThreadName("chassis controller");
+
+    RC_Ctl_t* pRC = RC_get();
+
+    while(1){
+
+      drive_kinematics(pRC->rc.channel0, pRC->rc.channel1, pRC->rc.channel2);
+    //  can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID, \
+          		10000, 10000, 10000, 10000);
+      chThdSleepMilliseconds(10);
+    }
+}
+
+void chassis_init(void){
+  drive_init();
+  chThdCreateStatic(chassis_control_wa, sizeof(chassis_control_wa),
+                          NORMALPRIO, chassis_control, NULL);
+}
+
+
+
 void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1)
 {
     // Set dead-zone to 6% range to provide smoother control
@@ -65,41 +94,27 @@ void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1)
     // For later coordinate with Gimbal
     int rotate_feedback = 0;
 
-    front_right = (-1*drive + strafe + rotate) + rotate_feedback;   // CAN ID: 0x201
-    back_right = (drive + strafe + rotate) + rotate_feedback;       // CAN ID: 0x202
-    front_left = (drive - strafe + rotate) + rotate_feedback;       // CAN ID: 0x203
-    back_left = (-1*drive - strafe + rotate) + rotate_feedback;     // CAN ID: 0x204
+    front_right = ((-1*drive + strafe + rotate) + rotate_feedback)/4.0;   // CAN ID: 0x201
+    back_right = ((drive + strafe + rotate) + rotate_feedback)/4.0;       // CAN ID: 0x202
+    front_left = ((drive - strafe + rotate) + rotate_feedback)/4.0;       // CAN ID: 0x203
+    back_left = ((-1*drive - strafe + rotate) + rotate_feedback)/4.0;     // CAN ID: 0x204
 
-    input_front_right = speedPID(front_right,0,&FR_wheel);
-    input_back_right = speedPID(back_right,1,&BR_wheel);
-    input_back_left = speedPID(back_left,2,&BL_wheel);
-    input_front_left = speedPID(front_left,3,&FL_wheel);
+    // Set a scaling factor to allow different speed modes, controlled by the left switch
+    // POSITION(value) = mode: UP(1) = fast, MIDDLE(3) = normal, DOWN(2) = slow
 
-    //Update using CAN bus chassis function (provided by Alex Wong)
-    can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID,input_front_right, input_back_right, input_front_left, input_back_left);
+    //Update using CAN bus chassis function
+
+
+    FR = PID_output(0, front_right, &CM1PID);
+    BR = PID_output(1, back_right , &CM2PID);
+    FL = PID_output(2, front_left , &CM3PID);
+    BL = PID_output(3, back_left  , &CM4PID);
+
+
+    can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID, \
+    		FR, BR, FL, BL);
+
+  //  can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID, \
+    		front_right * 0.1 , back_right * 0.1, front_left * 0.1 , back_left * 0.1);
 
 }
-
-//*******************************************************
-
-static THD_WORKING_AREA(chassis_control_wa, 2048);
-static THD_FUNCTION(chassis_control, p)
-{
-    (void)p;
-    chRegSetThreadName("chassis controller");
-
-    RC_Ctl_t* pRC = RC_get();
-
-    while(1){
-
-      drive_kinematics(pRC -> rc.channel0,pRC -> rc.channel1,pRC -> rc.channel2);
-      chThdSleepMilliseconds(10);
-    }
-}
-
-void chassis_init(void){
-  drive_init();
-  chThdCreateStatic(chassis_control_wa, sizeof(chassis_control_wa),
-                          NORMALPRIO, chassis_control, NULL);
-}
-
