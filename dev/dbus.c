@@ -22,11 +22,19 @@ static uint8_t rx_start_flag = 1;
 static void decryptDBUS(void)
 {
   RC_Ctl.rc.channel0 = ((rxbuf[0]) | (rxbuf[1]<<8)) & 0x07FF;
-	RC_Ctl.rc.channel1 = ((rxbuf[1]>>3) | (rxbuf[2]<<5)) & 0x07FF;
-	RC_Ctl.rc.channel2 = ((rxbuf[2]>>6) | (rxbuf[3]<<2) | ((uint32_t)rxbuf[4]<<10)) & 0x07FF;
-	RC_Ctl.rc.channel3 = ((rxbuf[4]>>1) | (rxbuf[5]<<7)) & 0x07FF;
+  RC_Ctl.rc.channel1 = ((rxbuf[1]>>3) | (rxbuf[2]<<5)) & 0x07FF;
+  RC_Ctl.rc.channel2 = ((rxbuf[2]>>6) | (rxbuf[3]<<2) | ((uint32_t)rxbuf[4]<<10)) & 0x07FF;
+  RC_Ctl.rc.channel3 = ((rxbuf[4]>>1) | (rxbuf[5]<<7)) & 0x07FF;
   RC_Ctl.rc.s1  = ((rxbuf[5] >> 4)& 0x000C) >> 2;                         //!< Switch left
   RC_Ctl.rc.s2  = ((rxbuf[5] >> 4)& 0x0003);
+
+
+  RC_Ctl.mouse.x = rxbuf[6] | (rxbuf[7] << 8);                   //!< Mouse X axis
+  RC_Ctl.mouse.y = rxbuf[8] | (rxbuf[9] << 8);                   //!< Mouse Y axis
+  RC_Ctl.mouse.z = rxbuf[10] | (rxbuf[11] << 8);                 //!< Mouse Z axis
+  RC_Ctl.mouse.LEFT = rxbuf[12];                                       //!< Mouse Left Is Press ?
+  RC_Ctl.mouse.RIGHT = rxbuf[13];                                       //!< Mouse Right Is Press ?
+  RC_Ctl.keyboard.key_code = rxbuf[14] | (rxbuf[15] << 8);                   //!< KeyBoard value
 }
 
 /*
@@ -119,6 +127,14 @@ static void rcStructInit(void)
   RC_Ctl.rc.channel1 = 1024;
   RC_Ctl.rc.channel2 = 1024;
   RC_Ctl.rc.channel3 = 1024;
+  RC_Ctl.rc.s1 =0;
+  RC_Ctl.rc.s2 = 0;
+  RC_Ctl.mouse.LEFT=0;
+  RC_Ctl.mouse.RIGHT =0;
+  RC_Ctl.mouse.x=0;
+  RC_Ctl.mouse.y=0;
+  RC_Ctl.mouse.z=0;
+  RC_Ctl.keyboard.key_code=0;
 }
 
 /**
