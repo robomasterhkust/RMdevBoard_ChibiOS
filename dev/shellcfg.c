@@ -191,7 +191,7 @@ void cmd_dbus(BaseSequentialStream * chp, int argc, char *argv[])
               // this is useful in tuning the Temperature PID
 //      PIMUStruct _pimu = imu_get();
       RC_Ctl_t* _pRC = RC_get();
-      uint16_t* _pdrive = get_drive();
+
 //      pTPIDStruct _tempPID = TPID_get();
       chprintf(chp,"rc.channel0:%i\n",(int)_pRC->rc.channel0);
 
@@ -205,7 +205,7 @@ void cmd_dbus(BaseSequentialStream * chp, int argc, char *argv[])
 
       chprintf(chp,"rc.s2: %i\n",(int)_pRC->rc.s2);
 
-      chprintf(chp,"drive: %i\n", (int)*_pdrive);
+ //     chprintf(chp,"drive: %i\n", (int)*_pdrive);
 //      chprintf(chp,"Temperature: %f\f\n", _pimu->temperature);
 //      chprintf(chp,"PID_value: %i\i\n", _tempPID->PID_Value);
       chThdSleep(MS2ST(250));
