@@ -90,7 +90,7 @@ static THD_FUNCTION(chassis_control, p)
     while(1){
       drive  = (int16_t)map(pRC->rc.channel0, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
       can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID, \
-          drive, drive, drive, drive);
+          drive, -drive, drive, -drive);
       chThdSleepMilliseconds(10);
     }
 }

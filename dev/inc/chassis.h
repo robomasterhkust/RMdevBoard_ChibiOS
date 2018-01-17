@@ -18,8 +18,8 @@
 #define CHASSIS_CAN_EID  0x200
 
 // DBUS MACRO
-#define RPM_MAX    ((int16_t) 32767)              //
-#define RPM_MIN    ((int16_t)-32768)              //
+#define RPM_MAX    ((int16_t) 32767)              // should be 227 when implementing PID
+#define RPM_MIN    ((int16_t)-32768)              // should be -227 when implementing PID
 #define ABS(x)     ( ((x) > 0) ? (x) : (-(x)) ) //return abs value of x
 // MATH definition
 float map(float x, float in_min, float in_max, float out_min, float out_max);
