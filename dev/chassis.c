@@ -25,23 +25,17 @@ extern PID CM1PID;
 extern PID CM2PID;
 extern PID CM3PID;
 extern PID CM4PID;
+
+volatile int16_t drive;
+volatile int16_t strafe ;
+volatile int16_t rotate ;
+
 // MATH function
 float map(float x, float in_min, float in_max, float out_min, float out_max)
 {
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-// Debugging unit**************************
-static uint16_t drive;
-
-uint16_t* get_drive(void){
-  return &drive;
-}
-
-void drive_init(void){
-  drive = 0;
-}
-//*********************************************
 
 
 
@@ -65,7 +59,7 @@ static THD_FUNCTION(chassis_control, p)
 }
 
 void chassis_init(void){
-  drive_init();
+
   chThdCreateStatic(chassis_control_wa, sizeof(chassis_control_wa),
                           NORMALPRIO, chassis_control, NULL);
 }
@@ -87,17 +81,17 @@ void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1)
     if(ABS(RX_X1 - RC_CH_VALUE_OFFSET) < THRESHOLD) RX_X1 = RC_CH_VALUE_OFFSET;
 
     //Remote Control Commands, Mapped to match min and max RPM
-    int16_t drive  = (int16_t)map(RX_X2, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
-    int16_t strafe = (int16_t)map(RX_Y1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
-    int16_t rotate = -(int16_t)map(RX_X1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
+    strafe  = (int16_t)map(RX_X2, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
+    drive = (int16_t)map(RX_Y1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
+    rotate = (int16_t)map(RX_X1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
 
     // For later coordinate with Gimbal
     int rotate_feedback = 0;
 
-    front_right = ((-1*drive + strafe + rotate) + rotate_feedback)/4.0;   // CAN ID: 0x201
-    back_right = ((drive + strafe + rotate) + rotate_feedback)/4.0;       // CAN ID: 0x202
-    front_left = ((drive - strafe + rotate) + rotate_feedback)/4.0;       // CAN ID: 0x203
-    back_left = ((-1*drive - strafe + rotate) + rotate_feedback)/4.0;     // CAN ID: 0x204
+    front_right = ((strafe - drive + rotate) + rotate_feedback);   // CAN ID: 0x201
+    back_right = ((-1*strafe - drive + rotate) + rotate_feedback);       // CAN ID: 0x202
+    front_left = ((strafe + drive + rotate) + rotate_feedback);       // CAN ID: 0x203
+    back_left = ((-1*strafe + drive + rotate) + rotate_feedback);     // CAN ID: 0x204
 
     // Set a scaling factor to allow different speed modes, controlled by the left switch
     // POSITION(value) = mode: UP(1) = fast, MIDDLE(3) = normal, DOWN(2) = slow

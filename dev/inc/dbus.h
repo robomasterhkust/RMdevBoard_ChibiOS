@@ -23,7 +23,7 @@
 #define KEY_D       0x0008
 #define KEY_A       0x0004
 #define KEY_S       0x0002
-#define KEY_W       0x000
+#define KEY_W       0x0001
 typedef struct{
 		struct{
 			uint16_t channel0;
