@@ -18,7 +18,7 @@ int16_t PID_output(int CM, int target_speed,volatile PID* PID){
 	ChassisEncoder_canStruct* chassis_encoder_array = can_getChassisMotor();
 	ChassisEncoder_canStruct chassis_encoder = chassis_encoder_array[CM];
 	//update the data stored in encoder
-	PID->P = chassis_encoder.raw_speed - target_speed;
+	PID->P = -chassis_encoder.raw_speed + target_speed;
 	PID->D = PID->P - PID->LastError;
 	PID->I = 0;
 	for (int i = 0 ; i<50 ; i++){
