@@ -54,6 +54,7 @@ static THD_FUNCTION(chassis_control, p)
       drive_kinematics(pRC->rc.channel0, pRC->rc.channel1, pRC->rc.channel2);
     //  can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID, \
           		10000, 10000, 10000, 10000);
+
       chThdSleepMilliseconds(10);
     }
 }
