@@ -40,8 +40,6 @@ static THD_FUNCTION(pwm_thd, arg) {
 
 void pwm_shooter_init(void)
 {
-    LEDR_ON();
-    LEDG_OFF();
 
     pwmStart(&PWMD8, &pwm8cfg);
     pwmEnableChannel(&PWMD8, 0, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 1000));

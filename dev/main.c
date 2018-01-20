@@ -91,10 +91,10 @@ int main(void) {
   params_init();
   can_processInit();
   RC_init();
-//  gimbal_init();
-  gimbal_sys_iden_init();
+  gimbal_init();
+  //gimbal_sys_iden_init();
   pwm_shooter_init();
-  extiinit();
+  //extiinit();
   tempControllerInit();
   //pwm12init();
 
