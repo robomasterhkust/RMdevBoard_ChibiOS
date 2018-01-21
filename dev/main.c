@@ -97,6 +97,7 @@ int main(void) {
   //extiinit();
   tempControllerInit();
   //pwm12init();
+  sdlog_init();
 
   //tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
 
