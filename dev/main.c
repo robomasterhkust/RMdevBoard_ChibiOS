@@ -24,6 +24,7 @@ static const magConfigStruct mag1_conf =
   {IST8310_ADDR_FLOATING, 200, IST8310_AXIS_REV_NO};
 
 PIMUStruct pIMU;
+PGyroStruct pGyro;
 
 #define MPU6500_UPDATE_PERIOD_US 1000000U/MPU6500_UPDATE_FREQ
 static THD_WORKING_AREA(Attitude_thread_wa, 4096);
@@ -91,20 +92,23 @@ int main(void) {
   params_init();
   can_processInit();
   RC_init();
-//  gimbal_init();
-  gimbal_sys_iden_init();
-  pwm_shooter_init();
-  extiinit();
-  tempControllerInit();
+  gimbal_init();
+  gimbal_sys_iden_init(); //*
+//  pwm_shooter_init(); // *
+  extiinit(); //*
+  tempControllerInit(); //*
+  chassis_init();
+  pGyro = gyro_init();
+
   //pwm12init();
 
   //tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
 
-  pIMU = imu_get();
+  pIMU = imu_get(); //*
 
   chThdCreateStatic(Attitude_thread_wa, sizeof(Attitude_thread_wa),
   NORMALPRIO + 5,
-                    Attitude_thread, NULL);
+                    Attitude_thread, NULL); //*
 
 
 

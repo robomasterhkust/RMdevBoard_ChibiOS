@@ -16,10 +16,12 @@
 
 #include "mpu6500.h"
 #include "ist8310.h"
+#include "adis16265.h"
 #include "attitude.h"
 #include "calibrate_sensor.h"
 
 #include "gimbal.h"
+#include "chassis.h"
 
 #include "exti.h"
 #include "imu_temp.h"
