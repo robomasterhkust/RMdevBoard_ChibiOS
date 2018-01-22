@@ -25,6 +25,7 @@
 
 #include "exti.h"
 #include "imu_temp.h"
+#include "sdlog.h"
 
 void shellStart(void);
 

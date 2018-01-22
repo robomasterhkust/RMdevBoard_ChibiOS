@@ -147,7 +147,9 @@ static THD_FUNCTION(gimbal_sys_iden, p)
     171.249908617510f,	212.176987801808f,	262.885244821938f,	325.712286997135f,	403.554387286977f,	500.0f};
     float stop_time_table[30] = {0};
     stop_time_table[0] = P * (1 / freq_log_space[0]);
-    for (int i = 0; i < 30; ++i) {
+
+    int i;
+    for (i = 0; i < 30; ++i) {
         stop_time_table[i] = stop_time_table[i-1] + P * (1 / freq_log_space[i]);
     }
 

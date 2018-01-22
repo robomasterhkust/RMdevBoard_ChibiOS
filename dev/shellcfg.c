@@ -173,8 +173,6 @@ void cmd_calibrate(BaseSequentialStream * chp, int argc, char *argv[])
     chprintf(chp,"Calibration: gyro, accl, adi fast, adi full\r\n");
 }
 
-extern PWMDriver PWMD12;
-
 void cmd_temp(BaseSequentialStream * chp, int argc, char *argv[])
 {
   (void) argc,argv;
@@ -190,8 +188,8 @@ void cmd_temp(BaseSequentialStream * chp, int argc, char *argv[])
 //      chprintf(chp,"PID_value: %i\i\n", _tempPID->PID_Value);
 //      chThdSleep(MS2ST(500));
 //  }
-
 }
+
 
 void cmd_dbus(BaseSequentialStream * chp, int argc, char *argv[])
 {
@@ -233,6 +231,7 @@ void cmd_gyro(BaseSequentialStream * chp, int argc, char *argv[])
       chprintf(chp,"Angle_vel: %f\n", _pGyro->angle_vel);
       chprintf(chp,"Angle: %f\n", _pGyro->angle);
 }
+
 
 /**
  * @brief array of shell commands, put the corresponding command and functions below

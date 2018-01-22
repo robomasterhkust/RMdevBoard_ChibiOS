@@ -93,6 +93,7 @@ int main(void) {
   can_processInit();
   RC_init();
   gimbal_init();
+
   gimbal_sys_iden_init(); //*
 //  pwm_shooter_init(); // *
   extiinit(); //*
@@ -101,6 +102,7 @@ int main(void) {
   pGyro = gyro_init();
 
   //pwm12init();
+  sdlog_init();
 
   //tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
 
