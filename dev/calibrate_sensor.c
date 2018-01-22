@@ -10,10 +10,10 @@
 #include "math_misc.h"
 
 #include "mpu6500.h"
-//#include "adi_gyro.h"
+#include "adis16265.h"
 #include "usbcfg.h"
 #include "calibrate_sensor.h"
-#include "flash.h"
+//#include "flash.h"
 #include "chprintf.h"
 #include <string.h>
 
@@ -411,8 +411,8 @@ void calibrate_gyroscope(PIMUStruct pIMU)
   }
 }
 
-/*
-static uint8_t gyro_cal(PGyroStruct pGyro, const uint8_t full_cal)
+
+uint8_t gyro_cal(PGyroStruct pGyro, const uint8_t full_cal)
 {
   float gyro_zero = 0.0f;
   uint16_t i = 0;
@@ -461,19 +461,19 @@ static uint8_t gyro_cal(PGyroStruct pGyro, const uint8_t full_cal)
 
   chprintf(chp,"\r\n");
   chprintf(chp,"Calibration complete\r\n");
-
+  pGyro->adis_gyroscope_not_calibrated = false;
   pGyro->offset += gyro_zero;
-  flashSectorErase(flashSectorAt(GYRO_CAL_FLASH));
-  flashWrite(GYRO_CAL_FLASH, &(pGyro->offset),4);
+//  flashSectorErase(flashSectorAt(GYRO_CAL_FLASH));
+//  flashWrite(GYRO_CAL_FLASH, &(pGyro->offset),4);
 
-  float test;
-  flashRead(GYRO_CAL_FLASH, &test,4);
-  chprintf(chp,"gyro_offset: %f\r\n",  test * 180.0f/M_PI);
+//  float test;
+//  flashRead(GYRO_CAL_FLASH, &test,4);
+    chprintf(chp,"gyro_offset: %f\r\n",  pGyro->offset ); //* 180.0f/M_PI
 
 	pGyro->state = INITED;
   return 0;
 }
-
+/*
 void cmd_calibrate_gyro(BaseSequentialStream * chp, int argc, char *argv[])
 {
   PGyroStruct pGyro = gyro_get();
