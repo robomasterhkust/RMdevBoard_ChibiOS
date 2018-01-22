@@ -62,13 +62,17 @@ static THD_FUNCTION(params_tx,p)
   uartStartSend(UART_PARAMS, 1, &subparams_total);
   chThdSleepMilliseconds(5);
 
+  uartStopSend(UART_PARAMS);
+  uartStartSend(UART_PARAMS, 4, (uint8_t*)&param_private_flag);
+  chThdSleepMilliseconds(5);
+
   uint8_t i;
   uint32_t flag;
 
   flag = 1;
   for (i = 0; i < PARAMS_NUM_MAX; i++)
   {
-    if((flag&param_valid_flag) && !(flag&param_private_flag))
+    if(flag&param_valid_flag)
     {
       uartStopSend(UART_PARAMS);
       uartStartSend(UART_PARAMS, 8, subparams[i]);
@@ -84,7 +88,7 @@ static THD_FUNCTION(params_tx,p)
   flag = 1;
   for(i = 0; i<PARAMS_NUM_MAX; i++)
   {
-    if((flag&param_valid_flag) && !(flag&param_private_flag))
+    if(flag&param_valid_flag)
     {
       uartStopSend(UART_PARAMS);
       uartStartSend(UART_PARAMS, 4*subparams[i][0], (uint8_t*)(params[i]));
@@ -96,7 +100,7 @@ static THD_FUNCTION(params_tx,p)
   flag = 1;
   for(i = 0; i<PARAMS_NUM_MAX; i++)
   {
-    if((flag&param_valid_flag) && !(flag&param_private_flag))
+    if(flag&param_valid_flag)
     {
       uart_sendLine(param_name[i]);
       uart_sendLine(subparam_name[i]);
@@ -118,7 +122,6 @@ static void rxend(UARTDriver *uartp)
     {
       case 'p':
         if((1<<rxbuf[1])&param_valid_flag &&
-           !((1<<rxbuf[1])&param_private_flag) &&
            rxbuf[2] < subparams[rxbuf[1]][0])
         {
           chSysLockFromISR();
@@ -128,7 +131,6 @@ static void rxend(UARTDriver *uartp)
         break;
       case 's':
         if((1<<rxbuf[1])&param_valid_flag &&
-           !((1<<rxbuf[1])&param_private_flag) &&
            rxbuf[2] < subparams[rxbuf[1]][0])
           subparams[rxbuf[1]][rxbuf[2] + 1] = rxbuf[3];
         break;
@@ -238,11 +240,9 @@ uint8_t params_set(param_t* const     p_param,
 
   if(param_private == PARAM_PRIVATE)
     param_private_flag |= (uint32_t)(1 << param_pos);
-  else
-  {
-    params_total++;
-    subparams_total += param_num;
-  }
+
+  params_total++;
+  subparams_total += param_num;
 
   return result;
 }

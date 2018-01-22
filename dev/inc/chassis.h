@@ -14,14 +14,19 @@
 #include "can.h"
 #include "dbus.h"
 #include "pid_chassis.h"
+#include "adis16265.h"
 
 #define CHASSIS_CAN  &CAND1         // Later should be CAND2
 #define CHASSIS_CAN_EID  0x200
 
 // DBUS MACRO
 
-#define RPM_MAX    ((int16_t) 10000)              //
-#define RPM_MIN    ((int16_t) -10000)              //
+#define CURRENT_MAX    ((int16_t) 16384)              //
+#define CURRENT_MIN    ((int16_t) -16384)              //
+
+#define HEADING_MIN     ((float) -3.14159) // - pi
+#define HEADING_MAX     ((float) 3.14159)   // pi
+#define HEADING_SCALE   ((uint16_t) 100)
 
 #define ABS(x)     ( ((x) > 0) ? (x) : (-(x)) ) //return abs value of x
 // MATH definition

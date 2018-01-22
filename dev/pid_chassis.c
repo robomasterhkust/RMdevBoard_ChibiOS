@@ -12,6 +12,7 @@ volatile PID CM1PID = { kP,kI,kD,0,0,0,0,0,{0},MAXCURRENT};
 volatile PID CM2PID = { kP,kI,kD,0,0,0,0,0,{0},MAXCURRENT};
 volatile PID CM3PID = { kP,kI,kD,0,0,0,0,0,{0},MAXCURRENT};
 volatile PID CM4PID = { kP,kI,kD,0,0,0,0,0,{0},MAXCURRENT};
+volatile PID HeadPID = { kP,kI,kD,0,0,0,0,0,{0},MAXCURRENT}; // might be Extra
 
 int16_t PID_output(int CM, int target_speed,volatile PID* PID){
 	//get the corresponding encoder
@@ -36,5 +37,3 @@ int16_t PID_output(int CM, int target_speed,volatile PID* PID){
 	PID->speed_buffer[49] = PID->P;
 	return (int16_t)PID->Output;
 }
-
-

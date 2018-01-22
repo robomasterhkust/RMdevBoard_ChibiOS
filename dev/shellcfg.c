@@ -98,7 +98,7 @@ void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
 
   //chprintf(chp,"Gimbal Pitch: %f\r\n",gimbal->pitch_angle);
  // chprintf(chp,"Gimbal Yaw: %f\r\n",gimbal->yaw_angle);
- // chprintf(chp,"IMU Pitch: %f\r\n",PIMU->euler_angle[Pitch]);
+  chprintf(chp,"IMU Pitch: %f\r\n",PIMU->euler_angle[Pitch]);
 }
 
 /**
@@ -138,7 +138,7 @@ void cmd_data(BaseSequentialStream * chp, int argc, char *argv[])
 void cmd_calibrate(BaseSequentialStream * chp, int argc, char *argv[])
 {
   PIMUStruct pIMU = imu_get();
-
+  PGyroStruct pGyro = gyro_get();
   if(argc)
   {
     if(!strcmp(argv[0], "accl"))
@@ -155,13 +155,23 @@ void cmd_calibrate(BaseSequentialStream * chp, int argc, char *argv[])
       calibrate_gyroscope(pIMU);
       chThdResume(&(pIMU->imu_Thd), MSG_OK);
     }
+    else if(!strcmp(argv[0], "adi"))
+    {
+      pGyro->adis_gyroscope_not_calibrated = true;
+      chThdSleepMilliseconds(10);
+      if(argc && !strcmp(argv[1],"fast"))
+        gyro_cal(pGyro,false); //fast calibration ~30s
+      else if(argc && strcmp(argv[1],"full"))
+        chprintf(chp,"Invalid parameter!\r\n");
+      else
+        gyro_cal(pGyro,true); //full calibration ~5min
+      chThdResume(&(pGyro->adis_Thd), MSG_OK);
+    }
     param_save_flash();
   }
   else
-    chprintf(chp,"Calibration: gyro, accl, adi\r\n");
+    chprintf(chp,"Calibration: gyro, accl, adi fast, adi full\r\n");
 }
-
-extern PWMDriver PWMD12;
 
 void cmd_temp(BaseSequentialStream * chp, int argc, char *argv[])
 {
@@ -178,8 +188,8 @@ void cmd_temp(BaseSequentialStream * chp, int argc, char *argv[])
 //      chprintf(chp,"PID_value: %i\i\n", _tempPID->PID_Value);
 //      chThdSleep(MS2ST(500));
 //  }
-
 }
+
 
 void cmd_dbus(BaseSequentialStream * chp, int argc, char *argv[])
 {
@@ -212,6 +222,16 @@ void cmd_dbus(BaseSequentialStream * chp, int argc, char *argv[])
   }
 }
 
+void cmd_gyro(BaseSequentialStream * chp, int argc, char *argv[])
+{
+      (void) argc,argv;
+
+      PGyroStruct _pGyro = gyro_get();
+      chprintf(chp,"Offset: %f\n", _pGyro->offset);
+      chprintf(chp,"Angle_vel: %f\n", _pGyro->angle_vel);
+      chprintf(chp,"Angle: %f\n", _pGyro->angle);
+}
+
 
 /**
  * @brief array of shell commands, put the corresponding command and functions below
@@ -224,6 +244,7 @@ static const ShellCommand commands[] =
   {"cal", cmd_calibrate},
   {"temp", cmd_temp},
   {"dbus", cmd_dbus},
+  {"gyro", cmd_gyro},
   {NULL, NULL}
 };
 
