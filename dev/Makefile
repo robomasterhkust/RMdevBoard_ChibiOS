@@ -129,7 +129,8 @@ CSRC = $(STARTUPSRC) \
        mpu6500.c attitude.c ist8310.c math_misc.c \
        canBusProcess.c dbus.c gimbal.c params.c usbcfg.c \
        calibrate_sensor.c gimbal_sys_iden.c shoot_pwm.c \
-       exti.c pwm_struct.c imu_temp.c chassis.c pid_chassis.c
+       exti.c pwm_struct.c imu_temp.c chassis.c pid_chassis.c \
+       adis16265.c
 
 
 

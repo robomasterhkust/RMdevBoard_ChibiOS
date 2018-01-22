@@ -105,7 +105,7 @@ static THD_FUNCTION(uart_dbus_thread, p)
       timeout = MS2ST(DBUS_INIT_WAIT_TIME_MS);
     }
 
-    //Control the flashing of green LED
+    //Control the flashing of green LED // Shift to Error.c
     if((!(count % 25) && !rxflag) || !(count% 75))
       LEDG_TOGGLE();
     count++;

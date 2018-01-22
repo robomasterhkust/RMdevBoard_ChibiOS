@@ -132,15 +132,15 @@
 #define GPIOE_PIN1                  1U
 #define GPIOE_IST8310_RST           2U
 #define GPIOE_PIN3                  3U
-#define GPIOE_SPI4_NSS              4U
-#define GPIOE_SPI4_MISO             5U
-#define GPIOE_SPI4_MOSI             6U
+#define GPIOE_SPI4_ADIS_NSS         4U
+#define GPIOE_SPI4_ADIS_MISO        5U
+#define GPIOE_SPI4_ADIS_MOSI        6U
 #define GPIOE_LED_R                 7U
 #define GPIOE_PIN8                  8U
 #define GPIOE_PIN9                  9U
 #define GPIOE_PIN10                 10U
 #define GPIOE_PIN11                 11U
-#define GPIOE_SPI4_SCK              12U
+#define GPIOE_SPI4_ADIS_SCK         12U
 #define GPIOE_TIM1_CH3              13U
 #define GPIOE_TIM1_CH4              14U
 #define GPIOE_PIN15                 15U
@@ -769,15 +769,15 @@
                                      PIN_MODE_INPUT(GPIOE_PIN1) |           \
                                      PIN_MODE_INPUT(GPIOE_IST8310_RST) |           \
                                      PIN_MODE_INPUT(GPIOE_PIN3) |        \
-                                     PIN_MODE_OUTPUT(GPIOE_SPI4_NSS) |           \
-                                     PIN_MODE_ALTERNATE(GPIOE_SPI4_MISO) |           \
-                                     PIN_MODE_ALTERNATE(GPIOE_SPI4_MOSI) |           \
+                                     PIN_MODE_OUTPUT(GPIOE_SPI4_ADIS_NSS) |           \
+                                     PIN_MODE_ALTERNATE(GPIOE_SPI4_ADIS_MISO) |           \
+                                     PIN_MODE_ALTERNATE(GPIOE_SPI4_ADIS_MOSI) |           \
                                      PIN_MODE_OUTPUT(GPIOE_LED_R) |           \
                                      PIN_MODE_INPUT(GPIOE_PIN8) |           \
                                      PIN_MODE_INPUT(GPIOE_PIN9) |           \
                                      PIN_MODE_INPUT(GPIOE_PIN10) |          \
                                      PIN_MODE_INPUT(GPIOE_PIN11) |          \
-                                     PIN_MODE_ALTERNATE(GPIOE_SPI4_SCK) |          \
+                                     PIN_MODE_ALTERNATE(GPIOE_SPI4_ADIS_SCK) |          \
                                      PIN_MODE_ALTERNATE(GPIOE_TIM1_CH3) |          \
                                      PIN_MODE_ALTERNATE(GPIOE_TIM1_CH4) |          \
                                      PIN_MODE_INPUT(GPIOE_PIN15))
@@ -785,15 +785,15 @@
                                      PIN_OTYPE_PUSHPULL(GPIOE_PIN1) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOE_IST8310_RST) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOE_PIN3) |     \
-                                     PIN_OTYPE_PUSHPULL(GPIOE_SPI4_NSS) |       \
-                                     PIN_OTYPE_PUSHPULL(GPIOE_SPI4_MISO) |       \
-                                     PIN_OTYPE_PUSHPULL(GPIOE_SPI4_MOSI) |       \
+                                     PIN_OTYPE_PUSHPULL(GPIOE_SPI4_ADIS_NSS) |       \
+                                     PIN_OTYPE_PUSHPULL(GPIOE_SPI4_ADIS_MISO) |       \
+                                     PIN_OTYPE_PUSHPULL(GPIOE_SPI4_ADIS_MOSI) |       \
                                      PIN_OTYPE_OPENDRAIN(GPIOE_LED_R) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOE_PIN8) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOE_PIN9) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOE_PIN10) |      \
                                      PIN_OTYPE_PUSHPULL(GPIOE_PIN11) |      \
-                                     PIN_OTYPE_PUSHPULL(GPIOE_SPI4_SCK) |      \
+                                     PIN_OTYPE_PUSHPULL(GPIOE_SPI4_ADIS_SCK) |      \
                                      PIN_OTYPE_PUSHPULL(GPIOE_TIM1_CH3) |      \
                                      PIN_OTYPE_PUSHPULL(GPIOE_TIM1_CH4) |      \
                                      PIN_OTYPE_PUSHPULL(GPIOE_PIN15))
@@ -801,15 +801,15 @@
                                      PIN_OSPEED_HIGH(GPIOE_PIN1) |          \
                                      PIN_OSPEED_HIGH(GPIOE_IST8310_RST) |          \
                                      PIN_OSPEED_HIGH(GPIOE_PIN3) |        \
-                                     PIN_OSPEED_HIGH(GPIOE_SPI4_NSS) |          \
-                                     PIN_OSPEED_HIGH(GPIOE_SPI4_MISO) |          \
-                                     PIN_OSPEED_HIGH(GPIOE_SPI4_MOSI) |          \
+                                     PIN_OSPEED_HIGH(GPIOE_SPI4_ADIS_NSS) |          \
+                                     PIN_OSPEED_HIGH(GPIOE_SPI4_ADIS_MISO) |          \
+                                     PIN_OSPEED_HIGH(GPIOE_SPI4_ADIS_MOSI) |          \
                                      PIN_OSPEED_HIGH(GPIOE_LED_R) |          \
                                      PIN_OSPEED_HIGH(GPIOE_PIN8) |          \
                                      PIN_OSPEED_HIGH(GPIOE_PIN9) |          \
                                      PIN_OSPEED_HIGH(GPIOE_PIN10) |         \
                                      PIN_OSPEED_HIGH(GPIOE_PIN11) |         \
-                                     PIN_OSPEED_HIGH(GPIOE_SPI4_SCK) |         \
+                                     PIN_OSPEED_HIGH(GPIOE_SPI4_ADIS_SCK) |         \
                                      PIN_OSPEED_HIGH(GPIOE_TIM1_CH3) |         \
                                      PIN_OSPEED_HIGH(GPIOE_TIM1_CH4) |         \
                                      PIN_OSPEED_HIGH(GPIOE_PIN15))
@@ -817,15 +817,15 @@
                                      PIN_PUPDR_FLOATING(GPIOE_PIN1) |       \
                                      PIN_PUPDR_FLOATING(GPIOE_IST8310_RST) |       \
                                      PIN_PUPDR_FLOATING(GPIOE_PIN3) |     \
-                                     PIN_PUPDR_PULLUP(GPIOE_SPI4_NSS) |       \
-                                     PIN_PUPDR_PULLDOWN(GPIOE_SPI4_MISO) |       \
-                                     PIN_PUPDR_PULLDOWN(GPIOE_SPI4_MOSI) |       \
+                                     PIN_PUPDR_PULLUP(GPIOE_SPI4_ADIS_NSS) |       \
+                                     PIN_PUPDR_PULLDOWN(GPIOE_SPI4_ADIS_MISO) |       \
+                                     PIN_PUPDR_PULLDOWN(GPIOE_SPI4_ADIS_MOSI) |       \
                                      PIN_PUPDR_PULLUP(GPIOE_LED_R) |       \
                                      PIN_PUPDR_FLOATING(GPIOE_PIN8) |       \
                                      PIN_PUPDR_FLOATING(GPIOE_PIN9) |       \
                                      PIN_PUPDR_FLOATING(GPIOE_PIN10) |     \
                                      PIN_PUPDR_FLOATING(GPIOE_PIN11) |      \
-                                     PIN_PUPDR_PULLDOWN(GPIOE_SPI4_SCK) |      \
+                                     PIN_PUPDR_PULLDOWN(GPIOE_SPI4_ADIS_SCK) |      \
                                      PIN_PUPDR_PULLDOWN(GPIOE_TIM1_CH3) |      \
                                      PIN_PUPDR_PULLDOWN(GPIOE_TIM1_CH4) |      \
                                      PIN_PUPDR_FLOATING(GPIOE_PIN15))
@@ -833,15 +833,15 @@
                                      PIN_ODR_HIGH(GPIOE_PIN1) |             \
                                      PIN_ODR_HIGH(GPIOE_IST8310_RST) |             \
                                      PIN_ODR_HIGH(GPIOE_PIN3) |           \
-                                     PIN_ODR_HIGH(GPIOE_SPI4_NSS) |             \
-                                     PIN_ODR_HIGH(GPIOE_SPI4_MISO) |             \
-                                     PIN_ODR_HIGH(GPIOE_SPI4_MOSI) |             \
+                                     PIN_ODR_HIGH(GPIOE_SPI4_ADIS_NSS) |             \
+                                     PIN_ODR_HIGH(GPIOE_SPI4_ADIS_MISO) |             \
+                                     PIN_ODR_HIGH(GPIOE_SPI4_ADIS_MOSI) |             \
                                      PIN_ODR_HIGH(GPIOE_LED_R) |             \
                                      PIN_ODR_HIGH(GPIOE_PIN8) |             \
                                      PIN_ODR_HIGH(GPIOE_PIN9) |             \
                                      PIN_ODR_HIGH(GPIOE_PIN10) |            \
                                      PIN_ODR_HIGH(GPIOE_PIN11) |            \
-                                     PIN_ODR_HIGH(GPIOE_SPI4_SCK) |            \
+                                     PIN_ODR_HIGH(GPIOE_SPI4_ADIS_SCK) |            \
                                      PIN_ODR_HIGH(GPIOE_TIM1_CH3) |            \
                                      PIN_ODR_HIGH(GPIOE_TIM1_CH4) |            \
                                      PIN_ODR_HIGH(GPIOE_PIN15))
@@ -849,15 +849,15 @@
                                      PIN_AFIO_AF(GPIOE_PIN1, 0U) |          \
                                      PIN_AFIO_AF(GPIOE_IST8310_RST, 0U) |          \
                                      PIN_AFIO_AF(GPIOE_PIN3, 0U) |        \
-                                     PIN_AFIO_AF(GPIOE_SPI4_NSS, 5U) |          \
-                                     PIN_AFIO_AF(GPIOE_SPI4_MISO, 5U) |          \
-                                     PIN_AFIO_AF(GPIOE_SPI4_MOSI, 5U) |          \
+                                     PIN_AFIO_AF(GPIOE_SPI4_ADIS_NSS, 5U) |          \
+                                     PIN_AFIO_AF(GPIOE_SPI4_ADIS_MISO, 5U) |          \
+                                     PIN_AFIO_AF(GPIOE_SPI4_ADIS_MOSI, 5U) |          \
                                      PIN_AFIO_AF(GPIOE_LED_R, 1U))
 #define VAL_GPIOE_AFRH              (PIN_AFIO_AF(GPIOE_PIN8, 0U) |          \
                                      PIN_AFIO_AF(GPIOE_PIN9, 0U) |          \
                                      PIN_AFIO_AF(GPIOE_PIN10, 0U) |         \
                                      PIN_AFIO_AF(GPIOE_PIN11, 0U) |         \
-                                     PIN_AFIO_AF(GPIOE_SPI4_SCK, 5U) |         \
+                                     PIN_AFIO_AF(GPIOE_SPI4_ADIS_SCK, 5U) |         \
                                      PIN_AFIO_AF(GPIOE_TIM1_CH3, 1U) |         \
                                      PIN_AFIO_AF(GPIOE_TIM1_CH4, 1U) |         \
                                      PIN_AFIO_AF(GPIOE_PIN15, 0U))

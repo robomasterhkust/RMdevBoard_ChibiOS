@@ -16,6 +16,7 @@
 
 #include "mpu6500.h"
 #include "ist8310.h"
+#include "adis16265.h"
 #include "attitude.h"
 #include "calibrate_sensor.h"
 
