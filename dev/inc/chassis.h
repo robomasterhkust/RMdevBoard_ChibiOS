@@ -24,9 +24,14 @@
 #define CURRENT_MAX    ((int16_t) 16384)              //
 #define CURRENT_MIN    ((int16_t) -16384)              //
 
+#define RPM_MAX    ((int16_t) 277)              //
+#define RPM_MIN    ((int16_t) -277)              //
+
 #define HEADING_MIN     ((float) -3.14159) // - pi
 #define HEADING_MAX     ((float) 3.14159)   // pi
-#define HEADING_SCALE   ((uint16_t) 100)
+//#define HEADING_MIN     ((float) -1) // - pi
+//#define HEADING_MAX     ((float) 1)   // pi
+#define HEADING_SCALE   ((uint16_t) 1)
 
 #define ABS(x)     ( ((x) > 0) ? (x) : (-(x)) ) //return abs value of x
 // MATH definition

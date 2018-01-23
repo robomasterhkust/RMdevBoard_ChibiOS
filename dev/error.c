@@ -7,4 +7,4 @@
 #include "main.h"
 #include "error.h"
 
-
+uint32_t ist8310_getError(void);

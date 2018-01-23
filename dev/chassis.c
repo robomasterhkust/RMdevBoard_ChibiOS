@@ -10,7 +10,7 @@
   (can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID, \
     0, 0, 0, 0))
 
-static volatile int16_t heading_target;
+//#define heading_target ((float) 0.0f);
 int16_t FR;
 int16_t BR;
 int16_t FL;
@@ -30,7 +30,7 @@ extern PID HeadPID;
 volatile int16_t drive;
 volatile int16_t strafe ;
 volatile int16_t rotate ;
-volatile int16_t heading_correction;
+volatile float heading_correction;
 
 // MATH function
 float map(float x, float in_min, float in_max, float out_min, float out_max)
@@ -54,22 +54,20 @@ static THD_FUNCTION(chassis_control, p)
     while(1){
 
       drive_kinematics(pRC->rc.channel0, pRC->rc.channel1, pRC->rc.channel2);
-    //  can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID, \
-          		10000, 10000, 10000, 10000);
-
       chThdSleepMilliseconds(10);
     }
 }
 
 void chassis_init(void){
-  heading_target = 0.0f;
+  //heading_target = 0.0f;
+  heading_correction = 0.0f;
   chThdCreateStatic(chassis_control_wa, sizeof(chassis_control_wa),
                           NORMALPRIO, chassis_control, NULL);
 }
 
 void update_heading(void){
   PGyroStruct pGyro = gyro_get();
-  heading_target = pGyro->angle;
+  pGyro->angle = 0.0f;
 }
 
 void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1)
@@ -84,26 +82,34 @@ void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1)
     if(ABS(RX_Y1 - RC_CH_VALUE_OFFSET) < THRESHOLD)  RX_Y1 = RC_CH_VALUE_OFFSET;
 
     // Create "dead-zone" for rotate
-    if(ABS(RX_X1 - RC_CH_VALUE_OFFSET) < THRESHOLD) RX_X1 = RC_CH_VALUE_OFFSET;
-    else update_heading();
+    if(ABS(RX_X1 - RC_CH_VALUE_OFFSET) < THRESHOLD){ RX_X1 = RC_CH_VALUE_OFFSET; }
+    else {update_heading();}
 
     // Compute the Heading correction
     PGyroStruct pGyro = gyro_get();
-    heading_correction = heading_target - pGyro->angle;
+    heading_correction = - pGyro->angle;// heading_target - pGyro->angle;
 
     //Remote Control Commands, Mapped to match min and max CURRENT
     strafe  = (int16_t)map(RX_X2, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, CURRENT_MIN, CURRENT_MAX);
     drive = (int16_t)map(RX_Y1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, CURRENT_MIN, CURRENT_MAX);
     rotate = (int16_t)map(RX_X1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, CURRENT_MIN, CURRENT_MAX);
-    heading_correction = HEADING_SCALE * (int16_t)map(heading_correction, HEADING_MIN, HEADING_MAX, CURRENT_MIN, CURRENT_MAX);
+    uint16_t heading_feedback = - HEADING_SCALE * (int16_t)map(heading_correction, HEADING_MIN, HEADING_MAX, CURRENT_MIN, CURRENT_MAX);
+
+    //From internal
+//    strafe  = (int16_t)map(RX_X2, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
+//    drive = (int16_t)map(RX_Y1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
+//    rotate = (int16_t)map(RX_X1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
+//    //heading_correction = HEADING_SCALE * (int16_t)map(heading_correction, HEADING_MIN, HEADING_MAX, CURRENT_MIN, CURRENT_MAX);
+
+
     // For later coordinate with Gimbal
     int rotate_feedback = 0;
 
 
-    front_right = ((strafe - drive + rotate) + rotate_feedback + heading_correction);   // CAN ID: 0x201
-    back_right = ((-1*strafe - drive + rotate) + rotate_feedback + heading_correction);       // CAN ID: 0x202
-    front_left = ((strafe + drive + rotate) + rotate_feedback + heading_correction);       // CAN ID: 0x203
-    back_left = ((-1*strafe + drive + rotate) + rotate_feedback + heading_correction);     // CAN ID: 0x204
+    front_right = ((strafe - drive + rotate) + rotate_feedback + heading_feedback);   // CAN ID: 0x201
+    back_right = ((-1*strafe - drive + rotate) + rotate_feedback + heading_feedback);       // CAN ID: 0x202
+    front_left = ((strafe + drive + rotate) + rotate_feedback  + heading_feedback);       // CAN ID: 0x203
+    back_left = ((-1*strafe + drive + rotate) + rotate_feedback + heading_feedback);     // CAN ID: 0x204
 
     // Set a scaling factor to allow different speed modes, controlled by the left switch
     // POSITION(value) = mode: UP(1) = fast, MIDDLE(3) = normal, DOWN(2) = slow
