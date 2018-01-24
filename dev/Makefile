@@ -135,6 +135,7 @@ CSRC = $(STARTUPSRC) \
        adis16265.c sdlog.c error.c
 
 
+
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CPPSRC =
