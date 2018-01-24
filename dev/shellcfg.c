@@ -57,6 +57,7 @@ static THD_FUNCTION(matlab_thread, p)
   BaseSequentialStream* chp = (BaseSequentialStream*)SERIAL_DATA;
 
   PIMUStruct PIMU = imu_get();
+  chassisStruct* chassis = chassis_get();
 //  GimbalStruct* gimbal = gimbal_get();
 
   uint32_t tick = chVTGetSystemTimeX();
@@ -71,14 +72,10 @@ static THD_FUNCTION(matlab_thread, p)
       tick = chVTGetSystemTimeX();
     }
 
-    txbuf_f[0] = PIMU->gyroData[X];
-    txbuf_f[1] = PIMU->gyroData[Y];
-    txbuf_f[2] = PIMU->gyroData[Z];
-    txbuf_f[3] = PIMU->euler_angle[Roll];
-    txbuf_f[4] = PIMU->euler_angle[Pitch];
-    txbuf_f[5] = PIMU->euler_angle[Yaw];
+    txbuf_f[0] = chassis->_motors[FRONT_LEFT].speed_sp;
+    txbuf_f[1] = chassis->_motors[FRONT_LEFT]._speed;
 
-    transmit_matlab(chp, NULL, txbuf_f, 0, 6);
+    transmit_matlab(chp, NULL, txbuf_f, 0, 2);
   }
 }
 
@@ -91,12 +88,19 @@ void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
   (void) argc,argv;
 //  PIMUStruct PIMU = imu_get();
 //  GimbalStruct* gimbal = gimbal_get();
-  chassisStruct* chassis = chassis_get();
+//  chassisStruct* chassis = chassis_get();
+  ChassisEncoder_canStruct* chassis = can_getChassisMotor();
+  ChassisEncoder_canStruct* extra = can_getExtraMotor();
 
-  chprintf(chp,"FL: %f\r\n",chassis->_motors[FRONT_LEFT]._speed);
-  chprintf(chp,"FR: %f\r\n",chassis->_motors[FRONT_RIGHT]._speed);
-  chprintf(chp,"BL: %f\r\n",chassis->_motors[BACK_LEFT]._speed);
-  chprintf(chp,"BR: %f\r\n",chassis->_motors[BACK_RIGHT]._speed);
+  chprintf(chp,"FL: %d\r\n",extra[0].raw_speed);
+  chprintf(chp,"FR: %d\r\n",extra[1].raw_speed);
+  chprintf(chp,"BL: %d\r\n",extra[2].raw_speed);
+  chprintf(chp,"BR: %d\r\n",extra[3].raw_speed);
+  chprintf(chp,"FL: %d\r\n",chassis[0].raw_speed);
+  chprintf(chp,"FR: %d\r\n",chassis[1].raw_speed);
+  chprintf(chp,"BL: %d\r\n",chassis[2].raw_speed);
+  chprintf(chp,"BR: %d\r\n",chassis[3].raw_speed);
+
 
   //chprintf(chp,"Gimbal Pitch: %f\r\n",gimbal->pitch_angle);
  // chprintf(chp,"Gimbal Yaw: %f\r\n",gimbal->yaw_angle);

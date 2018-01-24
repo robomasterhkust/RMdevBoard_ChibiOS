@@ -33,7 +33,7 @@ static inline float map(float x, float in_min, float in_max, float out_min, floa
 }
 
 #define   CHASSIS_ANGLE_PSC 7.6699e-4 //2*M_PI/0x1FFF
-#define   CHASSIS_SPEED_PSC 1
+#define   CHASSIS_SPEED_PSC 1.0f/((float)CHASSIS_GEAR_RATIO)
 #define   CHASSIS_CONNECTION_ERROR_COUNT 20U
 static void chassis_encoderUpdate(void)
 {
@@ -64,13 +64,14 @@ static void chassis_encoderUpdate(void)
   #endif
 }
 
+#define OUTPUT_MAX  30000
 static int16_t chassis_controlSpeed(motorStruct* motor, pi_controller_t* controller)
 {
   float error = motor->speed_sp - motor->_speed;
   controller->error_int += error * controller->ki;
   controller->error_int = boundOutput(controller->error_int, controller->error_int_max);
   float output = error*controller->kp + controller->error_int;
-  return (int16_t)(boundOutput(output,CURRENT_MAX));
+  return (int16_t)(boundOutput(output,OUTPUT_MAX));
 }
 
 static THD_WORKING_AREA(chassis_control_wa, 2048);
@@ -181,5 +182,5 @@ void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1)
     output[i] = chassis_controlSpeed(&chassis._motors[i], &motor_vel_controllers[i]);
 
   can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID,
-    		output[0], output[1], output[2], output[3]);
+    		output[FRONT_RIGHT], output[BACK_RIGHT], output[FRONT_LEFT], output[BACK_LEFT]); //BR,FR,--,--
 }
