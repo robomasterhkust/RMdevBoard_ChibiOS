@@ -251,6 +251,7 @@ static const ShellCommand commands[] =
   {"temp", cmd_temp},
   {"dbus", cmd_dbus},
   {"gyro", cmd_gyro},
+  {"error", cmd_error},
   {NULL, NULL}
 };
 

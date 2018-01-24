@@ -34,7 +34,7 @@ GimbalStruct* gimbal_get(void)
   return &gimbal;
 }
 
-uint32_t gimbal_get_error(void)
+uint32_t gimbal_getError(void)
 {
   return gimbal.errorFlag;
 }

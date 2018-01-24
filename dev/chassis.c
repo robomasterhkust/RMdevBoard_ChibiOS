@@ -21,6 +21,7 @@ lpfilterStruct lp_speed[CHASSIS_MOTOR_NUM];
   (can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID, \
     0, 0, 0, 0))
 
+
 chassisStruct* chassis_get(void)
 {
   return &chassis;
@@ -77,6 +78,7 @@ static int16_t chassis_controlSpeed(motorStruct* motor, pi_controller_t* control
 static THD_WORKING_AREA(chassis_control_wa, 2048);
 static THD_FUNCTION(chassis_control, p)
 {
+
   (void)p;
   chRegSetThreadName("chassis controller");
 
@@ -91,6 +93,7 @@ static THD_FUNCTION(chassis_control, p)
     else
     {
       tick = chVTGetSystemTimeX();
+
     }
 
     chassis_encoderUpdate();
@@ -126,9 +129,11 @@ void chassis_init(void)
   }
   chassis._pGyro = gyro_get();
   chassis._encoders = can_getChassisMotor();
+
   chThdCreateStatic(chassis_control_wa, sizeof(chassis_control_wa),
                           NORMALPRIO, chassis_control, NULL);
 }
+
 
 void update_heading(void)
 {
@@ -138,6 +143,7 @@ void update_heading(void)
 
 void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1)
 {
+
   // Set dead-zone to 6% range to provide smoother control
   float THRESHOLD = (RC_CH_VALUE_MAX - RC_CH_VALUE_MIN)*3/100;
 
@@ -183,4 +189,5 @@ void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1)
 
   can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID,
     		output[FRONT_RIGHT], output[BACK_RIGHT], output[FRONT_LEFT], output[BACK_LEFT]); //BR,FR,--,--
+
 }

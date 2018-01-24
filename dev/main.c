@@ -99,7 +99,7 @@ int main(void) {
   tempControllerInit(); //*
   chassis_init();
   pGyro = gyro_init();
-
+  error_init();
   //pwm12init();
   sdlog_init();
 
