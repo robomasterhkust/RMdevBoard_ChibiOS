@@ -5,13 +5,17 @@
 #include "stdbool.h"
 #include "hal.h"
 #include "string.h"
+#include "adis16265.h"
+
 #define GIMBAL_MOTOR_NUM  2U
 #define CHASSIS_MOTOR_NUM 4U
+#define EXTRA_MOTOR_NUM   4U
+
 /* CAN Bus 1 or 2 */
-#define CAN_CHASSIS_FL_FEEDBACK_MSG_ID              0x201
-#define CAN_CHASSIS_FR_FEEDBACK_MSG_ID              0x202
-#define CAN_CHASSIS_BL_FEEDBACK_MSG_ID              0x203
-#define CAN_CHASSIS_BR_FEEDBACK_MSG_ID              0x204
+#define CAN_CHASSIS_FL_FEEDBACK_MSG_ID              0x203
+#define CAN_CHASSIS_FR_FEEDBACK_MSG_ID              0x201
+#define CAN_CHASSIS_BL_FEEDBACK_MSG_ID              0x204
+#define CAN_CHASSIS_BR_FEEDBACK_MSG_ID              0x202
 #define CAN_GIMBAL_YAW_FEEDBACK_MSG_ID              0x205
 #define CAN_GIMBAL_PITCH_FEEDBACK_MSG_ID            0x206
 
@@ -23,10 +27,10 @@ typedef enum
 
 typedef enum
 {
-  FRONT_LEFT = 0,
-  FRONT_RIGHT,
-  BACK_LEFT,
-  BACK_RIGHT
+  FRONT_LEFT = 1,
+  FRONT_RIGHT = 3,
+  BACK_LEFT = 0,
+  BACK_RIGHT = 2
 }chassis_num_t;
 
 typedef struct {
@@ -44,6 +48,7 @@ typedef struct {
 
 volatile GimbalEncoder_canStruct* can_getGimbalMotor(void);
 volatile ChassisEncoder_canStruct* can_getChassisMotor(void);
+volatile ChassisEncoder_canStruct* can_getExtraMotor(void);
 
 void can_processInit(void);
 void can_motorSetCurrent(CANDriver *const CANx,
@@ -55,4 +60,3 @@ void can_motorSetCurrent(CANDriver *const CANx,
 
 
 #endif
-

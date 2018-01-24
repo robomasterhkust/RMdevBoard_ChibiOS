@@ -66,9 +66,6 @@ typedef enum{
 
 #define GYRO_UPDATE_PERIOD_US 1000000U/GYRO_UPDATE_FREQ
 
-#define X 0
-#define Y 1
-
 typedef uint16_t gyrodata_t;
 
 typedef enum{

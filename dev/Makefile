@@ -102,6 +102,7 @@ include $(CHIBIOS)/os/hal/osal/rt/osal.mk
 # RTOS files (optional).
 include $(CHIBIOS)/os/rt/rt.mk
 include $(CHIBIOS)/os/rt/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
+include $(CHIBIOS)/os/various/fatfs_bindings/fatfs.mk
 # Other files (optional).
 #include $(CHIBIOS)/test/rt/test.mk
 include $(CHIBIOS)/dsp/dsp.mk
@@ -120,6 +121,7 @@ CSRC = $(STARTUPSRC) \
        $(BOARDSRC) \
        $(TESTSRC) \
        $(MATHSRC) \
+			 $(FATFSSRC) \
 			 $(CHIBIOS)/os/various/shell.c \
        $(CHIBIOS)/os/various/evtimer.c \
        $(CHIBIOS)/os/various/syscalls.c \
@@ -129,9 +131,8 @@ CSRC = $(STARTUPSRC) \
        mpu6500.c attitude.c ist8310.c math_misc.c \
        canBusProcess.c dbus.c gimbal.c params.c usbcfg.c \
        calibrate_sensor.c gimbal_sys_iden.c shoot_pwm.c \
-       exti.c pwm_struct.c imu_temp.c chassis.c pid_chassis.c \
-       adis16265.c error.c
-
+       exti.c pwm_struct.c imu_temp.c chassis.c\
+       adis16265.c sdlog.c error.c
 
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
@@ -165,6 +166,7 @@ ASMSRC = $(STARTUPASM) $(PORTASM) $(OSALASM)
 INCDIR = $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          $(HALINC) $(PLATFORMINC) $(BOARDINC) $(TESTINC) \
          $(CHIBIOS)/dev \
+				 $(FATFSINC) \
          $(CHIBIOS)/os/various \
 				 $(CHIBIOS)/os/hal/lib/streams \
 				 inc -lm
