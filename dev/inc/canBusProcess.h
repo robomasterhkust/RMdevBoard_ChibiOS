@@ -5,6 +5,8 @@
 #include "stdbool.h"
 #include "hal.h"
 #include "string.h"
+#include "adis16265.h"
+
 #define GIMBAL_MOTOR_NUM  2U
 #define CHASSIS_MOTOR_NUM 4U
 /* CAN Bus 1 or 2 */
@@ -23,10 +25,10 @@ typedef enum
 
 typedef enum
 {
-  FRONT_LEFT = 0,
-  FRONT_RIGHT,
-  BACK_LEFT,
-  BACK_RIGHT
+  FRONT_LEFT = 1,
+  FRONT_RIGHT = 3,
+  BACK_LEFT = 0,
+  BACK_RIGHT = 2
 }chassis_num_t;
 
 typedef struct {
@@ -55,4 +57,3 @@ void can_motorSetCurrent(CANDriver *const CANx,
 
 
 #endif
-

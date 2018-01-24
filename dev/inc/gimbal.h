@@ -37,22 +37,6 @@ static const char gimbal_warning_messages[][GIMBAL_WARNING_COUNT] =
   "W:Gimbal control lose frame"
 };
 
-
-typedef struct{
-  param_t kp;
-  param_t ki;
-  float error_int;
-  float error_int_max;
-} __attribute__((packed)) pi_controller_t;
-
-typedef struct{
-  param_t kp;
-  param_t ki;
-  param_t kd;
-  float error_int;
-  float error_int_max;
-} __attribute__((packed)) pid_controller_t;
-
 typedef struct{
   bool inited;
   volatile GimbalEncoder_canStruct* _encoder_can;
