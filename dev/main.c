@@ -99,7 +99,7 @@ int main(void) {
   tempControllerInit(); //*
   chassis_init();
   pGyro = gyro_init();
-
+  error_init();
   //pwm12init();
 
   //tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);

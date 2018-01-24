@@ -25,14 +25,14 @@ typedef enum {
 
 #define GIMBAL_ERROR_COUNT    3U
 #define GIMBAL_WARNING_COUNT  1U
-static const char gimbal_error_messages[][GIMBAL_ERROR_COUNT] =
+static const char gimbal_error_messages[GIMBAL_ERROR_COUNT][50] =
 {
   "E:Gimbal yaw not connected",
   "E:Gimbal pitch not connected",
   "E:Gimbal init timeout"
 };
 
-static const char gimbal_warning_messages[][GIMBAL_WARNING_COUNT] =
+static const char gimbal_warning_messages[GIMBAL_WARNING_COUNT][50] =
 {
   "W:Gimbal control lose frame"
 };
@@ -100,7 +100,7 @@ typedef struct{
 
 GimbalStruct* gimbal_get(void);
 GimbalStruct* gimbal_get_sys_iden(void);
-uint32_t gimbal_get_error(void);
+uint32_t gimbal_getError(void);
 void gimbal_init(void);
 void gimbal_sys_iden_init(void);
 

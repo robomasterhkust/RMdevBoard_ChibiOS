@@ -13,6 +13,7 @@
 #include "canBusProcess.h"
 #include "dbus.h"
 #include "params.h"
+#include "error.h"
 
 #include "mpu6500.h"
 #include "ist8310.h"
