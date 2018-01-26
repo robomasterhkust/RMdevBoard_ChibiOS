@@ -94,8 +94,8 @@ int main(void) {
   gimbal_sys_iden_init(); //*
   gimbal_init();
 
-
   // pwm_shooter_init(); // *
+
   extiinit(); //*
   tempControllerInit(); //*
   chassis_init();
