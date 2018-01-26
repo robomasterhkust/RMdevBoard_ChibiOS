@@ -17,9 +17,13 @@ static volatile chassisStruct chassis;
 pi_controller_t motor_vel_controllers[CHASSIS_MOTOR_NUM];
 lpfilterStruct lp_speed[CHASSIS_MOTOR_NUM];
 
-#define chassis_canUpdate()   \
-  (can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID, \
-    0, 0, 0, 0))
+static uint8_t errorCounter = 0;
+static float previousSpeed = 0;
+static uint8_t errorFlag = 0;
+
+chassis_error_t chassis_getError(void){
+  return errorFlag;
+}
 
 chassisStruct* chassis_get(void)
 {
@@ -77,6 +81,7 @@ static int16_t chassis_controlSpeed(motorStruct* motor, pi_controller_t* control
 static THD_WORKING_AREA(chassis_control_wa, 2048);
 static THD_FUNCTION(chassis_control, p)
 {
+
   (void)p;
   chRegSetThreadName("chassis controller");
 
@@ -91,6 +96,7 @@ static THD_FUNCTION(chassis_control, p)
     else
     {
       tick = chVTGetSystemTimeX();
+
     }
 
     chassis_encoderUpdate();
@@ -126,9 +132,11 @@ void chassis_init(void)
   }
   chassis._pGyro = gyro_get();
   chassis._encoders = can_getChassisMotor();
+
   chThdCreateStatic(chassis_control_wa, sizeof(chassis_control_wa),
                           NORMALPRIO, chassis_control, NULL);
 }
+
 
 void update_heading(void)
 {
@@ -138,22 +146,44 @@ void update_heading(void)
 
 void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1)
 {
+
   // Set dead-zone to 6% range to provide smoother control
   float THRESHOLD = (RC_CH_VALUE_MAX - RC_CH_VALUE_MIN)*3/100;
-
+  bool check_error;
   // Create "dead-zone" for chassis.drive_sp
-  if(ABS(RX_X2 - RC_CH_VALUE_OFFSET) < THRESHOLD)
+  if(ABS(RX_X2 - RC_CH_VALUE_OFFSET) < THRESHOLD){
     RX_X2 = RC_CH_VALUE_OFFSET;
+    check_error = 0;
+    errorCounter = 0;
+    previousSpeed = 0;
+  }else{
+    check_error = 1;
+    previousSpeed = chassis._encoders[0].raw_speed;
+  }
 
   // Create "dead-zone" for chassis.strafe_sp
-  if(ABS(RX_Y1 - RC_CH_VALUE_OFFSET) < THRESHOLD)
+  if(ABS(RX_Y1 - RC_CH_VALUE_OFFSET) < THRESHOLD){
     RX_Y1 = RC_CH_VALUE_OFFSET;
+    check_error = 0;
+    errorCounter = 0;
+    previousSpeed = 0;
+  }else{
+    check_error = 1;
+    previousSpeed = chassis._encoders[0].raw_speed;
+  }
 
   // Create "dead-zone" for chassis.heading_sp
-  if(ABS(RX_X1 - RC_CH_VALUE_OFFSET) < THRESHOLD)
+  if(ABS(RX_X1 - RC_CH_VALUE_OFFSET) < THRESHOLD){
     RX_X1 = RC_CH_VALUE_OFFSET;
-  else
+  check_error = 0;
+      errorCounter = 0;
+      previousSpeed = 0;
+  }
+  else{
     chassis.heading_sp = chassis._pGyro->angle;
+  check_error = 1;
+  previousSpeed = chassis._encoders[0].raw_speed;
+}
 
   // Compute the Heading correction
   float heading_correction = chassis.heading_sp - chassis._pGyro->angle;
@@ -183,4 +213,11 @@ void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1)
 
   can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID,
     		output[FRONT_RIGHT], output[BACK_RIGHT], output[FRONT_LEFT], output[BACK_LEFT]); //BR,FR,--,--
+
+  if(check_error && (chassis._encoders[i].raw_speed - previousSpeed) < 1e-3){
+    errorCounter++;
+    if(errorCounter > 15){
+      errorFlag |= CHASSIS_MOTOR_NOT_CONNECTED;
+    }
+  }
 }

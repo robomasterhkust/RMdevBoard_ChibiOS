@@ -20,9 +20,14 @@
 #define CURRENT_MIN    ((int16_t)-277)              //
 #define CHASSIS_GEAR_RATIO    27U
 
+#define RPM_MAX    ((int16_t) 277)              //
+#define RPM_MIN    ((int16_t) -277)              //
+
 #define HEADING_MIN     ((float) -3.14159) // - pi
 #define HEADING_MAX     ((float) 3.14159)   // pi
-#define HEADING_SCALE   ((uint16_t) 100)
+//#define HEADING_MIN     ((float) -1) // - pi
+//#define HEADING_MAX     ((float) 1)   // pi
+#define HEADING_SCALE   ((uint16_t) 1)
 
 #define ABS(x)     ( ((x) > 0) ? (x) : (-(x)) ) //return abs value of x
 
@@ -42,6 +47,12 @@ typedef struct{
   uint8_t _wait_count;
 } motorPosStruct;
 
+typedef enum {
+  CHASSIS_OK = 0,
+  CHASSIS_MOTOR_NOT_CONNECTED = 1 <<0
+};
+typedef uint8_t chassis_error_t;
+
 typedef struct{
   motorStruct _motors[CHASSIS_MOTOR_NUM];
 
@@ -59,6 +70,7 @@ typedef struct{
 
 // MATH definition
 
+chassis_error_t chassis_getError(void);
 chassisStruct* chassis_get(void);
 void chassis_init(void);
 void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1);

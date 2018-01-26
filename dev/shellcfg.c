@@ -238,6 +238,14 @@ void cmd_gyro(BaseSequentialStream * chp, int argc, char *argv[])
       chprintf(chp,"Angle: %f\n", _pGyro->angle);
 }
 
+void cmd_ultrasonic(BaseSequentialStream * chp, int argc, char *argv[])
+{
+      (void) argc,argv;
+
+      float* pDist = hcsr04_getDistance();
+      chprintf(chp,"Distance: %f\n", *pDist);
+}
+
 
 /**
  * @brief array of shell commands, put the corresponding command and functions below
@@ -251,6 +259,8 @@ static const ShellCommand commands[] =
   {"temp", cmd_temp},
   {"dbus", cmd_dbus},
   {"gyro", cmd_gyro},
+  {"ultra", cmd_ultrasonic},
+  {"error", cmd_error},
   {NULL, NULL}
 };
 
