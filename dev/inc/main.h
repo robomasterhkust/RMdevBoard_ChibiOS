@@ -22,7 +22,9 @@
 #include "gimbal.h"
 
 #include "exti.h"
+#include "judge.h"
 #include "imu_temp.h"
+
 
 void shellStart(void);
 

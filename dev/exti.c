@@ -22,7 +22,7 @@
  * Thread normally suspended, resumes when shield button is pushed
  * For power module development only
  */
-
+#ifdef MOTOR_TEST
 thread_reference_t button_thread_ref = NULL;
 static volatile bool MotorOn = FALSE;
 static THD_WORKING_AREA(MotorToggleThread_wa, 128);
@@ -59,7 +59,7 @@ static THD_FUNCTION(MotorToggleThread, arg) {
 
   }
 }
-
+#endif
 /*
  * EXTI 10 CALLBACK
  * Configured for motor testing
@@ -115,7 +115,9 @@ void extiinit(void) {
 
   extStart(&EXTD1, &extcfg);
   extChannelEnable(&EXTD1, 10);
+#ifdef MOTOR_TEST
   chThdCreateStatic(MotorToggleThread_wa, sizeof(MotorToggleThread_wa),
                     NORMALPRIO, MotorToggleThread, NULL);
+#endif
 
 }
