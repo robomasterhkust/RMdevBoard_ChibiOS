@@ -27,6 +27,7 @@ typedef struct{
   imu_att_error_t imu_error;
   gimbal_error_t gimbal_error;
   ist8310_error_flag_t ist8310_error;
+  chassis_error_t chassis_error;
 }ERRORStruct, *pEStruct;
 
 pEStruct get_EMsg(void);
@@ -88,6 +89,16 @@ void printError_IMU(BaseSequentialStream * chp, imu_att_error_t error_Index);
  */
 
 void printError_dbus(BaseSequentialStream * chp, dbus_error_t error_Index);
+
+/*
+ * Chassis Error List
+ *
+ * CHASSIS_OK = 0,
+ * CHASSIS_MOTOR_NOT_CONNECTED = 1 <<0
+ */
+
+void printError_chassis(BaseSequentialStream * chp, chassis_error_t error_Index);
+
 
 //
 ///* Error codes */
