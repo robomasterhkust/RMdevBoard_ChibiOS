@@ -92,10 +92,12 @@ int main(void) {
   can_processInit();
   RC_init();
 //  gimbal_init();
-     gimbal_sys_iden_init();
+  gimbal_sys_iden_init();
   pwm_shooter_init();
   extiinit();
   judgeinit();
+  tempControllerInit();
+
 
   //tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
 
@@ -104,6 +106,8 @@ int main(void) {
   chThdCreateStatic(Attitude_thread_wa, sizeof(Attitude_thread_wa),
   NORMALPRIO + 5,
                     Attitude_thread, NULL);
+
+
 
   while (true)
   {
