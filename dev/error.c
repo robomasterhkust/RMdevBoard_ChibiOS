@@ -18,6 +18,7 @@ void EMsg_init(void){
   EMsg.imu_error = 0;
   EMsg.gimbal_error = 0;
   EMsg.ist8310_error = 0;
+  EMsg.chassis_error = 0;
 }
 
 void EMsg_update(void){
@@ -25,6 +26,7 @@ void EMsg_update(void){
   EMsg.dbus_error = dbus_getError();
   EMsg.gimbal_error = gimbal_getError();
   EMsg.ist8310_error = ist8310_getError();
+  EMsg.chassis_error = chassis_getError();
 }
 
 void printError_Gimbal(BaseSequentialStream * chp, gimbal_error_t error_Index){
@@ -107,6 +109,11 @@ void printError_dbus(BaseSequentialStream * chp, dbus_error_t error_Index){
   }
 }
 
+void printError_chassis(BaseSequentialStream * chp, chassis_error_t error_Index){
+  if(error_Index == 0) chprintf(chp,"Chassis Status: GREEN %s\n","");
+  if(error_Index & CHASSIS_MOTOR_NOT_CONNECTED) chprintf(chp,"Chassis Error: Motor Not Connected %s\n","");
+}
+
 void cmd_error(BaseSequentialStream * chp, int argc, char *argv[])
 {
       (void) argc,argv;
@@ -114,6 +121,7 @@ void cmd_error(BaseSequentialStream * chp, int argc, char *argv[])
       printError_Ist8310(chp, EMsg.ist8310_error);
       printError_IMU(chp, EMsg.imu_error);
       printError_dbus(chp, EMsg.dbus_error);
+      printError_chassis(chp, EMsg.chassis_error);
 }
 
 static THD_WORKING_AREA(error_message_thread_wa, 512);
