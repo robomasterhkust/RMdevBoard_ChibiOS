@@ -13,6 +13,15 @@
  * -inspection of RAM data at various data field's memory address during MCU runtime
  *  maybe required to ensure data integrity.
  *
+ *  Performance Characteristics and Specifications 26/1/2018
+ *  -2017 Judgment system firmware
+ *  -10134 data packet captured
+ *  -Mix of all 3 types of data packet sent from judgment system
+ *  -Ozone sampling frequency: 10kHz , performance will be better than shown below
+ *  Maximum number of data packets skipped in a row : 3 packets (Worst case)
+ *  Probability of not reading sent data packets : 3.686%
+ *
+ *
  *  Created on: 2 Jan 2018
  *      Author: Alex Wong, CRC part copied from DJI datasheet
  */
@@ -199,6 +208,8 @@ void Append_CRC16_Check_Sum(uint8_t * pchMessage, uint32_t dwLength)
 
 #define SERIAL_EVT_MASK         1
 
+#define TESTJUDGEPERF
+
 /*
  * certain data bits enforced by chibios, check serial_lld.c for forced set bits
  * to avoid unexpected settings of UART driver
@@ -222,7 +233,6 @@ void bytememcpy(void *des, void *src, uint32_t n) {
 }
 
 static mutex_t inqueue_mutex;
-//static mutex_t rxbuf_mutex;
 static uint8_t headerloc = 0;
 static uint8_t datalength = 0;
 static uint8_t packetdatalength = 0;
@@ -232,7 +242,11 @@ static uint8_t sdrxbuf[JUDGE_BUFFER_SIZE];
 static game_info_t gameInfo[1];
 static hlth_delta_info_t hlthInfo[1];
 static projectile_fb_t  projectileInfo[1];
+#ifdef TESTJUDGEPERF
 static volatile uint8_t packetID = 0;
+static volatile uint8_t deltapacketID = 0;
+static volatile uint8_t lastpacketID = 0;
+#endif
 static volatile void* datagroups[JUDGE_DATA_TYPES + 1];
 
 /*
@@ -247,7 +261,6 @@ static THD_FUNCTION(JudgeThread, arg) {
   memset((void *)sdrxbuf, 0, JUDGE_BUFFER_SIZE);
 
   chMtxObjectInit(&inqueue_mutex);
-  //chMtxObjectInit(&rxbuf_mutex);
 
   static const eventflags_t serial_wkup_flags =                     //Partially from SD driver
     CHN_INPUT_AVAILABLE | CHN_DISCONNECTED | SD_NOISE_ERROR |       //Partially inherited from IO queue driver
@@ -285,25 +298,7 @@ static THD_FUNCTION(JudgeThread, arg) {
           chMtxUnlock(&inqueue_mutex);                                //Release resource
           judgedecode();
         }
-        /*
-        chMtxLock(&inqueue_mutex);                                  //Operation non-atomic, lock resource
-        datalength = sdAsynchronousRead(SERIAL_JUDGE, &sdrxbuf,
-                                       (size_t)JUDGE_BUFFER_SIZE);  //Non-blocking data read
-        chMtxUnlock(&inqueue_mutex);                                //Release resource
-        for (headerloc = 0; headerloc < datalength; headerloc++) {  //Scan for frame head
-          if ((!pending_flags) &&                                                       //Verify no pending error
-              (sdrxbuf[headerloc] == JUDGE_FRAMEHEAD) &&                                //Verify first byte value
-              (Verify_CRC8_Check_Sum(&sdrxbuf[headerloc], JUDGE_SIZE_FRAMEHEAD)) &&     //Verify frame head CRC8
-              (sdrxbuf[headerloc + JUDGE_SHIFT_PACSIZE] < (datalength - headerloc)) &&  //Verify enough data captured
-              (Verify_CRC16_Check_Sum(&sdrxbuf[headerloc],
-                                      sdrxbuf[headerloc + JUDGE_SHIFT_PACSIZE] + JUDGE_SIZE_FRAMETAIL +
-                                      JUDGE_SIZE_FRAMEHEAD + JUDGE_SIZE_CMDID))) {      //Verify data packet CRC16
 
-            foundheader = true;                                                         //Gotcha!
-            break;
-          }
-        }
-        */
         FLUSH_I_QUEUE(SERIAL_JUDGE);
         break;
 
@@ -337,21 +332,6 @@ static THD_FUNCTION(JudgeThread, arg) {
       }
 
     } while (pending_flags && !foundheader);
-    /*
-    if(foundheader) {
-      chSysLock();
-      //gameInfo->lastpacketid = sdrxbuf[3];
-      packetID = sdrxbuf[headerloc + JUDGE_SHIFT_PACNUMBER];    //Record packet sequence to evaluate receiver performance
-      //desaddr = (void*) datagroups[sdrxbuf[headerloc + JUDGE_SHIFT_PACTYPE]];
-      //srcaddr = (void*) sdrxbuf + JUDGE_SHIFT_DATA;
-      datalength = sdrxbuf[headerloc + JUDGE_SHIFT_PACSIZE];
-      memcpy((void*) datagroups[sdrxbuf[headerloc + JUDGE_SHIFT_PACTYPE]],
-             (void*) sdrxbuf + JUDGE_SHIFT_DATA,
-             sdrxbuf[headerloc + JUDGE_SHIFT_PACSIZE]);
-      //gameInfo->volts = (int32_t) gameInfo->feedBackVolt;
-      chSysUnlock();
-    }
-    */
 
     FLUSH_I_QUEUE(SERIAL_JUDGE);
     memset((void*)sdrxbuf, 0, JUDGE_BUFFER_SIZE);               //Flush RX buffer
@@ -369,9 +349,13 @@ void judgedecode() {
         (Verify_CRC16_Check_Sum(&sdrxbuf[headerloc],
                             sdrxbuf[headerloc + JUDGE_SHIFT_PACSIZE] + JUDGE_SIZE_FRAMETAIL +
                             JUDGE_SIZE_FRAMEHEAD + JUDGE_SIZE_CMDID))) {            //Verify data packet CRC16
-
-      //foundheader = true;                                                         //Gotcha!
+#ifdef TESTJUDGEPERF
       packetID = sdrxbuf[headerloc + JUDGE_SHIFT_PACNUMBER];        //Record packet sequence to evaluate receiver performance
+      deltapacketID = packetID - lastpacketID < 0
+                    ? packetID + 255 - lastpacketID
+                    : packetID - lastpacketID;
+      lastpacketID = packetID;
+#endif
       packetdatalength = sdrxbuf[headerloc + JUDGE_SHIFT_PACSIZE];  //Get datalength from packet to avoid overhead from repeated addition operation
       if (sdrxbuf[headerloc + JUDGE_SHIFT_PACTYPE] == 2) {
         foundhlth = true;
@@ -379,7 +363,7 @@ void judgedecode() {
         foundhlth = false;
       }
       memcpy((void*) datagroups[sdrxbuf[headerloc + JUDGE_SHIFT_PACTYPE]],  //Gotta love pointers
-             (void*) sdrxbuf + JUDGE_SHIFT_DATA,
+             (void*) sdrxbuf + headerloc + JUDGE_SHIFT_DATA,
              packetdatalength);                                     //Copy rx packet data to correct data field
       headerloc += JUDGE_SIZE_FRAMEHEAD + JUDGE_SIZE_CMDID +
                    JUDGE_SIZE_FRAMETAIL + packetdatalength;         //Offset scanning index
@@ -392,7 +376,11 @@ void judgedecode() {
 
 void judgedatainit(void) {
 
+#ifdef TESTJUDGEPERF
   packetID = 0;
+  lastpacketID = 0;
+  deltapacketID = 0;
+#endif
 
 #ifdef JUDGE_USE_2017
 

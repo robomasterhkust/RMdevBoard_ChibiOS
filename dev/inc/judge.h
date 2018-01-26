@@ -79,8 +79,6 @@ typedef struct game_info_t{
   float         feedBackAmp;
   loc_data_t    locData;
   float         pwrBuf;
-  //int32_t       volts;
-  //uint8_t       lastpacketid;
 }__attribute__((packed)) game_info_t;
 
 typedef struct hlth_delta_info_t{
@@ -89,13 +87,7 @@ typedef struct hlth_delta_info_t{
   uint16_t              deltaVal;
 }__attribute__((packed)) hlth_delta_info_t;
 
-/*
-typedef struct hlth_delta_info_t{
-  armour_num_t          hitPos;
-  health_delta_num_t    deltaReason;
-  uint16_t              deltaVal;
-}__attribute__((packed)) hlth_delta_info_t;
-*/
+
 typedef struct projectile_fb_t{
   float     bulletSpeed;
   float     bulletFreq;
