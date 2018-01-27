@@ -15,6 +15,17 @@ static uint8_t rxbuf[DBUS_BUFFER_SIZE];
 static RC_Ctl_t RC_Ctl;
 static thread_reference_t uart_dbus_thread_handler = NULL;
 static uint8_t rx_start_flag = 1;
+typedef bool dbus_error_t;
+static dbus_error_t rxflag = false;
+
+/*
+ * @brief get error code: rx_flag
+ * @status: true = connected
+ *          false = not connected
+ */
+dbus_error_t dbus_getError(void){
+  return rxflag;
+}
 
 /**
  * @brief   Decode the received DBUS sequence and store it in RC_Ctl struct
@@ -76,7 +87,7 @@ static THD_FUNCTION(uart_dbus_thread, p)
 
   size_t rx_size;
   msg_t rxmsg;
-  bool rxflag = false;
+  rxflag = false;
   systime_t timeout = MS2ST(DBUS_INIT_WAIT_TIME_MS);
   uint32_t count = 0;
 

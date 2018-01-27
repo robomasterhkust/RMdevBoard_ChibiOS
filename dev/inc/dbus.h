@@ -60,8 +60,9 @@ typedef struct{
 		  uint16_t key_code;
 		}keyboard;
 }RC_Ctl_t;
+typedef bool dbus_error_t;
 
 RC_Ctl_t* RC_get(void);
 void RC_init(void);
-
+dbus_error_t dbus_getError(void);
 #endif

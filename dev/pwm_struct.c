@@ -61,14 +61,14 @@ static PWMConfig pwm4cfg = {
 };
 
 static PWMConfig pwm8cfg = {
-        100000,   /* 1MHz PWM clock frequency.   */
+        1000000,   /* 1MHz PWM clock frequency.   */
         1000,      /* Initial PWM period 1ms.       */
         NULL,
         {
-                {PWM_OUTPUT_ACTIVE_HIGH, NULL},
-                {PWM_OUTPUT_ACTIVE_HIGH, NULL},
-                {PWM_OUTPUT_ACTIVE_HIGH, NULL},
-                {PWM_OUTPUT_ACTIVE_HIGH, NULL}
+                {PWM_OUTPUT_DISABLED, NULL},
+                {PWM_OUTPUT_ACTIVE_HIGH, NULL}, // HR-SC04
+                {PWM_OUTPUT_DISABLED, NULL},
+                {PWM_OUTPUT_DISABLED, NULL}
         },
         0,
         0
@@ -103,7 +103,7 @@ void pwm4init(void){
 }
 
 void pwm8init(void){
-  pwmStart(&PWMD8, &pwm8cfg);
+//  pwmStart(&PWMD8, &pwm8cfg);
 //  pwmEnableChannel(&PWMD8, 0, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 9000));
 //  pwmEnableChannel(&PWMD8, 1, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 9000));
 //  pwmEnableChannel(&PWMD8, 2, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 9000));
