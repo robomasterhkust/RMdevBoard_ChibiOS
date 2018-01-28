@@ -12,6 +12,11 @@
  * @return
  */
 
+volatile int perc;
+volatile int r_percent;
+volatile int r_arg;
+volatile thread_t* pwm_th;
+
 static PWMConfig pwm8cfg = {
         100000,   /* 1MHz PWM clock frequency.   */
         1000,      /* Initial PWM period 1ms.       */
@@ -26,17 +31,13 @@ static PWMConfig pwm8cfg = {
         0
 };
 
-static THD_WORKING_AREA(pwm_thd_wa, 512);
-static THD_FUNCTION(pwm_thd, arg) {
-    (void)arg;
-
-    while (!chThdShouldTerminateX()) {
-        pwmEnableChannel(&PWMD8, 0, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, (int)arg));
-        pwmEnableChannel(&PWMD8, 1, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, (int)arg));
-        pwmEnableChannel(&PWMD8, 2, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, (int)arg));
-        pwmEnableChannel(&PWMD8, 3, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, (int)arg));
-        chThdSleepMilliseconds(1);
-    }
+void pwm_config(PWMDriver *pwmp, const PWMConfig *config,int p){
+  pwmStop(pwmp);
+  pwmStart(pwmp,config);
+  pwmEnableChannel(pwmp, 0, PWM_PERCENTAGE_TO_WIDTH(pwmp, p));
+  pwmEnableChannel(pwmp, 1, PWM_PERCENTAGE_TO_WIDTH(pwmp, p));
+  pwmEnableChannel(pwmp, 2, PWM_PERCENTAGE_TO_WIDTH(pwmp, p));
+  pwmEnableChannel(pwmp, 3, PWM_PERCENTAGE_TO_WIDTH(pwmp, p));
 }
 
 void pwm_shooter_init(void)
@@ -45,21 +46,27 @@ void pwm_shooter_init(void)
     LEDG_OFF();
 
     pwmStart(&PWMD8, &pwm8cfg);
-    pwmEnableChannel(&PWMD8, 0, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 1000));
-    pwmEnableChannel(&PWMD8, 1, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 1000));
-    pwmEnableChannel(&PWMD8, 2, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 1000));
-    pwmEnableChannel(&PWMD8, 3, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 1000));
-    chThdSleepMilliseconds(1000);
-    pwmEnableChannel(&PWMD8, 0, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 9000));
-    pwmEnableChannel(&PWMD8, 1, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 9000));
-    pwmEnableChannel(&PWMD8, 2, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 9000));
-    pwmEnableChannel(&PWMD8, 3, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 9000));
-    chThdSleepMilliseconds(1000);
 
+    pwm_config(&PWMD8,&pwm8cfg,1000);
+    chThdSleepSeconds(2);
+    pwm_config(&PWMD8,&pwm8cfg,9000);
+    chThdSleepSeconds(2);
+    pwm_config(&PWMD8,&pwm8cfg,1100);
+    chThdSleepSeconds(2);
+    pwm_config(&PWMD8,&pwm8cfg,1500);
+    chThdSleepSeconds(2);
+    pwm_config(&PWMD8,&pwm8cfg,1100);
+    chThdSleepSeconds(2);
     /**
-     * Starts the PWM channel 0 using 20% duty cycle.
+     * Starts the PWM channel 0 using 11% duty cycle.
      */
-    int percent = 2000;
-    chThdCreateStatic(pwm_thd_wa, sizeof(pwm_thd_wa), NORMALPRIO + 1, pwm_thd, percent);
+    perc = 0;
+    //map function output range: 1100-2600
+    r_percent = 1100;
     chThdSleepMilliseconds(1);
+}
+
+float map(float x, float in_min, float in_max, float out_min, float out_max)
+{
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }

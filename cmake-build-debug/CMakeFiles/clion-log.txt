@@ -1,0 +1,10 @@
+"C:\Users\Alex Wong\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\172.3968.17\bin\cmake\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug -DSTM32_CHIP=STM32F427II -G "CodeBlocks - MinGW Makefiles" C:\ChibiStudio\workspace_user\RM_Chibi
+CMake Error at C:/Users/Alex Wong/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/172.3968.17/bin/cmake/share/cmake-3.8/Modules/CMakeDetermineSystem.cmake:94 (message):
+  Could not find toolchain file: CMakeList.txt
+Call Stack (most recent call first):
+  CMakeLists.txt:4 (project)
+
+
+CMake Error: CMAKE_C_COMPILER not set, after EnableLanguage
+CMake Error: CMAKE_CXX_COMPILER not set, after EnableLanguage
+-- Configuring incomplete, errors occurred!

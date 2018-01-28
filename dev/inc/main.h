@@ -22,6 +22,9 @@
 #include "gimbal.h"
 
 #include "exti.h"
+#include "judge.h"
+#include "imu_temp.h"
+
 
 #include "shoot_pwm.h"
 
