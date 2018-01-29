@@ -231,6 +231,7 @@ static THD_FUNCTION(gyro_thread,p)
     else
     {
       tick = chVTGetSystemTimeX();
+      pGyro->error_flag |= GYRO_LOSE_FRAME;
     }
 
     if(pGyro->state == INITED)
@@ -308,3 +309,21 @@ PGyroStruct gyro_init(void)
   return pGyro;
 }
 
+/*
+ * State:
+ *  NOT_INITED = 0,
+ *  INITED = 1,
+ *  CALIBRATING = 2
+ */
+
+gyro_state_t gyro_getState(void){
+  return gyro.state;
+}
+/*
+ * Error List:
+ * 0: Not Inited
+ * 1: No Error
+ */
+uint8_t gyro_getError(void){
+  return gyro.error_flag;
+}

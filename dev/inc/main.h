@@ -13,12 +13,14 @@
 #include "canBusProcess.h"
 #include "dbus.h"
 #include "params.h"
+#include "error.h"
 
 #include "mpu6500.h"
 #include "ist8310.h"
 #include "adis16265.h"
 #include "attitude.h"
 #include "calibrate_sensor.h"
+#include "hcsr04.h"
 
 #include "gimbal.h"
 #include "chassis.h"
