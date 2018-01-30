@@ -61,8 +61,10 @@ typedef struct{
   #endif
 
   float heading_sp;
+  float rotate_sp;
   float drive_sp;
   float strafe_sp;
+  float pid_last_error;
 
   ChassisEncoder_canStruct* _encoders;
   PGyroStruct _pGyro;
