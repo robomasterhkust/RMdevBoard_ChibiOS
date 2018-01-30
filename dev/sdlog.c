@@ -12,6 +12,8 @@ char w0[10];
 char w1[10];
 char w2[10];
 char w3[10];
+int s_i;
+int s_f;
 
 /*
  * Working area for driver.
@@ -116,14 +118,19 @@ static THD_WORKING_AREA(sdlog_thread_wa,1024);
 static THD_FUNCTION(sdlog_thread,p)
 {
     uint32_t tick = chVTGetSystemTimeX();
+    tim = ST2MS(tick);
+    s_i = snprintf(NULL,0,"%d",tim)+1;
+    float temp = pIMU->accelData[0];
+    s_f = snprintf(NULL,0,"%f",temp)+1;
+
     /* testing writing in IMU acceleration data log*/
-    logger.position = 0x001E; //use buf[1]-buf[4]
+    logger.position = 0x00AA; //use buf[1,3,5,7]
     /* configuring file head*/
     int k;
-    logger.len_buf[1] = 5;
+    logger.len_buf[1] = s_i;
     for(k=2;k<8;k++){
       if(k%2)
-        logger.len_buf[k] = 8;
+        logger.len_buf[k] = s_f;
       else{
         logger.len_buf[k] = 1;
         logger.buf[k] = "\t";
@@ -146,6 +153,38 @@ static THD_FUNCTION(sdlog_thread,p)
     while(true)
     {
       tick += MS2ST(SDLOG_UPDATE_PERIOD_MS);
+      tim = ST2MS(tick);
+            char s0[5];
+            char b0[9];
+            char b1[9];
+            char b2[9];
+            /*int s_i = snprintf(NULL,0,"%d",s0);
+            int s_f = snprintf(NULL,0,"%d",b0);**/
+            snprintf(s0,s_i,"%d",tim);
+            snprintf(b0,s_f,"%f",pIMU->accelData[0]);
+            snprintf(b1,s_f,"%f",pIMU->accelData[1]);
+            snprintf(b2,s_f,"%f",pIMU->accelData[2]);
+
+            strcat(s0," ");
+            strcat(b0," ");
+            strcat(b1," ");
+            strcat(b2,"\n");
+
+            logger.buf[1] = s0;
+            logger.buf[3] = b0;
+            logger.buf[5] = b1;
+            logger.buf[7] = b2;
+
+            /*logger.buf[1] = &tim;
+            logger.buf[3] = &pIMU->accelData[0];
+            logger.buf[5] = &pIMU->accelData[1];
+            logger.buf[7] = &pIMU->accelData[2];**/
+            /* data used for watching in OZone*/
+            strcpy(w0,logger.buf[1]);
+            strcpy(w1,logger.buf[3]);
+            strcpy(w2,logger.buf[5]);
+            strcpy(w3,logger.buf[7]);
+
       if(chVTGetSystemTimeX() < tick)
         chThdSleepUntil(tick);
       else
@@ -169,39 +208,7 @@ static THD_FUNCTION(sdlog_thread,p)
       if(!error)
         f_sync(&fil);
 
-      tim = ST2MS(tick);
-      /*char s0[10];
-      char b0[10];
-      char b1[10];
-      char b2[10];
-      /*int s_i = snprintf(NULL,0,"%d",s0);
-      int s_f = snprintf(NULL,0,"%d",b0);**/
-      /*snprintf(s0,5,"%d",tim);
-      snprintf(b0,8,"%f",pIMU->accelData[0]);
-      snprintf(b1,8,"%f",pIMU->accelData[1]);
-      snprintf(b2,8,"%f",pIMU->accelData[2]);
-      //strcat(b2,re);
-      /*strcpy(logger.buf[1],s0);
-      strcpy(logger.buf[3],b0);
-      strcpy(logger.buf[5],b1);
-      strcpy(logger.buf[7],b2);*/
-      /*strcat(s0," ");
-      strcat(b0," ");
-      strcat(b1," ");
-      strcat(b2,"\n");*/
 
-      /*logger.len_buf[1] = s_i+1;
-      logger.len_buf[2] = s_f+1;
-      logger.len_buf[3] = s_f+1;
-      logger.len_buf[4] = s_f+1;*/
-      logger.buf[1] = &tim;
-      logger.buf[3] = &pIMU->accelData[0];
-      logger.buf[5] = &pIMU->accelData[1];
-      logger.buf[7] = &pIMU->accelData[2];
-      strcpy(w0,logger.buf[1]);
-      strcpy(w1,logger.buf[3]);
-      strcpy(w2,logger.buf[5]);
-      strcpy(w3,logger.buf[7]);
     }
 }
 
