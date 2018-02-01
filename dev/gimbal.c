@@ -12,6 +12,13 @@
 
 #define GIMBAL_IQ_MAX 5000
 
+static pi_controller_t _yaw_vel;
+static pi_controller_t _pitch_vel;
+static pid_controller_t _yaw_atti;
+static pid_controller_t _pitch_atti;
+static pid_controller_t _yaw_pos;
+static pid_controller_t _pitch_pos;
+
 #define gimbal_canUpdate()   \
   (can_motorSetCurrent(GIMBAL_CAN, GIMBAL_CAN_EID, \
     gimbal.yaw_iq_output, gimbal.pitch_iq_output, 0, 0))
@@ -27,9 +34,16 @@ GimbalStruct* gimbal_get(void)
   return &gimbal;
 }
 
-uint32_t gimbal_get_error(void)
+uint32_t gimbal_getError(void)
 {
   return gimbal.errorFlag;
+}
+
+static void gimbal_kill(void)
+{
+  gimbal.yaw_iq_output = 0;
+  gimbal.pitch_iq_output = 0;
+  gimbal_canUpdate();
 }
 
 #ifdef GIMBAL_ENCODER_USE_SPEED
@@ -184,14 +198,9 @@ static THD_FUNCTION(gimbal_thread, p)
   (void)p;
   chRegSetThreadName("Gimbal controller");
 
-  chSysLock();
-  chThdSuspendS(&gimbal_thread_handler);
-  chSysUnlock();
-
-  pi_controller_t _yaw_vel;
-  pi_controller_t _pitch_vel;
-  pid_controller_t _yaw_atti;
-  pid_controller_t _pitch_atti;
+//  chSysLock();
+//  chThdSuspendS(&gimbal_thread_handler);
+//  chSysUnlock();
 
   _yaw_vel.error_int = 0.0f;
   _pitch_vel.error_int = 0.0f;
@@ -207,17 +216,6 @@ static THD_FUNCTION(gimbal_thread, p)
   gimbal.pitch_speed_cmd = 0.0f;
   gimbal.yaw_atti_cmd = 0.0f;
   gimbal.pitch_atti_cmd = 0.436f;
-
-  const char _yaw_vel_name[] =   "Gimbal Yaw Vel";
-  const char _pitch_vel_name[] = "Gimbal Pitch Vel";
-  const char _yaw_atti_name[] =   "Gimbal Yaw Atti";
-  const char _pitch_atti_name[] = "Gimbal Pitch Atti";
-
-  params_set(&_yaw_vel,     0, 2, _yaw_vel_name,   subname_PI,      PARAM_PUBLIC);
-  params_set(&_pitch_vel,   1, 2, _pitch_vel_name, subname_PI,      PARAM_PUBLIC);
-
-  params_set(&_yaw_atti,     7, 3, _yaw_atti_name,   subname_PID,      PARAM_PUBLIC);
-  params_set(&_pitch_atti,   8, 3, _pitch_atti_name, subname_PID,      PARAM_PUBLIC);
 
   uint32_t tick = chVTGetSystemTimeX();
   float pitch_atti_out,yaw_atti_out;
@@ -303,6 +301,14 @@ static THD_FUNCTION(gimbal_thread, p)
     gimbal.pitch_iq_output = boundOutput(gimbal.pitch_iq_cmd, GIMBAL_IQ_MAX);
 
     gimbal_canUpdate();
+
+    //Stop the thread while calibrating IMU
+    /*
+    if(pIMU->accelerometer_not_calibrated || pIMU->gyroscope_not_calibrated)
+    {
+      gimbal_kill();
+      chThdExit(MSG_OK);
+    }*/
   }
 }
 
@@ -328,20 +334,11 @@ static THD_FUNCTION(gimbal_init_thread, p)
   }
   uint8_t _error_index = 0, _prev_index = 1;
 
-  pid_controller_t _yaw_pos;
-  pid_controller_t _pitch_pos;
-
   _pitch_pos.error_int = 0.0f;
   _yaw_pos.error_int = 0.0f;
 
   _pitch_pos.error_int_max = 1500.0f;
   _yaw_pos.error_int_max = 1000.0f;
-
-  const char yaw_pos_name[] =   "Gimbal Yaw Pos";
-  const char pitch_pos_name[] = "Gimbal Pitch Pos";
-
-  params_set(&_yaw_pos,   3, 3, yaw_pos_name,   subname_PID,   PARAM_PUBLIC);
-  params_set(&_pitch_pos, 4, 3, pitch_pos_name, subname_PID,   PARAM_PUBLIC);
 
   uint16_t _init_score[2] = {0, 0};
   uint16_t _init_time = 0;
@@ -415,9 +412,7 @@ static THD_FUNCTION(gimbal_init_thread, p)
     else if(_init_time++ > GIMBAL_INIT_TIMEOUT)
     {
       gimbal.errorFlag |= GIMBAL_INITALIZATION_TIMEOUT;
-      gimbal.yaw_iq_output = 0.0f;
-      gimbal.pitch_iq_output = 0.0f;
-      gimbal_canUpdate();
+      gimbal_kill();
       chThdExit(MSG_OK);
     }
 
@@ -432,6 +427,12 @@ static const char accl_name[]     = "Gimbal FF Accl";
 static const char subname_axis[]  = "Yaw Pitch Yaw_SD";
 static const char subname_ff[]    = "Yaw_w1 Pitch_w Yaw_a Pitch_a Yaw_w2 Yaw_th";
 static const char subname_accl[]  = "YawX YawY YawZ PitchX PitchY PitchZ";
+static const char _yaw_vel_name[] =   "Gimbal Yaw Vel";
+static const char _pitch_vel_name[] = "Gimbal Pitch Vel";
+static const char _yaw_atti_name[] =   "Gimbal Yaw Atti";
+static const char _pitch_atti_name[] = "Gimbal Pitch Atti";
+static const char yaw_pos_name[] =   "Gimbal Yaw Pos";
+static const char pitch_pos_name[] = "Gimbal Pitch Pos";
 
 /*
  *  @brief      Initialize the gimbal motor driver
@@ -463,10 +464,19 @@ void gimbal_init(void)
   params_set(gimbal.axis_ff_weight, 2, 6, axis_ff_name,   subname_ff,      PARAM_PUBLIC);
   params_set(gimbal.axis_ff_accel,  6, 6, accl_name,      subname_accl,    PARAM_PUBLIC);
 
-  chThdCreateStatic(gimbal_init_thread_wa, sizeof(gimbal_init_thread_wa),
-                    NORMALPRIO - 5, gimbal_init_thread, NULL);
-  chThdCreateStatic(gimbal_thread_wa, sizeof(gimbal_thread_wa),
-                    NORMALPRIO - 5, gimbal_thread, NULL);
+  params_set(&_yaw_pos,   3, 3, yaw_pos_name,   subname_PID,   PARAM_PUBLIC);
+  params_set(&_pitch_pos, 4, 3, pitch_pos_name, subname_PID,   PARAM_PUBLIC);
+
+  params_set(&_yaw_vel,     0, 2, _yaw_vel_name,   subname_PI,      PARAM_PUBLIC);
+  params_set(&_pitch_vel,   1, 2, _pitch_vel_name, subname_PI,      PARAM_PUBLIC);
+
+  params_set(&_yaw_atti,     7, 3, _yaw_atti_name,   subname_PID,      PARAM_PUBLIC);
+  params_set(&_pitch_atti,   8, 3, _pitch_atti_name, subname_PID,      PARAM_PUBLIC);
+
+//  chThdCreateStatic(gimbal_init_thread_wa, sizeof(gimbal_init_thread_wa),
+//                    NORMALPRIO - 5, gimbal_init_thread, NULL);
+//  chThdCreateStatic(gimbal_thread_wa, sizeof(gimbal_thread_wa),
+//                    NORMALPRIO - 5, gimbal_thread, NULL);
 
   gimbal.inited = true;
 }

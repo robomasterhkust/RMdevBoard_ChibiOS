@@ -11,6 +11,7 @@
 
 static volatile GimbalEncoder_canStruct  gimbal_encoder[GIMBAL_MOTOR_NUM];
 static volatile ChassisEncoder_canStruct chassis_encoder[CHASSIS_MOTOR_NUM];
+static volatile ChassisEncoder_canStruct extra_encoder[EXTRA_MOTOR_NUM];
 
 /*
  * 500KBaud, automatic wakeup, automatic recover
@@ -38,6 +39,11 @@ volatile ChassisEncoder_canStruct* can_getChassisMotor(void)
   return chassis_encoder;
 }
 
+volatile ChassisEncoder_canStruct* can_getExtraMotor(void)
+{
+  return extra_encoder;
+}
+
 static inline void can_processChassisEncoder
   (volatile ChassisEncoder_canStruct* cm, const CANRxFrame* const rxmsg)
 {
@@ -59,28 +65,49 @@ static inline void can_processGimbalEncoder
   chSysUnlock();
 }
 
-static void can_processEncoderMessage(const CANRxFrame* const rxmsg)
+static void can_processEncoderMessage(CANDriver* const canp, const CANRxFrame* const rxmsg)
 {
-  switch(rxmsg->SID)
+  if(canp == &CAND1)
   {
-      case CAN_CHASSIS_FL_FEEDBACK_MSG_ID:
-        can_processChassisEncoder(&chassis_encoder[FRONT_LEFT] ,rxmsg);
-        break;
-      case CAN_CHASSIS_FR_FEEDBACK_MSG_ID:
-        can_processChassisEncoder(&chassis_encoder[FRONT_RIGHT] ,rxmsg);
-        break;
-      case CAN_CHASSIS_BL_FEEDBACK_MSG_ID:
-        can_processChassisEncoder(&chassis_encoder[BACK_LEFT] ,rxmsg);
-        break;
-      case CAN_CHASSIS_BR_FEEDBACK_MSG_ID:
-        can_processChassisEncoder(&chassis_encoder[BACK_RIGHT] ,rxmsg);
-        break;
-      case CAN_GIMBAL_YAW_FEEDBACK_MSG_ID:
-        can_processGimbalEncoder(&gimbal_encoder[GIMBAL_YAW] ,rxmsg);
-        break;
-      case CAN_GIMBAL_PITCH_FEEDBACK_MSG_ID:
-        can_processGimbalEncoder(&gimbal_encoder[GIMBAL_PITCH] ,rxmsg);
-        break;
+    switch(rxmsg->SID)
+    {
+        case CAN_CHASSIS_FL_FEEDBACK_MSG_ID:
+          can_processChassisEncoder(&chassis_encoder[FRONT_LEFT] ,rxmsg);
+          break;
+        case CAN_CHASSIS_FR_FEEDBACK_MSG_ID:
+          can_processChassisEncoder(&chassis_encoder[FRONT_RIGHT] ,rxmsg);
+          break;
+        case CAN_CHASSIS_BL_FEEDBACK_MSG_ID:
+          can_processChassisEncoder(&chassis_encoder[BACK_LEFT] ,rxmsg);
+          break;
+        case CAN_CHASSIS_BR_FEEDBACK_MSG_ID:
+          can_processChassisEncoder(&chassis_encoder[BACK_RIGHT] ,rxmsg);
+          break;
+        case CAN_GIMBAL_YAW_FEEDBACK_MSG_ID:
+          can_processGimbalEncoder(&gimbal_encoder[GIMBAL_YAW] ,rxmsg);
+          break;
+        case CAN_GIMBAL_PITCH_FEEDBACK_MSG_ID:
+          can_processGimbalEncoder(&gimbal_encoder[GIMBAL_PITCH] ,rxmsg);
+          break;
+    }
+  }
+  else
+  {
+    switch(rxmsg->SID)
+    {
+        case CAN_CHASSIS_FL_FEEDBACK_MSG_ID:
+          can_processChassisEncoder(&extra_encoder[FRONT_LEFT] ,rxmsg);
+          break;
+        case CAN_CHASSIS_FR_FEEDBACK_MSG_ID:
+          can_processChassisEncoder(&extra_encoder[FRONT_RIGHT] ,rxmsg);
+          break;
+        case CAN_CHASSIS_BL_FEEDBACK_MSG_ID:
+          can_processChassisEncoder(&extra_encoder[BACK_LEFT] ,rxmsg);
+          break;
+        case CAN_CHASSIS_BR_FEEDBACK_MSG_ID:
+          can_processChassisEncoder(&extra_encoder[BACK_RIGHT] ,rxmsg);
+          break;
+    }
   }
 }
 
@@ -105,7 +132,7 @@ static THD_FUNCTION(can_rx, p) {
     while (canReceive(canp, CAN_ANY_MAILBOX,
                       &rxmsg, TIME_IMMEDIATE) == MSG_OK)
     {
-      can_processEncoderMessage(&rxmsg);
+      can_processEncoderMessage(canp, &rxmsg);
     }
   }
   chEvtUnregister(&canp->rxfull_event, &el);
@@ -154,6 +181,7 @@ void can_processInit(void)
 {
   memset((void *)gimbal_encoder,  0, sizeof(GimbalEncoder_canStruct) *GIMBAL_MOTOR_NUM);
   memset((void *)chassis_encoder, 0, sizeof(ChassisEncoder_canStruct)*CHASSIS_MOTOR_NUM);
+  memset((void *)extra_encoder, 0, sizeof(ChassisEncoder_canStruct)*EXTRA_MOTOR_NUM);
 
   uint8_t i;
   for (i = 0; i < CAN_FILTER_NUM; i++)

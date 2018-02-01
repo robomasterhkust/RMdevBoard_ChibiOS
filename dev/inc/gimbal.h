@@ -8,6 +8,7 @@
 #define GIMBAL_CONTROL_FREQ 1000U
 #define GIMBAL_CUTOFF_FREQ    30U
 //#define GIMBAL_ENCODER_USE_SPEED
+#define GIMBAL_IQ_MAX 5000
 
 #define GIMBAL_CAN  &CAND1
 #define GIMBAL_CAN_EID  0x1FF
@@ -25,33 +26,17 @@ typedef enum {
 
 #define GIMBAL_ERROR_COUNT    3U
 #define GIMBAL_WARNING_COUNT  1U
-static const char gimbal_error_messages[][GIMBAL_ERROR_COUNT] =
+static const char gimbal_error_messages[GIMBAL_ERROR_COUNT][50] =
 {
   "E:Gimbal yaw not connected",
   "E:Gimbal pitch not connected",
   "E:Gimbal init timeout"
 };
 
-static const char gimbal_warning_messages[][GIMBAL_WARNING_COUNT] =
+static const char gimbal_warning_messages[GIMBAL_WARNING_COUNT][50] =
 {
   "W:Gimbal control lose frame"
 };
-
-
-typedef struct{
-  param_t kp;
-  param_t ki;
-  float error_int;
-  float error_int_max;
-} __attribute__((packed)) pi_controller_t;
-
-typedef struct{
-  param_t kp;
-  param_t ki;
-  param_t kd;
-  float error_int;
-  float error_int_max;
-} __attribute__((packed)) pid_controller_t;
 
 typedef struct{
   bool inited;
@@ -100,7 +85,7 @@ typedef struct{
 
 GimbalStruct* gimbal_get(void);
 GimbalStruct* gimbal_get_sys_iden(void);
-uint32_t gimbal_get_error(void);
+uint32_t gimbal_getError(void);
 void gimbal_init(void);
 void gimbal_sys_iden_init(void);
 

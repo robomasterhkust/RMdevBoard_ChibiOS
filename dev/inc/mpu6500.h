@@ -102,12 +102,12 @@ typedef enum
 
 #define IMU_ERROR_COUNT    1U
 #define IMU_WARNING_COUNT  1U
-static const char imu_error_messages[][IMU_ERROR_COUNT] =
+static const char imu_error_messages[IMU_ERROR_COUNT][50] =
 {
   "E:Corrupted IMU Q data",
 };
 
-static const char imu_warning_messages[][IMU_WARNING_COUNT] =
+static const char imu_warning_messages[IMU_WARNING_COUNT][50] =
 {
   "W:IMU Reading lose frame"
 };

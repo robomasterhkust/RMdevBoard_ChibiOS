@@ -193,7 +193,7 @@
 #define STM32_ICU_USE_TIM3                  FALSE
 #define STM32_ICU_USE_TIM4                  FALSE
 #define STM32_ICU_USE_TIM5                  FALSE
-#define STM32_ICU_USE_TIM8                  FALSE
+#define STM32_ICU_USE_TIM8                  TRUE
 #define STM32_ICU_USE_TIM9                  FALSE
 #define STM32_ICU_TIM1_IRQ_PRIORITY         7
 #define STM32_ICU_TIM2_IRQ_PRIORITY         7
@@ -223,9 +223,9 @@
 #define STM32_PWM_USE_TIM3                  TRUE
 #define STM32_PWM_USE_TIM4                  TRUE
 #define STM32_PWM_USE_TIM5                  FALSE
-#define STM32_PWM_USE_TIM8                  TRUE
+#define STM32_PWM_USE_TIM8                  FALSE // TRUE
 #define STM32_PWM_USE_TIM9                  FALSE
-#define STM32_PWM_USE_TIM12                  TRUE
+#define STM32_PWM_USE_TIM12                 TRUE
 #define STM32_PWM_TIM1_IRQ_PRIORITY         7
 #define STM32_PWM_TIM2_IRQ_PRIORITY         7
 #define STM32_PWM_TIM3_IRQ_PRIORITY         7
@@ -233,7 +233,7 @@
 #define STM32_PWM_TIM5_IRQ_PRIORITY         7
 #define STM32_PWM_TIM8_IRQ_PRIORITY         7
 #define STM32_PWM_TIM9_IRQ_PRIORITY         7
-#define STM32_PWM_TIM12_IRQ_PRIORITY         7
+#define STM32_PWM_TIM12_IRQ_PRIORITY        7
 
 /*
  * SDC driver system settings.
