@@ -48,6 +48,13 @@ typedef struct{
 } motorPosStruct;
 
 typedef enum {
+  CHASSIS_MOTOR_0_NOT_CONNECTED = 1 << 0,
+  CHASSIS_MOTOR_1_NOT_CONNECTED = 1 << 1,
+  CHASSIS_MOTOR_2_NOT_CONNECTED = 1 << 2,
+  CHASSIS_MOTOR_3_NOT_CONNECTED = 1 << 3
+};
+
+typedef enum {
   CHASSIS_OK = 0,
   CHASSIS_MOTOR_NOT_CONNECTED = 1 <<0
 };
@@ -65,6 +72,7 @@ typedef struct{
   float drive_sp;
   float strafe_sp;
   float pid_last_error;
+  uint8_t errorFlag;
 
   ChassisEncoder_canStruct* _encoders;
   PGyroStruct _pGyro;
