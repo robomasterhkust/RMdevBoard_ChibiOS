@@ -2,6 +2,8 @@
 // Created by beck on 6/12/2017.
 //
 
+#include <inc/canBusProcess.h>
+#include <inc/gimbal.h>
 #include "ch.h"
 #include "hal.h"
 #include "canBusProcess.h"
@@ -36,21 +38,14 @@ GimbalStruct* gimbal_get_sys_iden(void)
     return &gimbal;
 }
 
+// TODO: add encoder process task individually
 static void gimbal_encoderUpdate(void)
 {
     if (gimbal._encoder_can[GIMBAL_YAW].updated)
     {
         gimbal._encoder_can[GIMBAL_YAW].updated = false;
 
-        float angle_input = (float) (gimbal._encoder_can[GIMBAL_YAW].raw_angle * GIMBAL_ANGLE_PSC);
-
-        // Prevent zero-crossing
-//        if (angle_input > GIMBAL_MAX_ANGLE && gimbal.yaw_angle < GIMBAL_MIN_ANGLE)
-//            angle_input -= 2*M_PI;
-//        else if (angle_input < GIMBAL_MIN_ANGLE && gimbal.yaw_angle > GIMBAL_MAX_ANGLE)
-//            angle_input += 2*M_PI;
-
-        gimbal.yaw_angle   = angle_input;
+        gimbal.yaw_angle   = gimbal._encoder_can[GIMBAL_YAW].radian_angle;
         gimbal.yaw_current = gimbal._encoder_can[GIMBAL_YAW].raw_current;
 
         gimbal.yaw_wait_count = 1;
@@ -69,15 +64,7 @@ static void gimbal_encoderUpdate(void)
     {
         gimbal._encoder_can[GIMBAL_PITCH].updated = false;
 
-        float angle_input = (float) (gimbal._encoder_can[GIMBAL_PITCH].raw_angle * GIMBAL_ANGLE_PSC);
-
-        // Prevent zero-crossing
-        if (angle_input > GIMBAL_MAX_ANGLE && gimbal.pitch_angle < GIMBAL_MIN_ANGLE)
-            angle_input -= 2*M_PI;
-        else if (angle_input < GIMBAL_MIN_ANGLE && gimbal.pitch_angle > GIMBAL_MAX_ANGLE)
-            angle_input += 2*M_PI;
-
-        gimbal.pitch_angle = angle_input;
+        gimbal.pitch_angle = gimbal._encoder_can[GIMBAL_PITCH].radian_angle;
         gimbal.pitch_current = gimbal._encoder_can[GIMBAL_PITCH].raw_current;
 
         gimbal.pitch_wait_count = 1;
