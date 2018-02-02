@@ -35,7 +35,7 @@ static inline float map(float x, float in_min, float in_max, float out_min, floa
 
 #define   CHASSIS_ANGLE_PSC 7.6699e-4 //2*M_PI/0x1FFF
 #define   CHASSIS_SPEED_PSC 1.0f/((float)CHASSIS_GEAR_RATIO)
-#define   + 20U
+#define   CHASSIS_CONNECTION_ERROR_COUNT  20U
 static void chassis_encoderUpdate(void)
 {
   uint8_t i;
