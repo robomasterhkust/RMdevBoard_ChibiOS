@@ -182,9 +182,9 @@ void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1)
   float heading_correction = chassis.heading_sp - chassis._pGyro->angle;
 
   //Remote Control Commands, Mapped to match min and max CURRENT
-  chassis.strafe_sp  = (int16_t)map(RX_X2, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, -CURRENT_MAX, CURRENT_MAX);
-  chassis.drive_sp = (int16_t)map(RX_Y1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, -CURRENT_MAX, CURRENT_MAX);
-  chassis.rotate_sp = (int16_t)map(RX_X1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, -CURRENT_MAX, CURRENT_MAX);
+  chassis.strafe_sp  = (int16_t)map(RX_X2, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, -RPM_MAX, RPM_MAX);
+  chassis.drive_sp = (int16_t)map(RX_Y1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, -RPM_MAX, RPM_MAX);
+  chassis.rotate_sp = (int16_t)map(RX_X1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, -RPM_MAX, RPM_MAX);
   heading_correction = chassis_controlHeading(&chassis, &heading_controller);
   // For later coordinate with chassis
   int rotate_feedback = 0;
