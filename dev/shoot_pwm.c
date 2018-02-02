@@ -5,7 +5,7 @@
 #include "stdint.h"
 #include "ch.h"
 #include "hal.h"
-#include "shoot_pwm.h"
+//#include "shoot_pwm.h"
 
 /**
  * 2017/12/17 PWM test
@@ -62,26 +62,26 @@ void pwm12_config(PWMDriver *pwmp, const PWMConfig *config,int p){
 
 void pwm_shooter_init(void)
 {
-    LEDR_ON();
-    LEDG_OFF();
+//    LEDR_ON();
+//    LEDG_OFF();
+//
+//    pwmStart(&PWMD8, &pwm8cfg);
+//    pwmStart(&PWMD12,&pwm12cfg);
 
-    pwmStart(&PWMD8, &pwm8cfg);
-    pwmStart(&PWMD12,&pwm12cfg);
-
-    chThdSleepSeconds(3);
+//    chThdSleepSeconds(3);
     //pwm_config(&PWMD8,&pwm8cfg,1000);
-    pwm12_config(&PWMD12,&pwm12cfg,9000);
-    chThdSleepSeconds(2);
+//    pwm12_config(&PWMD12,&pwm12cfg,9000);
+//    chThdSleepSeconds(2);
     //pwm_config(&PWMD8,&pwm8cfg,1000);
-    pwm12_config(&PWMD12,&pwm12cfg,1000);
-    chThdSleepSeconds(2);
-    float alpha = 0.1f;
-    while(y<2600){
-      y = alpha*x+(1-alpha)*y;
-      wa = y;
-      pwmEnableChannel(&PWMD12,0,PWM_PERCENTAGE_TO_WIDTH(&PWMD12, y));
-      pwmEnableChannel(&PWMD12,1,PWM_PERCENTAGE_TO_WIDTH(&PWMD12, y));
-    }
+//    pwm12_config(&PWMD12,&pwm12cfg,1000);
+//    chThdSleepSeconds(2);
+//    float alpha = 0.1f;
+//    while(y<2600){
+//      y = alpha*x+(1-alpha)*y;
+//      wa = y;
+//      pwmEnableChannel(&PWMD12,0,PWM_PERCENTAGE_TO_WIDTH(&PWMD12, y));
+//      pwmEnableChannel(&PWMD12,1,PWM_PERCENTAGE_TO_WIDTH(&PWMD12, y));
+//    }
 
     //pwm_config(&PWMD8,&pwm8cfg,1100);
     //pwm12_config(&PWMD12,&pwm12cfg,1100);
@@ -98,7 +98,7 @@ void pwm_shooter_init(void)
     //perc = 0;
     //map function output range: 1100-2600
     //r_percent = 1100;
-    chThdSleepMilliseconds(1);
+//    chThdSleepMilliseconds(1);
 }
 
 

@@ -34,8 +34,6 @@ static void rcStructInit(void)
   RC_Ctl.keyboard.key_code=0;
 }
 
-
-
 /*
  * @brief get error code: rx_flag
  * @status: true = connected
@@ -150,7 +148,6 @@ RC_Ctl_t* RC_get(void)
 {
   return &RC_Ctl;
 }
-
 
 /**
  * @brief   Initialize the RC receiver

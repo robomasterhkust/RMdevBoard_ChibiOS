@@ -190,13 +190,13 @@ void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1)
   int rotate_feedback = 0;
 
   chassis._motors[FRONT_RIGHT].speed_sp =
-    ((chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp) + rotate_feedback + heading_correction);   // CAN ID: 0x201
+    ((chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp) + rotate_feedback - heading_correction);   // CAN ID: 0x201
   chassis._motors[BACK_RIGHT].speed_sp =
-    ((-1*chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp) + rotate_feedback + heading_correction);       // CAN ID: 0x202
+    ((-1*chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp) + rotate_feedback - heading_correction);       // CAN ID: 0x202
   chassis._motors[FRONT_LEFT].speed_sp =
-    ((chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp) + rotate_feedback + heading_correction);       // CAN ID: 0x203
+    ((chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp) + rotate_feedback - heading_correction);       // CAN ID: 0x203
   chassis._motors[BACK_LEFT].speed_sp =
-    ((-1*chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp) + rotate_feedback + heading_correction);     // CAN ID: 0x204
+    ((-1*chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp) + rotate_feedback - heading_correction);     // CAN ID: 0x204
 
   uint8_t i;
   int16_t output[4];

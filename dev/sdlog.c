@@ -26,7 +26,7 @@ static FRESULT reg_error;
 FRESULT er;
 char name[10] = "test0.txt";
 
-extern PIMUStruct pIMU;
+//extern PIMUStruct pIMU;
 /*
  * SDIO configuration.
  */
@@ -120,8 +120,8 @@ static THD_FUNCTION(sdlog_thread,p)
     uint32_t tick = chVTGetSystemTimeX();
     tim = ST2MS(tick);
     s_i = snprintf(NULL,0,"%d",tim)+1;
-    float temp = pIMU->accelData[0];
-    s_f = snprintf(NULL,0,"%f",temp)+1;
+   // float temp = pIMU->accelData[0];
+   // s_f = snprintf(NULL,0,"%f",temp)+1;
 
     /* testing writing in IMU acceleration data log*/
     logger.position = 0x00AA; //use buf[1,3,5,7]
@@ -161,9 +161,9 @@ static THD_FUNCTION(sdlog_thread,p)
             /*int s_i = snprintf(NULL,0,"%d",s0);
             int s_f = snprintf(NULL,0,"%d",b0);**/
             snprintf(s0,s_i,"%d",tim);
-            snprintf(b0,s_f,"%f",pIMU->accelData[0]);
-            snprintf(b1,s_f,"%f",pIMU->accelData[1]);
-            snprintf(b2,s_f,"%f",pIMU->accelData[2]);
+ //           snprintf(b0,s_f,"%f",pIMU->accelData[0]);
+ //           snprintf(b1,s_f,"%f",pIMU->accelData[1]);
+ //           snprintf(b2,s_f,"%f",pIMU->accelData[2]);
 
             strcat(s0," ");
             strcat(b0," ");
