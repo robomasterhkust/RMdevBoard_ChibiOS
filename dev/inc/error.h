@@ -94,7 +94,10 @@ void printError_dbus(BaseSequentialStream * chp, dbus_error_t error_Index);
  * Chassis Error List
  *
  * CHASSIS_OK = 0,
- * CHASSIS_MOTOR_NOT_CONNECTED = 1 <<0
+ * CHASSIS_MOTOR_0_NOT_CONNECTED = 1 <<0
+ * CHASSIS_MOTOR_1_NOT_CONNECTED = 1 <<1
+ * CHASSIS_MOTOR_2_NOT_CONNECTED = 1 <<2
+ * CHASSIS_MOTOR_3_NOT_CONNECTED = 1 <<3
  */
 
 void printError_chassis(BaseSequentialStream * chp, chassis_error_t error_Index);
