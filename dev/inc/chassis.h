@@ -16,12 +16,10 @@
 
 // DBUS MACRO
 
-#define CURRENT_MAX    ((int16_t) 277)              //
-#define CURRENT_MIN    ((int16_t)-277)              //
 #define CHASSIS_GEAR_RATIO    27U
 
-#define RPM_MAX    ((int16_t) 277)              //
-#define RPM_MIN    ((int16_t) -277)              //
+#define RPM_MAX    ((int16_t) 350)              //
+#define RPM_MIN    ((int16_t) -350)              //
 
 #define HEADING_MIN     ((float) -3.14159) // - pi
 #define HEADING_MAX     ((float) 3.14159)   // pi
