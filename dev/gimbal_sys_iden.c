@@ -1,16 +1,20 @@
-//
-// Created by beck on 6/12/2017.
-//
+/**
+ * Created by beck on 6/12/2017.
+ * @brief   a simply cascaded gimbal controller
+ *          and a gimbal system identification system
+ */
 
-#include <inc/canBusProcess.h>
-#include <inc/gimbal.h>
+#include <gimbal.h>
 #include "ch.h"
 #include "hal.h"
 #include "canBusProcess.h"
 #include "gimbal.h"
+#include "dbus.h"
 #include "string.h"
 #include "math_misc.h"
 #include "arm_math.h"
+
+#define GIMBAL_SYSTEM_IDENTIFICATION false
 
 GimbalStruct gimbal;
 static arm_pid_instance_f32 pid_yaw_pos;
@@ -23,11 +27,10 @@ static pi_controller_t _pitch_vel;
 static pid_controller_t _yaw_atti;
 static pid_controller_t _pitch_atti;
 
-#define GIMBAL_MAX_ANGLE 5.02655f
-#define GIMBAL_MIN_ANGLE 1.25664f
-#define GIMBAL_ANGLE_PSC 7.6699e-4 //2*M_PI/0x1FFF
-#define GIMBAL_CONNECTION_ERROR_COUNT 20U
-#define GIMBAL_CONTROL_PERIOD_NEXT    US2ST(1000000U/GIMBAL_CONTROL_FREQ)
+static THD_WORKING_AREA(gimbal_rc_control_wa, 512);
+static THD_WORKING_AREA(gimbal_serial_control_wa, 512);
+static THD_WORKING_AREA(gimbal_simple_control_wa, 2048);
+static THD_WORKING_AREA(gimbal_sys_iden_wa, 2048);
 
 #define gimbal_canUpdate() \
     (can_motorSetCurrent(GIMBAL_CAN, GIMBAL_CAN_EID,\
@@ -38,7 +41,6 @@ GimbalStruct* gimbal_get_sys_iden(void)
     return &gimbal;
 }
 
-// TODO: add encoder process task individually
 static void gimbal_encoderUpdate(void)
 {
     if (gimbal._encoder_can[GIMBAL_YAW].updated)
@@ -80,22 +82,29 @@ static void gimbal_encoderUpdate(void)
     }
 }
 
-/* name of gimbal parameters*/
-static const char axis_ff_name[]  = "Gimbal Axis FF";
-static const char init_pos_name[] = "Gimbal Init Pos";
-static const char accl_name[]     = "Gimbal FF Accl";
-static const char subname_axis[]  = "Yaw Pitch Yaw_SD";
-static const char subname_ff[]    = "Yaw_w1 Pitch_w Yaw_a Pitch_a Yaw_w2 Yaw_th";
-static const char subname_accl[]  = "YawX YawY YawZ PitchX PitchY PitchZ";
-static const char _yaw_vel_name[] =   "Gimbal Yaw Vel";
-static const char _pitch_vel_name[] = "Gimbal Pitch Vel";
-static const char _yaw_atti_name[] =   "Gimbal Yaw Atti";
-static const char _pitch_atti_name[] = "Gimbal Pitch Atti";
-static const char yaw_pos_name[] =   "Gimbal Yaw Pos";
-static const char pitch_pos_name[] = "Gimbal Pitch Pos";
+static inline void pid_initialize(arm_pid_instance_f32* pid, const float Kp, const float Ki, const float Kd)
+{
+    pid->Kp = Kp;
+    pid->Ki = Ki;
+    pid->Kd = Kd;
+    arm_pid_init_f32(pid, 0);
+}
 
-static THD_WORKING_AREA(gimbal_simple_control_wa, 2048);
-static THD_WORKING_AREA(gimbal_sys_iden_wa, 2048);
+static THD_FUNCTION(gimbal_rc_control, p)
+{
+    (void)p;
+    chRegSetThreadName("chassis controller");
+    RC_Ctl_t* pRC = RC_get();
+
+    while (!chThdShouldTerminateX())
+    {
+        gimbal.pitch_atti_cmd += map(pRC->rc.channel3, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, (float)M_PI/2000, (float)-M_PI/2000);
+        gimbal.yaw_atti_cmd   += map(pRC->rc.channel2, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, (float)M_PI/2000, (float)-M_PI/2000);
+        bound(&gimbal.pitch_atti_cmd, (float)M_PI/8);
+        bound(&gimbal.yaw_atti_cmd, (float)M_PI/3);
+        chThdSleepMilliseconds(1);
+    }
+}
 
 /**
  * @brief   Controller designed by Beck
@@ -105,7 +114,7 @@ static THD_WORKING_AREA(gimbal_sys_iden_wa, 2048);
 static THD_FUNCTION(gimbal_simple_control, p)
 {
     (void)p;
-    chRegSetThreadName("gimbal controller");
+    chRegSetThreadName("gimbal simple cascaded controller");
     gimbal.pitch_speed_cmd = 0.0f;
     gimbal.yaw_speed_cmd = 0.0f;
 
@@ -116,8 +125,13 @@ static THD_FUNCTION(gimbal_simple_control, p)
     {
         gimbal_encoderUpdate();
 
-        gimbal.pitch_speed_cmd = arm_pid_f32(&pid_pitch_pos, gimbal.axis_init_pos[GIMBAL_PITCH] - gimbal.pitch_angle);
-        gimbal.yaw_speed_cmd = arm_pid_f32(&pid_yaw_pos, gimbal.axis_init_pos[GIMBAL_YAW] - gimbal.yaw_angle);
+        pid_initialize(&pid_pitch_pos, _pitch_atti.kp, _pitch_atti.ki, _pitch_atti.kd);
+        pid_initialize(&pid_pitch_vel, _pitch_vel.kp, _pitch_vel.ki, 0); // -1000, 0, 0
+        pid_initialize(&pid_yaw_pos, _yaw_atti.kp, _yaw_atti.ki, _yaw_atti.kd);
+        pid_initialize(&pid_yaw_vel, _yaw_vel.kp, _yaw_vel.ki, 0); // 1000, 0, 0
+
+        gimbal.pitch_speed_cmd = arm_pid_f32(&pid_pitch_pos, gimbal.pitch_atti_cmd + gimbal.axis_init_pos[GIMBAL_PITCH] - gimbal.pitch_angle);
+        gimbal.yaw_speed_cmd = arm_pid_f32(&pid_yaw_pos, gimbal.yaw_atti_cmd + gimbal.axis_init_pos[GIMBAL_YAW] - gimbal.yaw_angle);
 
         gimbal.pitch_iq_cmd = arm_pid_f32(&pid_pitch_vel, gimbal.pitch_speed_cmd - gimbal._pIMU->gyroData[Y]);
         gimbal.yaw_iq_cmd   = arm_pid_f32(&pid_yaw_vel,   gimbal.yaw_speed_cmd - gimbal._pIMU->gyroData[Z]);
@@ -213,13 +227,19 @@ static THD_FUNCTION(gimbal_sys_iden, p)
     }
 }
 
-static void pid_initialize(arm_pid_instance_f32* pid, const float Kp, const float Ki, const float Kd)
-{
-    pid->Kp = Kp;
-    pid->Ki = Ki;
-    pid->Kd = Kd;
-    arm_pid_init_f32(pid, 0);
-}
+/* name of gimbal parameters*/
+static const char axis_ff_name[]  = "Gimbal Axis FF";
+static const char init_pos_name[] = "Gimbal Init Pos";
+static const char accl_name[]     = "Gimbal FF Accl";
+static const char subname_axis[]  = "Yaw Pitch Yaw_SD";
+static const char subname_ff[]    = "Yaw_w1 Pitch_w Yaw_a Pitch_a Yaw_w2 Yaw_th";
+static const char subname_accl[]  = "YawX YawY YawZ PitchX PitchY PitchZ";
+static const char _yaw_vel_name[] =   "Gimbal Yaw Vel";
+static const char _pitch_vel_name[] = "Gimbal Pitch Vel";
+static const char _yaw_atti_name[] =   "Gimbal Yaw Atti";
+static const char _pitch_atti_name[] = "Gimbal Pitch Atti";
+static const char yaw_pos_name[] =   "Gimbal Yaw Pos";
+static const char pitch_pos_name[] = "Gimbal Pitch Pos";
 
 /**
  * @Note    Requires to run can_processInit() first
@@ -252,18 +272,23 @@ void gimbal_sys_iden_init(void)
     params_set(&_yaw_atti,     7, 3, _yaw_atti_name,   subname_PID,      PARAM_PUBLIC);
     params_set(&_pitch_atti,   8, 3, _pitch_atti_name, subname_PID,      PARAM_PUBLIC);
 
-    pid_initialize(&pid_pitch_pos, _pitch_atti.kp, _pitch_atti.ki, _pitch_atti.kd);
-    pid_initialize(&pid_pitch_vel, _pitch_vel.kp, _pitch_vel.ki, 0); // -1000, 0, 0
-    pid_initialize(&pid_yaw_pos, _yaw_atti.kp, _yaw_atti.ki, _yaw_atti.kd);
-    pid_initialize(&pid_yaw_vel, _yaw_vel.kp, _yaw_vel.ki, 0); // 1000, 0, 0
+    arm_pid_init_f32(&pid_pitch_pos, 1);
+    arm_pid_init_f32(&pid_pitch_vel, 1);
+    arm_pid_init_f32(&pid_yaw_pos, 1);
+    arm_pid_init_f32(&pid_yaw_vel, 1);
 
     gimbal_encoderUpdate();
 
     chThdCreateStatic(gimbal_simple_control_wa, sizeof(gimbal_simple_control_wa),
                         NORMALPRIO - 5, gimbal_simple_control, NULL);
 
-//    chThdCreateStatic(gimbal_sys_iden_wa, sizeof(gimbal_sys_iden_wa),
-//                      NORMALPRIO - 5, gimbal_sys_iden, NULL);
+    chThdCreateStatic(gimbal_rc_control_wa, sizeof(gimbal_rc_control_wa),
+                        NORMALPRIO - 5, gimbal_rc_control, NULL);
+
+#if GIMBAL_SYSTEM_IDENTIFICATION
+    chThdCreateStatic(gimbal_sys_iden_wa, sizeof(gimbal_sys_iden_wa),
+                      NORMALPRIO - 5, gimbal_sys_iden, NULL);
+#endif
 
     gimbal.inited = true;
 }

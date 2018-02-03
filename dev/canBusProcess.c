@@ -4,7 +4,6 @@
  * @brief   CAN driver configuration file
  * @reference   RM2017_Archive
  */
-#include <inc/canBusProcess.h>
 #include "ch.h"
 #include "hal.h"
 
