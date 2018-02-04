@@ -19,6 +19,9 @@
 #define CAN_GIMBAL_YAW_FEEDBACK_MSG_ID              0x205
 #define CAN_GIMBAL_PITCH_FEEDBACK_MSG_ID            0x206
 
+#define CAN_ENCODER_RANGE           8192            // 0x2000
+#define CAN_ENCODER_RADIAN_RATIO    7.669904e-4f    // 2*M_PI / 0x2000
+
 typedef enum
 {
   GIMBAL_YAW = 0,
@@ -34,16 +37,33 @@ typedef enum
 }chassis_num_t;
 
 typedef struct {
-  uint16_t raw_angle;
-  int16_t  raw_current;
-  int16_t  current_setpoint;
-  bool updated;
+    uint16_t raw_angle;
+    int16_t  raw_current;
+    int16_t  current_setpoint;
+
+    uint16_t last_raw_angle;
+    uint16_t offset_raw_angle;
+    int32_t round_count;
+    int32_t total_ecd;
+    float radian_angle; // Continuous
+
+    bool updated;
 } GimbalEncoder_canStruct;
 
 typedef struct {
-  uint16_t raw_angle;
-  int16_t  raw_speed;
-  bool updated;
+    uint16_t raw_angle;
+    int16_t  raw_speed;
+    int16_t act_current;
+    uint8_t temperature;
+
+    uint16_t last_raw_angle;
+    uint16_t offset_raw_angle;
+    uint32_t msg_count;
+    int32_t round_count;
+    int32_t total_ecd;
+    float radian_angle; // Continuous
+
+    bool updated;
 } ChassisEncoder_canStruct;
 
 volatile GimbalEncoder_canStruct* can_getGimbalMotor(void);
