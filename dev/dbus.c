@@ -69,13 +69,11 @@ static void decryptDBUS(void)
  */
 static void rxend(UARTDriver *uartp) {
 
-  if(rx_start_flag)
-  {
+  if (rx_start_flag) {
     chSysLockFromISR();
     chThdResumeI(&uart_dbus_thread_handler, MSG_OK);
     chSysUnlockFromISR();
-  }
-  else
+  } else
     rx_start_flag = 1;
 }
 
@@ -83,11 +81,11 @@ static void rxend(UARTDriver *uartp) {
  * UART driver configuration structure.
  */
 static UARTConfig uart_cfg = {
-  NULL,NULL,rxend,NULL,NULL,
-  100000,
-  USART_CR1_PCE,
-  0,
-  0
+        NULL, NULL, rxend, NULL, NULL,
+        100000,
+        USART_CR1_PCE,
+        0,
+        0
 };
 
 #define  DBUS_INIT_WAIT_TIME_MS      4U
@@ -107,8 +105,7 @@ static THD_FUNCTION(uart_dbus_thread, p)
   systime_t timeout = MS2ST(DBUS_INIT_WAIT_TIME_MS);
   uint32_t count = 0;
 
-  while(!chThdShouldTerminateX())
-  {
+  while (!chThdShouldTerminateX()) {
     uartStopReceive(UART_DBUS);
     uartStartReceive(UART_DBUS, DBUS_BUFFER_SIZE, rxbuf);
 
@@ -116,18 +113,13 @@ static THD_FUNCTION(uart_dbus_thread, p)
     rxmsg = chThdSuspendTimeoutS(&uart_dbus_thread_handler, timeout);
     chSysUnlock();
 
-    if(rxmsg == MSG_OK)
-    {
-      if(!rxflag)
-      {
+    if (rxmsg == MSG_OK) {
+      if (!rxflag) {
         timeout = MS2ST(DBUS_WAIT_TIME_MS);
         rxflag = true;
-      }
-      else
+      } else
         decryptDBUS();
-    }
-    else
-    {
+    } else {
       rxflag = false;
       rcStructInit();
       timeout = MS2ST(DBUS_INIT_WAIT_TIME_MS);

@@ -8,6 +8,7 @@
 #define GIMBAL_CONTROL_FREQ 1000U
 #define GIMBAL_CUTOFF_FREQ    30U
 //#define GIMBAL_ENCODER_USE_SPEED
+#define GIMBAL_IQ_MAX 5000
 
 #define GIMBAL_CAN  &CAND1
 #define GIMBAL_CAN_EID  0x1FF
@@ -25,6 +26,9 @@ typedef enum {
 
 #define GIMBAL_ERROR_COUNT    3U
 #define GIMBAL_WARNING_COUNT  1U
+#define GIMBAL_CONNECTION_ERROR_COUNT 20U
+#define GIMBAL_CONTROL_PERIOD_NEXT    US2ST(1000000U/GIMBAL_CONTROL_FREQ)
+
 static const char gimbal_error_messages[GIMBAL_ERROR_COUNT][50] =
 {
   "E:Gimbal yaw not connected",

@@ -17,10 +17,10 @@
 
 static BaseSequentialStream* chp = (BaseSequentialStream*)&SDU1;
 static const IMUConfigStruct imu1_conf =
-  {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_250, MPU6500_AXIS_REV_Z};
+  {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_250, MPU6500_AXIS_REV_NO};
 
 static const magConfigStruct mag1_conf =
-  {IST8310_ADDR_FLOATING, 200, IST8310_AXIS_REV_NO};
+        {IST8310_ADDR_FLOATING, 200, IST8310_AXIS_REV_NO};
 
 PIMUStruct pIMU;
 PGyroStruct pGyro;
@@ -91,19 +91,18 @@ int main(void) {
   params_init();
   can_processInit();
   RC_init();
-  gimbal_sys_iden_init(); //*
-  gimbal_init();
 
-  // pwm_shooter_init(); // *
+//  gimbal_init();
+    gimbal_sys_iden_init();
 
-  extiinit(); //*
+//    pwm_shooter_init(); // *
+
+//  extiinit(); //*
   tempControllerInit(); //*
-  chassis_init();
+//  chassis_init();
   pGyro = gyro_init();
   error_init();
   //pwm12init();
-  sdlog_init();
-  ultrasonic_init();
 
   //tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
 
