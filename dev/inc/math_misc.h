@@ -211,6 +211,20 @@ static inline void rotm2eulerangle(const float rotm[3][3], float euler_angle[3])
   }
 }
 
+/**
+ * @brief map from one unit to another
+ * @param x
+ * @param in_min
+ * @param in_max
+ * @param out_min
+ * @param out_max
+ * @return linearly unified output
+ */
+static inline float map(float x, float in_min, float in_max, float out_min, float out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
 void lpfilter_init(lpfilterStruct* const lp,
   const float sample_freq, const float cutoff_freq);
 

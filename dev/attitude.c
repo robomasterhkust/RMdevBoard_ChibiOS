@@ -22,8 +22,7 @@ uint8_t attitude_update(PIMUStruct pIMU)
   vector_normalize(pIMU->qIMU, 4);
   uint8_t i;
 
-  if(accel < 12.81f && accel > 6.81f)
-  {
+  if (accel < 12.81f && accel > 6.81f) {
     float accel_corr[3], norm_accel[3], v2[3];
 
     v2[0] = 2.0f * (pIMU->qIMU[1] * pIMU->qIMU[3] - pIMU->qIMU[0] * pIMU->qIMU[2]);
@@ -34,15 +33,14 @@ uint8_t attitude_update(PIMUStruct pIMU)
             pIMU->qIMU[3] * pIMU->qIMU[3];
 
     for (i = 0; i < 3; i++)
-      norm_accel[i] = pIMU->accelData[i]/accel;
+      norm_accel[i] = pIMU->accelData[i] / accel;
 
     vector3_cross(norm_accel, v2, accel_corr);
     for (i = 0; i < 3; i++)
       corr[i] += accel_corr[i] * ATT_W_ACCEL;
 
     if(spinRate < 0.175f)
-      for (i = 0; i < 3; i++)
-      {
+      for (i = 0; i < 3; i++) {
         _error_int[i] += corr[i] * (ATT_W_GYRO * pIMU->dt);
 
         if(_error_int[i] > GYRO_BIAS_MAX)
@@ -61,24 +59,22 @@ uint8_t attitude_update(PIMUStruct pIMU)
   float q[4] = {pIMU->qIMU[0], pIMU->qIMU[1], pIMU->qIMU[2], pIMU->qIMU[3]};
   for (i = 0; i < 4; i++)
     q[i] += dq[i] * pIMU->dt;
-  vector_normalize(q,4);
+  vector_normalize(q, 4);
 
-  if(isfinite(q[0]) && isfinite(q[1]) && isfinite(q[2]) && isfinite(q[3]))
-  {
+  if (isfinite(q[0]) && isfinite(q[1]) && isfinite(q[2]) && isfinite(q[3])) {
     for (i = 0; i < 4; i++)
       pIMU->qIMU[i] = q[i];
 
-    #ifdef  IMU_USE_EULER_ANGLE
-      quarternion2euler(pIMU->qIMU, pIMU->euler_angle);
-      pIMU->d_euler_angle[Pitch] = cosf(pIMU->euler_angle[Roll])*pIMU->gyroData[Y] -
-        sinf(pIMU->euler_angle[Roll]) * pIMU->gyroData[Z];
-      pIMU->d_euler_angle[Yaw] = (sinf(pIMU->euler_angle[Roll])*pIMU->gyroData[Y] +
-        cosf(pIMU->euler_angle[Roll]) * pIMU->gyroData[Z]) / cosf(pIMU->euler_angle[Pitch]);
-    #endif
+#ifdef  IMU_USE_EULER_ANGLE
+    quarternion2euler(pIMU->qIMU, pIMU->euler_angle);
+    pIMU->d_euler_angle[Pitch] = cosf(pIMU->euler_angle[Roll]) * pIMU->gyroData[Y] -
+                                 sinf(pIMU->euler_angle[Roll]) * pIMU->gyroData[Z];
+    pIMU->d_euler_angle[Yaw] = (sinf(pIMU->euler_angle[Roll]) * pIMU->gyroData[Y] +
+                                cosf(pIMU->euler_angle[Roll]) * pIMU->gyroData[Z]) / cosf(pIMU->euler_angle[Pitch]);
+#endif
 
     return IMU_OK;
-  }
-  else
+  } else
     return IMU_CORRUPTED_Q_DATA;
 }
 
@@ -86,13 +82,13 @@ uint8_t attitude_imu_init(PIMUStruct pIMU)
 {
   float rot_matrix[3][3];
 
-  float norm = vector_norm(pIMU->accelData,3);
+  float norm = vector_norm(pIMU->accelData, 3);
   uint8_t i;
   for (i = 0; i < 3; i++)
     rot_matrix[2][i] = pIMU->accelData[i] / norm;
 
-  norm = sqrtf(rot_matrix[2][2]*rot_matrix[2][2] +
-    rot_matrix[2][0]*rot_matrix[2][0]);
+  norm = sqrtf(rot_matrix[2][2] * rot_matrix[2][2] +
+               rot_matrix[2][0] * rot_matrix[2][0]);
 
   rot_matrix[0][0] = rot_matrix[2][2] / norm;
   rot_matrix[0][1] = 0.0f;
