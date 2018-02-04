@@ -97,11 +97,11 @@ file(GLOB_RECURSE SHELL_SRC "os/various/shell.c" "os/various/evtimer.c" "os/vari
         "os/hal/lib/streams/memstreams.c" "os/hal/lib/streams/chprintf.c")
 include_directories(os/various os/hal/lib/streams)
 
-add_library(USER ${USER_SRC} dev/ros_comm.c)
+add_library(USER ${USER_SRC})
 add_library(STARTUP ${STARTUP_SRC} os/common/ports/ARMCMx/compilers/GCC/crt0_v7m.s)
 add_library(HAL ${HAL_SRC})
 add_library(PLATFORM ${PLATFORM_SRC})
-add_library(BOARD ${BOARD_SRC} dev/inc/ros_comm.h)
+add_library(BOARD ${BOARD_SRC})
 add_library(OSAL ${OSAL_SRC})
 add_library(RTOS ${RTOS_SRC})
 add_library(PORT ${PORT_SRC} os/rt/ports/ARMCMx/compilers/GCC/chcoreasm_v7m.s)

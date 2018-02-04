@@ -20,6 +20,7 @@
 #include "adis16265.h"
 #include "attitude.h"
 #include "calibrate_sensor.h"
+#include "hcsr04.h"
 
 #include "gimbal.h"
 #include "chassis.h"
@@ -27,7 +28,7 @@
 #include "exti.h"
 #include "judge.h"
 #include "imu_temp.h"
-
+#include "sdlog.h"
 #include "shoot_pwm.h"
 
 void shellStart(void);
