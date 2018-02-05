@@ -111,7 +111,11 @@ void printError_dbus(BaseSequentialStream * chp, dbus_error_t error_Index){
 
 void printError_chassis(BaseSequentialStream * chp, chassis_error_t error_Index){
   if(error_Index == 0) chprintf(chp,"Chassis Status: GREEN %s\n","");
-  if(error_Index & CHASSIS_MOTOR_NOT_CONNECTED) chprintf(chp,"Chassis Error: Motor Not Connected %s\n","");
+  if(error_Index & CHASSIS_MOTOR_0_NOT_CONNECTED) chprintf(chp,"Chassis Error: Motor 0 Not Connected %s\n","");
+  if(error_Index & CHASSIS_MOTOR_1_NOT_CONNECTED) chprintf(chp,"Chassis Error: Motor 1 Not Connected %s\n","");
+  if(error_Index & CHASSIS_MOTOR_2_NOT_CONNECTED) chprintf(chp,"Chassis Error: Motor 2 Not Connected %s\n","");
+  if(error_Index & CHASSIS_MOTOR_3_NOT_CONNECTED) chprintf(chp,"Chassis Error: Motor 3 Not Connected %s\n","");
+
 }
 
 void cmd_error(BaseSequentialStream * chp, int argc, char *argv[])

@@ -198,9 +198,9 @@ static THD_FUNCTION(gimbal_thread, p)
   (void)p;
   chRegSetThreadName("Gimbal controller");
 
-  chSysLock();
-  chThdSuspendS(&gimbal_thread_handler);
-  chSysUnlock();
+//  chSysLock();
+//  chThdSuspendS(&gimbal_thread_handler);
+//  chSysUnlock();
 
   _yaw_vel.error_int = 0.0f;
   _pitch_vel.error_int = 0.0f;
@@ -427,12 +427,12 @@ static const char accl_name[]     = "Gimbal FF Accl";
 static const char subname_axis[]  = "Yaw Pitch Yaw_SD";
 static const char subname_ff[]    = "Yaw_w1 Pitch_w Yaw_a Pitch_a Yaw_w2 Yaw_th";
 static const char subname_accl[]  = "YawX YawY YawZ PitchX PitchY PitchZ";
-const char _yaw_vel_name[] =   "Gimbal Yaw Vel";
-const char _pitch_vel_name[] = "Gimbal Pitch Vel";
-const char _yaw_atti_name[] =   "Gimbal Yaw Atti";
-const char _pitch_atti_name[] = "Gimbal Pitch Atti";
-const char yaw_pos_name[] =   "Gimbal Yaw Pos";
-const char pitch_pos_name[] = "Gimbal Pitch Pos";
+static const char _yaw_vel_name[] =   "Gimbal Yaw Vel";
+static const char _pitch_vel_name[] = "Gimbal Pitch Vel";
+static const char _yaw_atti_name[] =   "Gimbal Yaw Atti";
+static const char _pitch_atti_name[] = "Gimbal Pitch Atti";
+static const char yaw_pos_name[] =   "Gimbal Yaw Pos";
+static const char pitch_pos_name[] = "Gimbal Pitch Pos";
 
 /*
  *  @brief      Initialize the gimbal motor driver
@@ -460,12 +460,12 @@ void gimbal_init(void)
 
   gimbal_encoderUpdate();
 
-  params_set(gimbal.axis_init_pos,  5, 3, init_pos_name,  subname_axis,    PARAM_PRIVATE);
-  params_set(gimbal.axis_ff_weight, 2, 6, axis_ff_name,   subname_ff,      PARAM_PRIVATE);
-  params_set(gimbal.axis_ff_accel,  6, 6, accl_name,      subname_accl,    PARAM_PRIVATE);
+  params_set(gimbal.axis_init_pos,  5, 3, init_pos_name,  subname_axis,    PARAM_PUBLIC);
+  params_set(gimbal.axis_ff_weight, 2, 6, axis_ff_name,   subname_ff,      PARAM_PUBLIC);
+  params_set(gimbal.axis_ff_accel,  6, 6, accl_name,      subname_accl,    PARAM_PUBLIC);
 
-  params_set(&_yaw_pos,   3, 3, yaw_pos_name,   subname_PID,   PARAM_PRIVATE);
-  params_set(&_pitch_pos, 4, 3, pitch_pos_name, subname_PID,   PARAM_PRIVATE);
+  params_set(&_yaw_pos,   3, 3, yaw_pos_name,   subname_PID,   PARAM_PUBLIC);
+  params_set(&_pitch_pos, 4, 3, pitch_pos_name, subname_PID,   PARAM_PUBLIC);
 
   params_set(&_yaw_vel,     0, 2, _yaw_vel_name,   subname_PI,      PARAM_PUBLIC);
   params_set(&_pitch_vel,   1, 2, _pitch_vel_name, subname_PI,      PARAM_PUBLIC);
@@ -473,10 +473,10 @@ void gimbal_init(void)
   params_set(&_yaw_atti,     7, 3, _yaw_atti_name,   subname_PID,      PARAM_PUBLIC);
   params_set(&_pitch_atti,   8, 3, _pitch_atti_name, subname_PID,      PARAM_PUBLIC);
 
-  chThdCreateStatic(gimbal_init_thread_wa, sizeof(gimbal_init_thread_wa),
-                    NORMALPRIO - 5, gimbal_init_thread, NULL);
-  chThdCreateStatic(gimbal_thread_wa, sizeof(gimbal_thread_wa),
-                    NORMALPRIO - 5, gimbal_thread, NULL);
+//  chThdCreateStatic(gimbal_init_thread_wa, sizeof(gimbal_init_thread_wa),
+//                    NORMALPRIO - 5, gimbal_init_thread, NULL);
+//  chThdCreateStatic(gimbal_thread_wa, sizeof(gimbal_thread_wa),
+//                    NORMALPRIO - 5, gimbal_thread, NULL);
 
   gimbal.inited = true;
 }

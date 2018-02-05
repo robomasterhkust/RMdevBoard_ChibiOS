@@ -242,8 +242,8 @@ void cmd_ultrasonic(BaseSequentialStream * chp, int argc, char *argv[])
 {
       (void) argc,argv;
 
-      float* pDist = hcsr04_getDistance();
-      chprintf(chp,"Distance: %f\n", *pDist);
+//      float* pDist = hcsr04_getDistance();
+//      chprintf(chp,"Distance: %f\n", *pDist);
 }
 
 
