@@ -16,7 +16,7 @@
 
 // DBUS MACRO
 
-#define CURRENT_MAX    ((int16_t) 277)              //
+#define RPM_MAX    ((int16_t) 277)              //
 #define CURRENT_MIN    ((int16_t)-277)              //
 #define CHASSIS_GEAR_RATIO    27U
 
