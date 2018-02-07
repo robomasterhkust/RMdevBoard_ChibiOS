@@ -1,7 +1,7 @@
 #ifndef _PARAMS_H_
 #define _PARAMS_H_
 
-#define PARAMS_VERSION "1.3"
+#define PARAMS_VERSION "1.3.01"
 
 //#define PARAMS_USE_UART
 #define PARAMS_USE_USB

@@ -94,30 +94,30 @@ int main(void) {
   palClearPad(GPIOA, GPIOA_LED_B);
 
 
-  shellStart();
-    mavlinkComm_init();
-  params_init();
-  can_processInit();
-  RC_init();
-  gimbal_sys_iden_init(); //*
-//  gimbal_init();
-//
-//   pwm_shooter_init(); // *
+    shellStart();
+    params_init();
+//    sdlog_init();
+    can_processInit();
+    RC_init();
+    extiinit(); //*
+//    pGyro = gyro_init();
+//    tempControllerInit(); //*
 
-  extiinit(); //*
-  tempControllerInit(); //*
-  chassis_init();
-  pGyro = gyro_init();
-  error_init();
+    mavlinkComm_init();
+
+    chassis_init();
+    gimbal_sys_iden_init(); //*
+    gimbal_init();
+    pwm_shooter_init(); // *
+    error_init();
 //  pwm12init();
-//  sdlog_init();
+//
 //  ultrasonic_init();
 
     mavlinkComm_heartbeat_publish(&packet_test, 100);
     mavlink_heartbeat_t* mavlink_rx = mavlinkComm_heartbeat_subscribe();
 
 //  tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
-
 
   pIMU = imu_get(); //*
 
@@ -127,10 +127,11 @@ int main(void) {
 
 
 
-  while (true)
+  while (!chThdShouldTerminateX())
   {
 
     chThdSleepMilliseconds(500);
+    LEDR_TOGGLE();
 
   }
 

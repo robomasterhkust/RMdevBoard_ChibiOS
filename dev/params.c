@@ -20,7 +20,7 @@
 static uint32_t            param_valid_flag = 0;
 static uint32_t            param_private_flag = 0;
 static p_param_t           params[PARAMS_NUM_MAX];
-static uint8_t             subparams[PARAMS_NUM_MAX][8];
+static int8_t              subparams[PARAMS_NUM_MAX][8];
 static uint8_t             params_total = 0;
 static uint8_t             subparams_total = 0;
 static param_name_t        param_name[PARAMS_NUM_MAX];
@@ -31,7 +31,7 @@ p_param_t* param_p = params;
 void* param_valid = &param_valid_flag;
 void* param_private = &param_private_flag;
 
-#define RXBUF_SIZE 10
+#define RXBUF_SIZE 13
 static uint8_t rxbuf[RXBUF_SIZE];
 
 #ifdef PARAMS_USE_UART
@@ -58,7 +58,7 @@ static THD_FUNCTION(params_tx,p)
 {
   chRegSetThreadName("param transmitter");
   (void)p;
-  chThdSleepMilliseconds(400);
+  chThdSleepMilliseconds(100);
 
   char version[] = PARAMS_VERSION;
 
@@ -73,6 +73,12 @@ static THD_FUNCTION(params_tx,p)
   uartStopSend(UART_PARAMS);
   uartStartSend(UART_PARAMS, 4, (uint8_t*)&param_private_flag);
   chThdSleepMilliseconds(10);
+
+  char mode = 1;
+
+  uartStopSend(UART_PARAMS);
+  uartStartSend(UART_PARAMS, 1, &mode);  //mode: CHIBIOS USB
+  chThdSleepMilliseconds(5);
 
   sendLine(version);
 
@@ -128,22 +134,18 @@ static void rxend(UARTDriver *uartp)
 {
   if(uartp == UART_PARAMS)
   {
-    switch(rxbuf[1])
+    uint8_t param_index, subParam_index;
+
+    switch(rxbuf[0])
     {
-      case 0xFE:
-        if((1<<rxbuf[3])&param_valid_flag &&
-           rxbuf[4] < subparams[rxbuf[3]][0])
-        {
-          chSysLockFromISR();
-          params[rxbuf[3]][rxbuf[4]] = *((param_t*)(rxbuf+5));
-          chSysUnlockFromISR();
-        }
-        break;
       case 0xFD:
-        if((1<<rxbuf[3])&param_valid_flag &&
-           rxbuf[4] < subparams[rxbuf[3]][0])
+        param_index = rxbuf[2] - '0';
+        subParam_index = rxbuf[3] - '0';
+
+        if((1<<param_index)&param_valid_flag &&
+           subParam_index < subparams[param_index][0])
         {
-          subparams[rxbuf[3]][rxbuf[4] + 1] = *((int*)(rxbuf+5));
+          subparams[param_index][subParam_index + 1] = (int8_t)(rxbuf[4] - '0');
         }
         break;
       case 0xFB:
@@ -156,6 +158,36 @@ static void rxend(UARTDriver *uartp)
         chThdStartI(uart_transmit_thread);
         chSysUnlockFromISR();
         break;
+      case 0xF9:
+        param_index = rxbuf[2] - '0';
+        subParam_index = rxbuf[3] - '0';
+
+        if((1<<param_index)&param_valid_flag &&
+            subParam_index < subparams[param_index][0])
+        {
+          chSysLockFromISR();
+          uint8_t i, byte;
+          uint32_t data = 0;
+          for (i = 0; i < 8; i++)
+          {
+            byte = rxbuf[i + 4];
+            if(byte >= '0' && byte <= '9')
+              byte -= '0';
+            else if(byte >= 'a' && byte <= 'f')
+              byte -= ('a' - 10);
+            data |= ((byte & 0x0f) << (28 - 4*i));
+          }
+
+          params[param_index][subParam_index] = *(param_t*)(&data);
+          chSysUnlockFromISR();
+        }
+        break;
+        default:
+        {/*
+          uartStopSend(UART_PARAMS);
+          uartStartSend(UART_PARAMS, 3, "wtf");
+          */
+        }
     }
 
     chSysLockFromISR();
@@ -183,16 +215,18 @@ static THD_FUNCTION(params_rx,p)
 
   while(!chThdShouldTerminateX())
   {
+    uartStopReceive(UART_PARAMS);
     uartStartReceive(UART_PARAMS, RXBUF_SIZE, rxbuf);
 
     chSysLock();
-    chThdSuspendS(&uart_receive_thread_handler);
+    chThdSuspendTimeoutS(&uart_receive_thread_handler, MS2ST(1000));
     chSysUnlock();
   }
 }
 #endif
 
 #ifdef PARAMS_USE_USB
+#include "usbcfg.h"
 static void sendLine(BaseSequentialStream * chp, const char* const string)
 {
   uint8_t i;
@@ -212,11 +246,26 @@ void cmd_param_rx(BaseSequentialStream * chp, int argc, char *argv[])
 {
   uint8_t* data = argv[0];
 
-  if((1<<data[0])&param_valid_flag &&
-     data[1] < subparams[data[0]][0])
+  uint8_t index = data[0] - '0';
+  uint8_t sub_index = data[1] - '0';
+
+  if((1<<index)&param_valid_flag &&
+     sub_index < subparams[index][0])
   {
     chSysLock();
-    params[data[0]][data[1]] = *((param_t*)(data+2));
+    uint8_t i, byte;
+    uint32_t result = 0;
+    for (i = 0; i < 8; i++)
+    {
+      byte = data[i + 2];
+      if(byte >= '0' && byte <= '9')
+        byte -= '0';
+      else if(byte >= 'a' && byte <= 'f')
+        byte -= ('a' - 10);
+      result |= ((byte & 0x0f) << (28 - 4*i));
+    }
+
+    params[index][sub_index] = *(param_t*)(&result);
     chSysUnlock();
   }
 }
@@ -225,21 +274,26 @@ void cmd_param_scale(BaseSequentialStream * chp, int argc, char *argv[])
 {
   uint8_t* data = argv[0];
 
-  if((1<<data[0])&param_valid_flag &&
-     data[1] < subparams[data[0]][0])
-    subparams[data[0]][data[1] + 1] = *((int*)(data+2));
+  uint8_t index = data[0] - '0';
+  uint8_t sub_index = data[1] - '0';
+  int8_t scale = data[2] - '0';
+
+  if((1<<index)&param_valid_flag &&
+     sub_index < subparams[index][0])
+    subparams[index][sub_index + 1] = scale;
 }
 
 void cmd_param_update(BaseSequentialStream * chp, int argc, char *argv[])
 {
-  param_save_flash();
+  if(!strcmp(argv[0],"update----"))
+    param_save_flash();
 }
 
 void cmd_param_tx(BaseSequentialStream * chp, int argc, char *argv[])
 {
   char version[] = PARAMS_VERSION;
 
-  chThdSleepMilliseconds(400);
+  chThdSleepMilliseconds(100);
 
   chSequentialStreamPut(chp, params_total);
   chThdSleepMilliseconds(10);
@@ -251,6 +305,9 @@ void cmd_param_tx(BaseSequentialStream * chp, int argc, char *argv[])
   uint8_t i,j;
   for (i = 0; i < 4; i++)
     chSequentialStreamPut(chp, *byte++);
+  chThdSleepMilliseconds(10);
+
+  chSequentialStreamPut(chp, 0); //mode: CHIBIOS UART
   chThdSleepMilliseconds(10);
 
   sendLine(chp, version);
@@ -369,6 +426,9 @@ uint8_t params_set(param_t* const     p_param,
 
 void param_save_flash(void)
 {
+  LEDR_ON();
+  LEDG_OFF();
+
   flashSectorErase(PARAM_FLASH_SECTOR);
   uint8_t i;
   uint32_t flag = 1;
@@ -385,6 +445,8 @@ void param_save_flash(void)
     }
     flag = flag<<1;
   }
+
+  LEDR_OFF();
 }
 
 void params_init(void)
