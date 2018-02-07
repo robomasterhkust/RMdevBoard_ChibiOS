@@ -15,7 +15,7 @@
 */
 #include "main.h"
 
-static BaseSequentialStream* chp = (BaseSequentialStream*)&SDU1;
+//static BaseSequentialStream* chp = (BaseSequentialStream*)&SDU1;
 static const IMUConfigStruct imu1_conf =
         {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_250, MPU6500_AXIS_REV_Z};
 
@@ -63,7 +63,14 @@ static THD_FUNCTION(Attitude_thread, p)
   }
 }
 
-
+mavlink_heartbeat_t packet_test = {
+    963497464,
+    17,
+    84,
+    151,
+    218,
+    3
+};
 
 /*
  * Application entry point.
@@ -88,24 +95,29 @@ int main(void) {
 
 
   shellStart();
+    mavlinkComm_init();
   params_init();
   can_processInit();
   RC_init();
   gimbal_sys_iden_init(); //*
 //  gimbal_init();
-
-  // pwm_shooter_init(); // *
+//
+//   pwm_shooter_init(); // *
 
   extiinit(); //*
   tempControllerInit(); //*
   chassis_init();
   pGyro = gyro_init();
   error_init();
-  //pwm12init();
+//  pwm12init();
 //  sdlog_init();
 //  ultrasonic_init();
 
-  //tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
+    mavlinkComm_heartbeat_publish(&packet_test, 100);
+    mavlink_heartbeat_t* mavlink_rx = mavlinkComm_heartbeat_subscribe();
+
+//  tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
+
 
   pIMU = imu_get(); //*
 

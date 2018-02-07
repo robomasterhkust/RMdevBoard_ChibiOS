@@ -121,18 +121,18 @@ CSRC = $(STARTUPSRC) \
        $(BOARDSRC) \
        $(TESTSRC) \
        $(MATHSRC) \
-			 $(FATFSSRC) \
-			 $(CHIBIOS)/os/various/shell.c \
+       $(FATFSSRC) \
+       $(CHIBIOS)/os/various/shell.c \
        $(CHIBIOS)/os/various/evtimer.c \
        $(CHIBIOS)/os/various/syscalls.c \
-			 $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
+       $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
        $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
        main.c shellcfg.c flash.c tft_display.c \
        mpu6500.c attitude.c ist8310.c math_misc.c \
        canBusProcess.c dbus.c gimbal.c params.c usbcfg.c \
        calibrate_sensor.c gimbal_sys_iden.c shoot_pwm.c \
        exti.c pwm_struct.c imu_temp.c chassis.c\
-       adis16265.c error.c judge.c
+       adis16265.c error.c judge.c mavlink_comm.c mavlink_topic.c
 
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
@@ -166,10 +166,12 @@ ASMSRC = $(STARTUPASM) $(PORTASM) $(OSALASM)
 INCDIR = $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          $(HALINC) $(PLATFORMINC) $(BOARDINC) $(TESTINC) \
          $(CHIBIOS)/dev \
-				 $(FATFSINC) \
+		 $(FATFSINC) \
          $(CHIBIOS)/os/various \
-				 $(CHIBIOS)/os/hal/lib/streams \
-				 inc -lm
+         $(CHIBIOS)/os/hal/lib/streams \
+         $(CHIBIOS)/mavlink \
+         $(CHIBIOS)/mavlink/minimal \
+         inc -lm
 
 ##define SERIAL_CMD       &SDU1
 #define SERIAL_DATA      &SDU1

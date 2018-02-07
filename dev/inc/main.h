@@ -22,6 +22,7 @@
 #include "calibrate_sensor.h"
 #include "hcsr04.h"
 
+#include "mavlink_comm.h"
 #include "gimbal.h"
 #include "chassis.h"
 

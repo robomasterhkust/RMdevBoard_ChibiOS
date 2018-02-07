@@ -1,5 +1,5 @@
 /**
- * Edward ZHANG, 20171111
+ * Edward ZHANG, 20180205
  * @file    param.c
  * @brief   parameter tuning and management interface
  */
@@ -26,11 +26,17 @@ static uint8_t             subparams_total = 0;
 static param_name_t        param_name[PARAMS_NUM_MAX];
 static param_name_t        subparam_name[PARAMS_NUM_MAX];
 
-#define RXBUF_SIZE 7
-static uint8_t rxbuf[RXBUF_SIZE];
-static thread_reference_t uart_receive_thread_handler = NULL;
+/* for testing*/
+p_param_t* param_p = params;
+void* param_valid = &param_valid_flag;
+void* param_private = &param_private_flag;
 
-static void uart_sendLine(const char* const string)
+#define RXBUF_SIZE 10
+static uint8_t rxbuf[RXBUF_SIZE];
+
+#ifdef PARAMS_USE_UART
+static thread_reference_t uart_receive_thread_handler = NULL;
+static void sendLine(const char* const string)
 {
   char terminator = '\n';
   uartStopSend(UART_PARAMS);
@@ -47,12 +53,14 @@ static void uart_sendLine(const char* const string)
   chThdSleepMilliseconds(5);
 }
 
-static THD_WORKING_AREA(params_tx_wa, 128);
+static THD_WORKING_AREA(params_tx_wa, 256);
 static THD_FUNCTION(params_tx,p)
 {
   chRegSetThreadName("param transmitter");
   (void)p;
-  chThdSleepMilliseconds(10);
+  chThdSleepMilliseconds(400);
+
+  char version[] = PARAMS_VERSION;
 
   uartStopSend(UART_PARAMS);
   uartStartSend(UART_PARAMS, 1, &params_total);
@@ -64,7 +72,9 @@ static THD_FUNCTION(params_tx,p)
 
   uartStopSend(UART_PARAMS);
   uartStartSend(UART_PARAMS, 4, (uint8_t*)&param_private_flag);
-  chThdSleepMilliseconds(5);
+  chThdSleepMilliseconds(10);
+
+  sendLine(version);
 
   uint8_t i;
   uint32_t flag;
@@ -102,8 +112,8 @@ static THD_FUNCTION(params_tx,p)
   {
     if(flag&param_valid_flag)
     {
-      uart_sendLine(param_name[i]);
-      uart_sendLine(subparam_name[i]);
+      sendLine(param_name[i]);
+      sendLine(subparam_name[i]);
     }
     flag = flag<<1;
   }
@@ -118,26 +128,28 @@ static void rxend(UARTDriver *uartp)
 {
   if(uartp == UART_PARAMS)
   {
-    switch(rxbuf[0])
+    switch(rxbuf[1])
     {
-      case 'p':
-        if((1<<rxbuf[1])&param_valid_flag &&
-           rxbuf[2] < subparams[rxbuf[1]][0])
+      case 0xFE:
+        if((1<<rxbuf[3])&param_valid_flag &&
+           rxbuf[4] < subparams[rxbuf[3]][0])
         {
           chSysLockFromISR();
-          params[rxbuf[1]][rxbuf[2]] = *((param_t*)(rxbuf+3));
+          params[rxbuf[3]][rxbuf[4]] = *((param_t*)(rxbuf+5));
           chSysUnlockFromISR();
         }
         break;
-      case 's':
-        if((1<<rxbuf[1])&param_valid_flag &&
-           rxbuf[2] < subparams[rxbuf[1]][0])
-          subparams[rxbuf[1]][rxbuf[2] + 1] = rxbuf[3];
+      case 0xFD:
+        if((1<<rxbuf[3])&param_valid_flag &&
+           rxbuf[4] < subparams[rxbuf[3]][0])
+        {
+          subparams[rxbuf[3]][rxbuf[4] + 1] = *((int*)(rxbuf+5));
+        }
         break;
-      case 'u':
+      case 0xFB:
         param_save_flash();
         break;
-      case 'g':
+      case 0xFA:
         chSysLockFromISR();
         thread_t* uart_transmit_thread = chThdCreateI(params_tx_wa,sizeof(params_tx_wa),
           NORMALPRIO - 7,params_tx,NULL);
@@ -157,7 +169,7 @@ static void rxend(UARTDriver *uartp)
  */
 static UARTConfig uart_cfg = {
   NULL,NULL,rxend,NULL,NULL,
-  115200,
+  PARAMS_BR,
   0,
   0,
   0
@@ -178,13 +190,119 @@ static THD_FUNCTION(params_rx,p)
     chSysUnlock();
   }
 }
+#endif
+
+#ifdef PARAMS_USE_USB
+static void sendLine(BaseSequentialStream * chp, const char* const string)
+{
+  uint8_t i;
+  char* byte = string;
+  if(string != NULL)
+    for (i = 0; i < strlen(string); i++)
+      chSequentialStreamPut(chp, *byte++);
+  else
+    chSequentialStreamPut(chp, '*');
+
+  chThdSleepMilliseconds(20);
+  chSequentialStreamPut(chp, '\n');
+  chThdSleepMilliseconds(5);
+}
+
+void cmd_param_rx(BaseSequentialStream * chp, int argc, char *argv[])
+{
+  uint8_t* data = argv[0];
+
+  if((1<<data[0])&param_valid_flag &&
+     data[1] < subparams[data[0]][0])
+  {
+    chSysLock();
+    params[data[0]][data[1]] = *((param_t*)(data+2));
+    chSysUnlock();
+  }
+}
+
+void cmd_param_scale(BaseSequentialStream * chp, int argc, char *argv[])
+{
+  uint8_t* data = argv[0];
+
+  if((1<<data[0])&param_valid_flag &&
+     data[1] < subparams[data[0]][0])
+    subparams[data[0]][data[1] + 1] = *((int*)(data+2));
+}
+
+void cmd_param_update(BaseSequentialStream * chp, int argc, char *argv[])
+{
+  param_save_flash();
+}
+
+void cmd_param_tx(BaseSequentialStream * chp, int argc, char *argv[])
+{
+  char version[] = PARAMS_VERSION;
+
+  chThdSleepMilliseconds(400);
+
+  chSequentialStreamPut(chp, params_total);
+  chThdSleepMilliseconds(10);
+
+  chSequentialStreamPut(chp, subparams_total);
+  chThdSleepMilliseconds(10);
+
+  char* byte = (char*)&param_private_flag;
+  uint8_t i,j;
+  for (i = 0; i < 4; i++)
+    chSequentialStreamPut(chp, *byte++);
+  chThdSleepMilliseconds(10);
+
+  sendLine(chp, version);
+  uint32_t flag;
+
+  flag = 1;
+  for (i = 0; i < PARAMS_NUM_MAX; i++)
+  {
+    if(flag&param_valid_flag)
+    {
+      byte = (char*)subparams[i];
+      for (j = 0; j < 8; j++)
+        chSequentialStreamPut(chp, *byte++);
+      chThdSleepMilliseconds(10);
+
+      chSequentialStreamPut(chp, i);
+      chThdSleepMilliseconds(10);
+    }
+    flag = flag<<1;
+  }
+
+  flag = 1;
+  for(i = 0; i<PARAMS_NUM_MAX; i++)
+  {
+    if(flag&param_valid_flag)
+    {
+      byte = (char*)params[i];
+      for (j = 0; j < 4*subparams[i][0]; j++)
+        chSequentialStreamPut(chp, *byte++);
+      chThdSleepMilliseconds(10);
+    }
+    flag = flag<<1;
+  }
+
+  flag = 1;
+  for(i = 0; i<PARAMS_NUM_MAX; i++)
+  {
+    if(flag&param_valid_flag)
+    {
+      sendLine(chp, param_name[i]);
+      sendLine(chp, subparam_name[i]);
+    }
+    flag = flag<<1;
+  }
+}
+#endif
 
 static uint8_t param_load_flash(const uint8_t param_pos, const uint8_t param_num)
 {
   uint8_t result = 0;
 
-  flashaddr_t address = PARAM_FLASH_ADDR + 16 +
-                        param_pos*PARAM_FLASH_BLOCK;
+  flashaddr_t address = PARAM_FLASH_ADDR + 16 + param_pos*PARAM_FLASH_BLOCK;
   flashRead(address,subparams[param_pos],8);
 
   uint8_t i;
@@ -206,7 +324,7 @@ static uint8_t param_load_flash(const uint8_t param_pos, const uint8_t param_num
        params[param_pos][i] < -1.701411e38)
     {
       params[param_pos][i] = 0.0f;
-      result = 1;
+      result = 2;
     }
   return result;
 }
@@ -218,20 +336,22 @@ uint8_t params_set(param_t* const     p_param,
                   param_name_t const  subParam_name,
                   param_public_flag_t param_private)
 {
+  uint8_t result = 0;
+
   //Maximum num of parameters and subparameters supported
   if(param_num > 7 || param_pos >= PARAMS_NUM_MAX)
     return 1;
 
-  uint8_t result = 0;
   //Check whether this position is occupied or not
-  if(param_valid_flag & (1<<param_pos))
+  if(param_valid_flag & ((uint32_t)1<<param_pos))
     return 2;
   else
-    param_valid_flag |= (uint32_t)(1<<param_pos);
+    param_valid_flag |= ((uint32_t)1<<param_pos);
 
   params[param_pos] = p_param;
   subparams[param_pos][0] = param_num;
 
+  //Read out raw data on flash, and check validity
   if(param_load_flash(param_pos, param_num))
     result = 3;
 
@@ -239,22 +359,12 @@ uint8_t params_set(param_t* const     p_param,
   subparam_name[param_pos] = subParam_name;
 
   if(param_private == PARAM_PRIVATE)
-    param_private_flag |= (uint32_t)(1 << param_pos);
+    param_private_flag |= ((uint32_t)1 << param_pos);
 
   params_total++;
   subparams_total += param_num;
 
   return result;
-}
-
-void params_init(void)
-{
-  param_valid_flag = 0;
-  param_private_flag = 0;
-
-  uartStart(UART_PARAMS, &uart_cfg);
-  chThdCreateStatic(params_rx_wa,sizeof(params_rx_wa),
-    NORMALPRIO + 7,params_rx,NULL);
 }
 
 void param_save_flash(void)
@@ -275,4 +385,16 @@ void param_save_flash(void)
     }
     flag = flag<<1;
   }
+}
+
+void params_init(void)
+{
+  param_valid_flag = 0;
+  param_private_flag = 0;
+
+  #ifdef PARAMS_USE_UART
+    uartStart(UART_PARAMS, &uart_cfg);
+    chThdCreateStatic(params_rx_wa,sizeof(params_rx_wa),
+      NORMALPRIO + 7,params_rx,NULL);
+  #endif
 }
