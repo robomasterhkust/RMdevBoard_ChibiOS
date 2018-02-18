@@ -29,5 +29,5 @@ enum calibration_state  // Declare the calibration enum states
 
 void calibrate_gyroscope(PIMUStruct pIMU);
 void calibrate_accelerometer(PIMUStruct pIMU);
-
+uint8_t gyro_cal(PGyroStruct pGyro, const uint8_t full_cal);
 #endif
