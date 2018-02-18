@@ -106,8 +106,8 @@ int main(void) {
     mavlinkComm_init();
 
     chassis_init();
-    gimbal_sys_iden_init(); //*
-    gimbal_init();
+    //gimbal_sys_iden_init(); //*
+    //gimbal_init();
     pwm_shooter_init(); // *
     error_init();
 //  pwm12init();

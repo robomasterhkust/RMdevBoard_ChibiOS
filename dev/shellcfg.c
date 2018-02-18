@@ -269,8 +269,8 @@ void cmd_ultrasonic(BaseSequentialStream * chp, int argc, char *argv[])
 {
       (void) argc,argv;
 
-      float* pDist = hcsr04_getDistance();
-      chprintf(chp,"Distance: %f\n", *pDist);
+//      float* pDist = hcsr04_getDistance();
+//      chprintf(chp,"Distance: %f\n", *pDist);
 }
 
 
@@ -314,6 +314,7 @@ static const ShellConfig shell_cfg1 =
  * @api
  */
 void shellStart(void)
+{
   //sdStart(SERIAL_CMD, NULL);
   /*
    * Initializes a serial-over-USB CDC driver.
