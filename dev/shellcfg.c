@@ -7,8 +7,18 @@
 #include "shell.h"
 #include <string.h>
 
-#define SERIAL_CMD       &SDU1
-#define SERIAL_DATA      &SDU1
+#define SHELL_USE_USB
+
+#if !defined(SHELL_USE_USB)
+#define SHELL_SERIAL_UART &SD3
+
+  static const SerialConfig shell_serial_conf = {
+  115200,               //Baud Rate
+  0,         //CR1 Register
+  0,      //CR2 Register
+  0                     //CR3 Register
+};
+#endif
 
 static thread_t* matlab_thread_handler = NULL;
 /**
@@ -54,7 +64,7 @@ static THD_FUNCTION(matlab_thread, p)
 
   int32_t txbuf_d[16];
   float txbuf_f[16];
-  BaseSequentialStream* chp = (BaseSequentialStream*)SERIAL_DATA;
+  BaseSequentialStream* chp = (BaseSequentialStream*)&SDU1;
 
   PIMUStruct PIMU = imu_get();
   chassisStruct* chassis = chassis_get();
@@ -86,25 +96,42 @@ static THD_WORKING_AREA(Shell_thread_wa, 1024);
 void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
 {
   (void) argc,argv;
-//  PIMUStruct PIMU = imu_get();
-//  GimbalStruct* gimbal = gimbal_get();
-//  chassisStruct* chassis = chassis_get();
-  ChassisEncoder_canStruct* chassis = can_getChassisMotor();
-  ChassisEncoder_canStruct* extra = can_getExtraMotor();
+  PIMUStruct PIMU = imu_get();
+  GimbalStruct* gimbal = gimbal_get();
 
-  chprintf(chp,"FL: %d\r\n",extra[0].raw_speed);
-  chprintf(chp,"FR: %d\r\n",extra[1].raw_speed);
-  chprintf(chp,"BL: %d\r\n",extra[2].raw_speed);
-  chprintf(chp,"BR: %d\r\n",extra[3].raw_speed);
-  chprintf(chp,"FL: %d\r\n",chassis[0].raw_speed);
-  chprintf(chp,"FR: %d\r\n",chassis[1].raw_speed);
-  chprintf(chp,"BL: %d\r\n",chassis[2].raw_speed);
-  chprintf(chp,"BR: %d\r\n",chassis[3].raw_speed);
+  chprintf(chp,"AccelX: %f\r\n",PIMU->accelData[X]);
+  chprintf(chp,"AccelY: %f\r\n",PIMU->accelData[Y]);
+  chprintf(chp,"AccelZ: %f\r\n",PIMU->accelData[Z]);
 
+  chprintf(chp,"Gimbal Pitch: %f\r\n",gimbal->pitch_angle);
+  chprintf(chp,"Gimbal Yaw: %f\r\n",gimbal->yaw_angle);
+  chprintf(chp,"IMU Pitch: %f\r\n",PIMU->euler_angle[Pitch]);
 
-  //chprintf(chp,"Gimbal Pitch: %f\r\n",gimbal->pitch_angle);
- // chprintf(chp,"Gimbal Yaw: %f\r\n",gimbal->yaw_angle);
-  //chprintf(chp,"IMU Pitch: %f\r\n",PIMU->euler_angle[Pitch]);
+  chprintf(chp,"param: %f\r\n",param_p[2][0]);
+  chprintf(chp,"param: %f\r\n",param_p[2][1]);
+  chprintf(chp,"param: %f\r\n",param_p[3][1]);
+  chprintf(chp,"param: %f\r\n",param_p[4][0]);
+  chprintf(chp,"param: %f\r\n",param_p[4][1]);
+
+  chprintf(chp,"valid: %x\r\n",*(uint32_t*)param_valid);
+  chprintf(chp,"private: %x\r\n",*(uint32_t*)param_private);
+
+  param_t test[6];
+
+  flashRead(0x080E0000 + 64U + 128U * 3 + 16,
+            (char*)(test), 12);
+
+  chprintf(chp,"flash: %f\r\n",test[0]);
+  chprintf(chp,"flash: %f\r\n",test[1]);
+  chprintf(chp,"flash: %f\r\n",test[2]);
+
+  flashRead(0x080E0000 + 64U + 128U * 2 + 16,
+            (char*)(test), 24);
+
+  chprintf(chp,"flash: %f\r\n",test[0]);
+  chprintf(chp,"flash: %f\r\n",test[1]);
+  chprintf(chp,"flash: %f\r\n",test[2]);
+
 }
 
 /**
@@ -254,8 +281,17 @@ void cmd_ultrasonic(BaseSequentialStream * chp, int argc, char *argv[])
 static const ShellCommand commands[] =
 {
   {"test", cmd_test},
-  {"data", cmd_data},
   {"cal", cmd_calibrate},
+  {"\xEE", cmd_data},
+#ifdef MAVLINK_COMM_TEST
+  {"mavlink", cmd_mavlink},
+#endif
+#ifdef PARAMS_USE_USB
+  {"\xFD",cmd_param_scale},
+  {"\xFB",cmd_param_update},
+  {"\xFA",cmd_param_tx},
+  {"\xF9",cmd_param_rx},
+#endif
   {"temp", cmd_temp},
   {"dbus", cmd_dbus},
   {"gyro", cmd_gyro},
@@ -266,7 +302,7 @@ static const ShellCommand commands[] =
 
 static const ShellConfig shell_cfg1 =
 {
-  (BaseSequentialStream *)SERIAL_CMD,
+  (BaseSequentialStream *)&SDU1,
   commands
 };
 
@@ -283,6 +319,7 @@ void shellStart(void)
   /*
    * Initializes a serial-over-USB CDC driver.
    */
+#ifdef SHELL_USE_USB
   sduObjectInit(&SDU1);
   sduStart(&SDU1, &serusbcfg);
 
@@ -298,6 +335,9 @@ void shellStart(void)
 
   usbStart(serusbcfg.usbp, &usbcfg);
   usbConnectBus(serusbcfg.usbp);
+#else
+    sdStart(SHELL_SERIAL_UART, shell_serial_conf);
+#endif
 
   shellInit();
 
