@@ -12,10 +12,10 @@
 #define EXTRA_MOTOR_NUM   4U
 
 /* CAN Bus 1 or 2 */
-#define CAN_CHASSIS_FL_FEEDBACK_MSG_ID              0x203
 #define CAN_CHASSIS_FR_FEEDBACK_MSG_ID              0x201
-#define CAN_CHASSIS_BL_FEEDBACK_MSG_ID              0x204
-#define CAN_CHASSIS_BR_FEEDBACK_MSG_ID              0x202
+#define CAN_CHASSIS_FL_FEEDBACK_MSG_ID              0x202
+#define CAN_CHASSIS_BL_FEEDBACK_MSG_ID              0x203
+#define CAN_CHASSIS_BR_FEEDBACK_MSG_ID              0x204
 #define CAN_GIMBAL_YAW_FEEDBACK_MSG_ID              0x205
 #define CAN_GIMBAL_PITCH_FEEDBACK_MSG_ID            0x206
 
@@ -30,10 +30,14 @@ typedef enum
 
 typedef enum
 {
-  FRONT_LEFT = 1,
-  FRONT_RIGHT = 3,
-  BACK_LEFT = 0,
-  BACK_RIGHT = 2
+//  FRONT_LEFT = 1,
+//  FRONT_RIGHT = 3,
+//  BACK_LEFT = 0,
+//  BACK_RIGHT = 2
+    FRONT_RIGHT = 0,
+    FRONT_LEFT = 1,
+    BACK_LEFT = 2,
+    BACK_RIGHT = 3
 }chassis_num_t;
 
 typedef struct {
