@@ -5,15 +5,22 @@
 #include "stdint.h"
 #include "ch.h"
 #include "hal.h"
-//#include "shoot_pwm.h"
+#include "shoot_pwm.h"
+
+const int rc_max = 1864;
+const int rc_min = 364;
+
+int watch_width = 0;
 
 /**
  * 2017/12/17 PWM test
  * @return
  */
-       int perc = 2600;
+int perc = 2600;
 
-extern float map(float x, float in_min, float in_max, float out_min, float out_max);
+float map(float x, float in_min, float in_max, float out_min, float out_max){
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
 
 PWMConfig pwm8cfg = {
         100000,   /* 1MHz PWM clock frequency.   */
@@ -43,6 +50,34 @@ PWMConfig pwm12cfg = {
         0
 };
 
+static THD_WORKING_AREA(pwm_accel_wa,512);
+static THD_FUNCTION(pwm_accel,p){
+  chRegSetThreadName("PWM acceleration");
+
+  (int)p;
+  float alpha = 0.2f;
+  int y = 1050;
+  int x = p;
+  RC_Ctl_t* RC_Ctl = RC_get();
+  //pwmEnableChannel(&PWMD12,0,PWM_PERCENTAGE_TO_WIDTH(&PWMD12, x));
+  //pwmEnableChannel(&PWMD12,1,PWM_PERCENTAGE_TO_WIDTH(&PWMD12, x));
+  /*while(!chThdShouldTerminateX()){
+    int width = (int)map(RC_Ctl->rc.channel1,rc_min,rc_max,1000,2600);
+    watch_width = width;
+    pwmEnableChannel(&PWMD12,0,PWM_PERCENTAGE_TO_WIDTH(&PWMD12, width));
+    chThdSleepSeconds(1);
+  }*/
+
+
+  while(y<x){
+    watch_width = y;
+    y = alpha*x+(1-alpha)*y;
+    pwmEnableChannel(&PWMD12,0,PWM_PERCENTAGE_TO_WIDTH(&PWMD12, y));
+    pwmEnableChannel(&PWMD12,1,PWM_PERCENTAGE_TO_WIDTH(&PWMD12, y));
+    chThdSleepSeconds(1);
+  }
+}
+
 void pwm_config(PWMDriver *pwmp, const PWMConfig *config,int p){
   pwmStop(pwmp);
   pwmStart(pwmp,config);
@@ -62,43 +97,27 @@ void pwm12_config(PWMDriver *pwmp, const PWMConfig *config,int p){
 
 void pwm_shooter_init(void)
 {
-//    LEDR_ON();
-//    LEDG_OFF();
-//
-//    pwmStart(&PWMD8, &pwm8cfg);
-//    pwmStart(&PWMD12,&pwm12cfg);
+    LEDR_ON();
+    LEDG_OFF();
 
-//    chThdSleepSeconds(3);
-    //pwm_config(&PWMD8,&pwm8cfg,1000);
-//    pwm12_config(&PWMD12,&pwm12cfg,9000);
-//    chThdSleepSeconds(2);
-    //pwm_config(&PWMD8,&pwm8cfg,1000);
-//    pwm12_config(&PWMD12,&pwm12cfg,1000);
-//    chThdSleepSeconds(2);
-//    float alpha = 0.1f;
-//    while(y<2600){
-//      y = alpha*x+(1-alpha)*y;
-//      wa = y;
-//      pwmEnableChannel(&PWMD12,0,PWM_PERCENTAGE_TO_WIDTH(&PWMD12, y));
-//      pwmEnableChannel(&PWMD12,1,PWM_PERCENTAGE_TO_WIDTH(&PWMD12, y));
-//    }
+    pwmStart(&PWMD12,&pwm12cfg);
 
-    //pwm_config(&PWMD8,&pwm8cfg,1100);
-    //pwm12_config(&PWMD12,&pwm12cfg,1100);
-    //chThdSleepSeconds(2);
-    //pwm_config(&PWMD8,&pwm8cfg,1500);
-    //pwm12_config(&PWMD12,&pwm12cfg,1500);
-    //chThdSleepSeconds(2);
-    //pwm_config(&PWMD8,&pwm8cfg,1100);
-    //pwm12_config(&PWMD12,&pwm12cfg,2000);
-    //chThdSleepSeconds(2);
-    /**
-     * Starts the PWM channel 0 using 11% duty cycle.
-     */
-    //perc = 0;
-    //map function output range: 1100-2600
-    //r_percent = 1100;
-//    chThdSleepMilliseconds(1);
+    //chThdSleepSeconds(3);
+
+    pwm12_config(&PWMD12,&pwm12cfg,9000);
+    //pwm12_config(&PWMD12,&pwm12cfg,9000,1);
+    chThdSleepSeconds(2);
+
+    pwm12_config(&PWMD12,&pwm12cfg,1000);
+    //pwm12_config(&PWMD12,&pwm12cfg,1000,1);
+    chThdSleepSeconds(2);
+    pwm12_config(&PWMD12,&pwm12cfg,1200);
+    //pwm12_config(&PWMD12,&pwm12cfg,1200,1);
+    chThdSleepMilliseconds(1);
+
+    chThdCreateStatic(pwm_accel_wa, sizeof(pwm_accel_wa),
+      NORMALPRIO + 6, pwm_accel, 1500);
+    chThdSleepMilliseconds(1);
 }
 
 

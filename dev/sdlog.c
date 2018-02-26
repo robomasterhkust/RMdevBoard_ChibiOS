@@ -4,16 +4,16 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
 #include "ff.h"
+
 sdlogStruct logger;
 int tim;
-char w0[10];
-char w1[10];
-char w2[10];
-char w3[10];
-int s_i;
-int s_f;
+char w0[16];
+
+int write_times = 0;
+
+float pi = 3.1415926;
+FRESULT writing;
 
 /*
  * Working area for driver.
@@ -23,10 +23,11 @@ static FATFS fs;
 static FIL fil;
 static FRESULT reg_error;
 
+
 FRESULT er;
 char name[10] = "test0.txt";
 
-//extern PIMUStruct pIMU;
+extern PIMUStruct pIMU;
 /*
  * SDIO configuration.
  */
@@ -83,7 +84,6 @@ uint8_t sdlog_createFile(char fileName[])
  */
 uint8_t sdlog_put(const uint8_t pos, const void* const buf, const uint8_t len)
 {
-  //TODO put the buf* and length to sdlogstruct and verify it
   if(logger.buf[pos])
     return -1;
   logger.buf[pos] = buf;
@@ -103,88 +103,54 @@ static inline uint8_t sdlog_write(const uint8_t pos)
   uint8_t len;
   FRESULT fr;
 
-  //fr = f_write(&fil, logger.buf[pos], logger.len_buf[pos], &len);
-  if(pos==1)
-    fr = f_write(&fil,(int *)logger.buf[pos], logger.len_buf[pos],&len);
-  else if(pos%2)
-    fr = f_write(&fil,(float *)logger.buf[pos], logger.len_buf[pos],&len);
-  else
-    fr = f_write(&fil,(char *)logger.buf[pos], logger.len_buf[pos],&len);
+  fr = f_write(&fil, logger.buf[pos], logger.len_buf[pos], &len);
 
   return (uint8_t)fr;
+}
+
+
+
+/**
+ *  @brief  cast float/int into string and write in
+ *  @param  f: a float/int
+ *  @param  t: a char indicating the type of f
+ *  @param  pos£º the position to be put
+ *  @return     the char pointer representing the string
+ */
+
+inline char* fitos(float f,char t){
+  int s;
+  char* c = NULL;
+  switch(t){
+  case 'f':s = snprintf(NULL,0,"%f",f);
+           c = malloc(s+1);
+          snprintf(c,s+1,"%f",f);break;
+  case 'i':s = snprintf(NULL,0,"%d",(int)f);
+           c = malloc(s+1);
+           snprintf(c,s+1,"%d",(int)f);break;
+  }
+  return c;
 }
 
 static THD_WORKING_AREA(sdlog_thread_wa,1024);
 static THD_FUNCTION(sdlog_thread,p)
 {
     uint32_t tick = chVTGetSystemTimeX();
-    tim = ST2MS(tick);
-    s_i = snprintf(NULL,0,"%d",tim)+1;
-   // float temp = pIMU->accelData[0];
-   // s_f = snprintf(NULL,0,"%f",temp)+1;
-
-    /* testing writing in IMU acceleration data log*/
-    logger.position = 0x00AA; //use buf[1,3,5,7]
-    /* configuring file head*/
-    int k;
-    logger.len_buf[1] = s_i;
-    for(k=2;k<8;k++){
-      if(k%2)
-        logger.len_buf[k] = s_f;
-      else{
-        logger.len_buf[k] = 1;
-        logger.buf[k] = "\t";
-      }
-    }
-    logger.len_buf[8] = 1;
-    logger.buf[8] = "\n";
-    /*char buff1[20] = "type:";
-    char buff2[20] = "1systime";
-    char buff3[20] = "3float";
-    char buff4[20] = "\n";
-    logger.buf[1] = buff1;
-    logger.buf[2] = buff2;
-    logger.buf[3] = buff3;
-    logger.buf[4] = buff4;*/
 
     f_open(&fil, name,  FA_WRITE);
     f_lseek(&fil, 0);
+    sdlog_put(1,&pi,4);
 
     while(true)
-    {
+    {   pi+=0.1;
+      logger.buf[1] = &pi;
+      //cast_u u0;
       tick += MS2ST(SDLOG_UPDATE_PERIOD_MS);
       tim = ST2MS(tick);
-            char s0[5];
-            char b0[9];
-            char b1[9];
-            char b2[9];
-            /*int s_i = snprintf(NULL,0,"%d",s0);
-            int s_f = snprintf(NULL,0,"%d",b0);**/
-            snprintf(s0,s_i,"%d",tim);
- //           snprintf(b0,s_f,"%f",pIMU->accelData[0]);
- //           snprintf(b1,s_f,"%f",pIMU->accelData[1]);
- //           snprintf(b2,s_f,"%f",pIMU->accelData[2]);
-
-            strcat(s0," ");
-            strcat(b0," ");
-            strcat(b1," ");
-            strcat(b2,"\n");
-
-            logger.buf[1] = s0;
-            logger.buf[3] = b0;
-            logger.buf[5] = b1;
-            logger.buf[7] = b2;
-
-            /*logger.buf[1] = &tim;
-            logger.buf[3] = &pIMU->accelData[0];
-            logger.buf[5] = &pIMU->accelData[1];
-            logger.buf[7] = &pIMU->accelData[2];**/
-            /* data used for watching in OZone*/
-            strcpy(w0,logger.buf[1]);
-            strcpy(w1,logger.buf[3]);
-            strcpy(w2,logger.buf[5]);
-            strcpy(w3,logger.buf[7]);
-
+      //fitob(pi,&u0,1);
+      //pi+=0.1;
+      //int k;
+      int w = 0;
       if(chVTGetSystemTimeX() < tick)
         chThdSleepUntil(tick);
       else
@@ -197,20 +163,24 @@ static THD_FUNCTION(sdlog_thread,p)
       {
         if(!(logger.position & (1<<i)))
           continue;
+        w++;
         error = sdlog_write(i);
         if(error)
         {
           logger.errorCode |= (error << 7);
           break;
         }
+        if(!error)
+          f_sync(&fil);
       }
 
-      if(!error)
-        f_sync(&fil);
-
-
+      writing = (FRESULT)error;
+      if(w>write_times)
+        write_times = w;
     }
 }
+
+
 
 /**
  *   @brief   initializes SD logger
@@ -233,23 +203,25 @@ void sdlog_init(void)
     logger.errorCode |= SD_NOCONNECT;
     return;
   }
+  /*Creat a new log file without overwriting.*/
   int in = 0;
   reg_error = f_mount(&fs, "", 1);
 
   volatile FRESULT err = f_open(&fil,"test0.txt",FA_OPEN_EXISTING);
+  char* mid = malloc(4);
   while(err==FR_OK){
     in++;
     char* head = "test";
     char* tail = ".txt";
-    char* mid = malloc(4);
     snprintf(mid,4,"%d",in);
     strcpy(name,head);
     strcat(name,mid);
     strcat(name,tail);
     err = f_open(&fil,name,FA_OPEN_EXISTING);
   }
-
   logger.errorCode |= sdlog_createFile(name);
+  free(mid);
+
 
   chThdCreateStatic(sdlog_thread_wa, sizeof(sdlog_thread_wa),
                     NORMALPRIO - 10,
