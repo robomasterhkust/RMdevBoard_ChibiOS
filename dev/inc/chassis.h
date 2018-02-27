@@ -14,6 +14,17 @@
 #define CHASSIS_UPDATE_FREQ 500
 #define CHASSIS_UPDATE_PERIOD_US 1000000/CHASSIS_UPDATE_FREQ
 
+#define VAL_LIMIT(val, min, max) \
+do {\
+if((val) <= (min))\
+{\
+  (val) = (min);\
+}\
+else if((val) >= (max))\
+{\
+  (val) = (max);\
+}\
+} while(0)\
 
 
 /************************ chassis parameter ****************************/
@@ -23,12 +34,12 @@
 #define PERIMETER  478
 
 /* wheel track distance(mm) */
-#define WHEELTRACK 403
+#define WHEELTRACK  545 //403
 /* wheelbase distance(mm) */
-#define WHEELBASE  385
+#define WHEELBASE  340 //385
 
 /* gimbal is relative to chassis center x axis offset(mm) */
-#define GIMBAL_X_OFFSET 150
+#define GIMBAL_X_OFFSET 120 //150
 /* gimbal is relative to chassis center y axis offset(mm) */
 #define GIMBAL_Y_OFFSET 0
 
@@ -72,7 +83,7 @@
 //#define HEADING_MAX     ((float) 1)   // pi
 #define HEADING_SCALE   ((uint16_t) 1)
 #define ABS(x)     ( ((x) > 0) ? (x) : (-(x)) ) //return abs value of x
-
+#define RADIAN_COEF 57.3f
 //#define CHASSIS_USE_POS_MOTOR
 
 typedef enum

@@ -17,6 +17,7 @@ static volatile chassisStruct chassis;
 pi_controller_t motor_vel_controllers[CHASSIS_MOTOR_NUM];
 pid_controller_t heading_controller;
 lpfilterStruct lp_speed[CHASSIS_MOTOR_NUM];
+int rotation_center_gimbal = 1;
 
 chassis_error_t chassis_getError(void){
   return chassis.errorFlag;
@@ -146,11 +147,13 @@ static const HeadingName = "Heading";
 void chassis_init(void)
 {
   memset(&chassis,0,sizeof(chassisStruct));
-
+  rotation_center_gimbal = 1;
   chassis.drive_sp = 0.0f;
   chassis.strafe_sp = 0.0f;
   chassis.rotate_sp = 0.0f;
   chassis.heading_sp = 0.0f;
+  chassis.rotate_x_offset = 0.0f;
+  chassis.rotate_y_offset = 0.0f;
   uint8_t i;
   params_set(&motor_vel_controllers[FRONT_LEFT], 9,2,FLvelName,subname_PI,PARAM_PUBLIC);
   params_set(&motor_vel_controllers[FRONT_RIGHT], 10,2,FRvelName,subname_PI,PARAM_PUBLIC);
@@ -190,75 +193,114 @@ void update_heading(void)
  * */
 
 void mecanum_cal(){
-  static float rotate_ratio_fr =1;
-  static float rotate_ratio_fl =1;
-  static float rotate_ratio_br =1;
-  static float rotate_ratio_bl =1;
+  static float rotate_ratio_fr;
+  static float rotate_ratio_fl;
+  static float rotate_ratio_br;
+  static float rotate_ratio_bl;
+  static float wheel_rpm_ratio;
+  chSysLock(); // ensure that the calculation is done in batch
 
-  chassis._motors[FRONT_RIGHT].speed_sp =
-    (chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp*rotate_ratio_fr);   // CAN ID: 0x201
-  chassis._motors[BACK_RIGHT].speed_sp =
-    (-1*chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp*rotate_ratio_br);       // CAN ID: 0x202
-  chassis._motors[FRONT_LEFT].speed_sp =
-    (chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp*rotate_ratio_fl);       // CAN ID: 0x203
-  chassis._motors[BACK_LEFT].speed_sp =
-    (-1*chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp*rotate_ratio_bl);     // CAN ID: 0x204
-
-
-}
-
-void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1)
-{
-
-  // Set dead-zone to 6% range to provide smoother control
-  float THRESHOLD = (RC_CH_VALUE_MAX - RC_CH_VALUE_MIN)*3/100;
-  // Create "dead-zone" for chassis.drive_sp
-  if(ABS(RX_X2 - RC_CH_VALUE_OFFSET) < THRESHOLD)
-    RX_X2 = RC_CH_VALUE_OFFSET;
-
-  // Create "dead-zone" for chassis.strafe_sp
-  if(ABS(RX_Y1 - RC_CH_VALUE_OFFSET) < THRESHOLD)
-    RX_Y1 = RC_CH_VALUE_OFFSET;
-
-  // Create "dead-zone" for chassis.heading_sp
-  if(ABS(RX_X1 - RC_CH_VALUE_OFFSET) < THRESHOLD){
-    RX_X1 = RC_CH_VALUE_OFFSET;
+  if(chassis.ctrl_mode == DODGE_MODE)
+  {
+    chassis.rotate_x_offset = GIMBAL_X_OFFSET;
+    chassis.rotate_y_offset = 0;
   }
-  else{
-  chassis.heading_sp = chassis._pGyro->angle;
-}
+  else
+  {
+    chassis.rotate_x_offset = 0; //glb_struct.gimbal_x_offset;
+    chassis.rotate_y_offset = 0; //glb_struct.gimbal_y_offset;
+  }
 
-  // Compute the Heading correction
-  float heading_correction = chassis.heading_sp - chassis._pGyro->angle;
+  if(1) //rotation_center_gimbal
+  {
+    rotate_ratio_fr = ((WHEELBASE+ WHEELTRACK)/2.0f \
+                        - chassis.rotate_x_offset + chassis.rotate_y_offset)/RADIAN_COEF;
+    rotate_ratio_fl = ((WHEELBASE+WHEELTRACK)/2.0f \
+                        - chassis.rotate_x_offset - chassis.rotate_y_offset)/RADIAN_COEF;
+    rotate_ratio_bl = ((WHEELBASE+WHEELTRACK)/2.0f \
+                        + chassis.rotate_x_offset - chassis.rotate_y_offset)/RADIAN_COEF;
+    rotate_ratio_br = ((WHEELBASE+WHEELTRACK)/2.0f \
+                        + chassis.rotate_x_offset + chassis.rotate_y_offset)/RADIAN_COEF;
+  }
+  else
+  {
+    rotate_ratio_fr = ((WHEELBASE+WHEELTRACK)/2.0f)/RADIAN_COEF;
+    rotate_ratio_fl = ((WHEELBASE+WHEELTRACK)/2.0f)/RADIAN_COEF;
+    rotate_ratio_bl = ((WHEELBASE+WHEELTRACK)/2.0f)/RADIAN_COEF;
+    rotate_ratio_br = ((WHEELBASE+WHEELTRACK)/2.0f)/RADIAN_COEF;
+  }
+  wheel_rpm_ratio = 60.0f/(PERIMETER*CHASSIS_SPEED_PSC);
+  chSysUnlock();
 
-  //Remote Control Commands, Mapped to match min and max CURRENT
 
-  chassis.strafe_sp  = (int16_t)map(RX_X2, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
-  chassis.drive_sp = (int16_t)map(RX_Y1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
-  chassis.rotate_sp = (int16_t)map(RX_X1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
-  //heading_correction = HEADING_SCALE * (int16_t)map(heading_correction, HEADING_MIN, HEADING_MAX, CURRENT_MIN, CURRENT_MAX);
-
-  heading_correction = chassis_controlHeading(&chassis, &heading_controller);
-  // For later coordinate with chassis
-  int rotate_feedback = 0;
+  VAL_LIMIT(chassis.drive_sp, -MAX_CHASSIS_VX_SPEED, MAX_CHASSIS_VX_SPEED);  //mm/s
+  VAL_LIMIT(chassis.strafe_sp, -MAX_CHASSIS_VY_SPEED, MAX_CHASSIS_VY_SPEED);  //mm/s
+  VAL_LIMIT(chassis.rotate_sp, -MAX_CHASSIS_VR_SPEED, MAX_CHASSIS_VR_SPEED);  //deg/s
 
   chassis._motors[FRONT_RIGHT].speed_sp =
-    ((chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp) + rotate_feedback - heading_correction);   // CAN ID: 0x201
+    (chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp*rotate_ratio_fr)*wheel_rpm_ratio;   // CAN ID: 0x201
   chassis._motors[BACK_RIGHT].speed_sp =
-    ((-1*chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp) + rotate_feedback - heading_correction);       // CAN ID: 0x204
+    (-1*chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp*rotate_ratio_br)*wheel_rpm_ratio;       // CAN ID: 0x202
   chassis._motors[FRONT_LEFT].speed_sp =
-    ((chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp) + rotate_feedback - heading_correction);       // CAN ID: 0x202
+    (chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp*rotate_ratio_fl)*wheel_rpm_ratio;       // CAN ID: 0x203
   chassis._motors[BACK_LEFT].speed_sp =
-    ((-1*chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp) + rotate_feedback - heading_correction);     // CAN ID: 0x203
+    (-1*chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp*rotate_ratio_bl)*wheel_rpm_ratio;     // CAN ID: 0x204
 
-  uint8_t i;
-  int16_t output[4];
-  for (i = 0; i < CHASSIS_MOTOR_NUM; i++)
-    output[i] = chassis_controlSpeed(&chassis._motors[i], &motor_vel_controllers[i]);
 
-  can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID,
-    		output[FRONT_RIGHT], output[BACK_RIGHT], output[FRONT_LEFT], output[BACK_LEFT]); //BR,FR,--,--
 }
+
+//void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1)
+//{
+//
+//  // Set dead-zone to 6% range to provide smoother control
+//  float THRESHOLD = (RC_CH_VALUE_MAX - RC_CH_VALUE_MIN)*3/100;
+//  // Create "dead-zone" for chassis.drive_sp
+//  if(ABS(RX_X2 - RC_CH_VALUE_OFFSET) < THRESHOLD)
+//    RX_X2 = RC_CH_VALUE_OFFSET;
+//
+//  // Create "dead-zone" for chassis.strafe_sp
+//  if(ABS(RX_Y1 - RC_CH_VALUE_OFFSET) < THRESHOLD)
+//    RX_Y1 = RC_CH_VALUE_OFFSET;
+//
+//  // Create "dead-zone" for chassis.heading_sp
+//  if(ABS(RX_X1 - RC_CH_VALUE_OFFSET) < THRESHOLD){
+//    RX_X1 = RC_CH_VALUE_OFFSET;
+//  }
+//  else{
+//  chassis.heading_sp = chassis._pGyro->angle;
+//}
+//
+//  // Compute the Heading correction
+//  float heading_correction = chassis.heading_sp - chassis._pGyro->angle;
+//
+//  //Remote Control Commands, Mapped to match min and max CURRENT
+//
+//  chassis.strafe_sp  = (int16_t)map(RX_X2, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
+//  chassis.drive_sp = (int16_t)map(RX_Y1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
+//  chassis.rotate_sp = (int16_t)map(RX_X1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
+//  //heading_correction = HEADING_SCALE * (int16_t)map(heading_correction, HEADING_MIN, HEADING_MAX, CURRENT_MIN, CURRENT_MAX);
+//
+//  heading_correction = chassis_controlHeading(&chassis, &heading_controller);
+//  // For later coordinate with chassis
+//  int rotate_feedback = 0;
+//
+//  chassis._motors[FRONT_RIGHT].speed_sp =
+//    ((chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp) + rotate_feedback - heading_correction);   // CAN ID: 0x201
+//  chassis._motors[BACK_RIGHT].speed_sp =
+//    ((-1*chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp) + rotate_feedback - heading_correction);       // CAN ID: 0x204
+//  chassis._motors[FRONT_LEFT].speed_sp =
+//    ((chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp) + rotate_feedback - heading_correction);       // CAN ID: 0x202
+//  chassis._motors[BACK_LEFT].speed_sp =
+//    ((-1*chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp) + rotate_feedback - heading_correction);     // CAN ID: 0x203
+//
+//  uint8_t i;
+//  int16_t output[4];
+//  for (i = 0; i < CHASSIS_MOTOR_NUM; i++)
+//    output[i] = chassis_controlSpeed(&chassis._motors[i], &motor_vel_controllers[i]);
+//
+//  can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID,
+//    		output[FRONT_RIGHT], output[BACK_RIGHT], output[FRONT_LEFT], output[BACK_LEFT]); //BR,FR,--,--
+//}
 
 void drive_motor(){
 
