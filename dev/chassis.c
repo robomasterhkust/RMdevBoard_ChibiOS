@@ -307,7 +307,7 @@ void separate_gimbal_handle(int RX_X2, int RX_Y1, int RX_X1){
   }
   else{
   chassis.heading_sp = chassis._pGyro->angle;
-}
+  }
 
   // Compute the Heading correction
   float heading_correction = chassis_controlHeading(&chassis, &heading_controller);
