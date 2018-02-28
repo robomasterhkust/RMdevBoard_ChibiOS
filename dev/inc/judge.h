@@ -163,6 +163,8 @@ typedef struct projectile_fb_t{
 
 #endif 
 
+void** judgeData_get(void);
+
 void judgedecode(void);
 
 void judgeinit(void);

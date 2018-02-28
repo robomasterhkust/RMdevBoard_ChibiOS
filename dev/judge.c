@@ -249,6 +249,10 @@ static volatile uint8_t lastpacketID = 0;
 #endif
 static volatile void* datagroups[JUDGE_DATA_TYPES + 1];
 
+void** judgeData_get(void){
+  return &datagroups;
+}
+
 /*
  * Handles receiving of UART data from judge
  */
