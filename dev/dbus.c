@@ -20,18 +20,18 @@ static dbus_error_t rxflag = false;
 
 static void rcStructInit(void)
 {
-  RC_Ctl.rc.channel0 = 1024;
-  RC_Ctl.rc.channel1 = 1024;
-  RC_Ctl.rc.channel2 = 1024;
-  RC_Ctl.rc.channel3 = 1024;
-  RC_Ctl.rc.s1 =0;
-  RC_Ctl.rc.s2 = 0;
-  RC_Ctl.mouse.LEFT=0;
-  RC_Ctl.mouse.RIGHT =0;
-  RC_Ctl.mouse.x=0;
-  RC_Ctl.mouse.y=0;
-  RC_Ctl.mouse.z=0;
-  RC_Ctl.keyboard.key_code=0;
+    RC_Ctl.rc.channel0 = 1024;
+    RC_Ctl.rc.channel1 = 1024;
+    RC_Ctl.rc.channel2 = 1024;
+    RC_Ctl.rc.channel3 = 1024;
+    RC_Ctl.rc.s1 =0;
+    RC_Ctl.rc.s2 = 0;
+    RC_Ctl.mouse.LEFT=0;
+    RC_Ctl.mouse.RIGHT =0;
+    RC_Ctl.mouse.x=0;
+    RC_Ctl.mouse.y=0;
+    RC_Ctl.mouse.z=0;
+    RC_Ctl.keyboard.key_code=0;
 }
 
 /*

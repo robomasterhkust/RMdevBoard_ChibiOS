@@ -4,6 +4,7 @@
  *  Created on: 10 Jan, 2018
  *      Author: ASUS
  */
+#include <canBusProcess.h>
 #include "ch.h"
 #include "hal.h"
 
@@ -89,11 +90,11 @@ static THD_FUNCTION(chassis_control, p)
   (void)p;
   chRegSetThreadName("chassis controller");
 
-  RC_Ctl_t* pRC = RC_get();
+  Gimbal_Send_Dbus_canStruct* pRC = can_get_sent_dbus();
 
   uint32_t tick = chVTGetSystemTimeX();
   chassis.ctrl_mode = MANUAL_SEPARATE_GIMBAL;
-  while(1)
+  while(!chThdShouldTerminateX())
   {
     tick += US2ST(CHASSIS_UPDATE_PERIOD_US);
     if(tick > chVTGetSystemTimeX())
@@ -123,7 +124,7 @@ static THD_FUNCTION(chassis_control, p)
         chassis_stop_handle();
       }break;
       case MANUAL_SEPARATE_GIMBAL:{
-        separate_gimbal_handle(pRC->rc.channel0, pRC->rc.channel1, pRC->rc.channel2);
+        separate_gimbal_handle(pRC->channel0, pRC->channel1, 1024);
       }break;
       case MANUAL_FOLLOW_GIMBAL:{
         follow_gimbal_handle();
@@ -133,7 +134,7 @@ static THD_FUNCTION(chassis_control, p)
       }break;
     }
     //drive_kinematics(pRC->rc.channel0, pRC->rc.channel1, pRC->rc.channel2);
-    mecanum_cal(pRC->rc.s1);
+    mecanum_cal(pRC->s1);
     drive_motor();
   }
 }
@@ -157,12 +158,13 @@ void chassis_init(void)
   chassis.rotate_y_offset = 0.0f;
   uint8_t i;
   // *********************temporary section*********************
-  for(int j = 0; j < 4; j++){
+    {int j;
+  for(j = 0; j < 4; j++){
     motor_vel_controllers[j].error_int = 0.0f;
     motor_vel_controllers[j].error_int_max = 0.0f;
     motor_vel_controllers[j].ki = 0.5f;
     motor_vel_controllers[j].kp = 55.0f;
-  }
+  }}
   heading_controller.error_int = 0.0f;
   heading_controller.error_int_max = 0.0f;
   heading_controller.ki = 0.0f;
@@ -185,7 +187,7 @@ void chassis_init(void)
   heading_controller.error_int = 0.0f;
   heading_controller.error_int_max = 0.0f;
   chassis._pGyro = gyro_get();
-  chassis._encoders = can_getChassisMotor();
+  chassis._encoders = can_getExtraMotor();
 
   chThdCreateStatic(chassis_control_wa, sizeof(chassis_control_wa),
                           NORMALPRIO, chassis_control, NULL);
@@ -261,18 +263,20 @@ void mecanum_cal(int s1){
     (-1*chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp*rotate_ratio_bl)*wheel_rpm_ratio;     // CAN ID: 0x204
   float max = 0.0f;
   //find max item
-  for (uint8_t i = 0; i < 4; i++)
+    {int i;
+  for (i = 0; i < 4; i++)
   {
     if (fabsf(chassis._motors[i].speed_sp) > max)
       max = fabsf(chassis._motors[i].speed_sp);
-  }
+  }}
   //equal proportion
   if (max > MAX_WHEEL_RPM)
   {
     float rate = MAX_WHEEL_RPM / max;
-    for (uint8_t i = 0; i < 4; i++)
+      {int i;
+    for (i = 0; i < 4; i++)
       chassis._motors[i].speed_sp *= rate;
-  }
+  }}
 }
 
 void drive_motor(){
@@ -309,27 +313,13 @@ static void chassis_operation_func(int16_t forward_back, int16_t left_right, int
 
 void separate_gimbal_handle(int RX_X2, int RX_Y1, int RX_X1){
 
-  // Set dead-zone to 6% range to provide smoother control
-  float THRESHOLD = (RC_CH_VALUE_MAX - RC_CH_VALUE_MIN)*3/100;
-  // Create "dead-zone" for chassis.drive_sp
-  if(ABS(RX_X2 - RC_CH_VALUE_OFFSET) < THRESHOLD)
-    RX_X2 = RC_CH_VALUE_OFFSET;
-
-  // Create "dead-zone" for chassis.strafe_sp
-  if(ABS(RX_Y1 - RC_CH_VALUE_OFFSET) < THRESHOLD)
-    RX_Y1 = RC_CH_VALUE_OFFSET;
-
-  // Create "dead-zone" for chassis.heading_sp
-  if(ABS(RX_X1 - RC_CH_VALUE_OFFSET) < THRESHOLD){
-    RX_X1 = RC_CH_VALUE_OFFSET;
-  }
-  else{
   chassis_operation_func(RX_X2 - 1024, RX_Y1 - 1024, RX_X1 - 1024);
-  }
+
 }
 void follow_gimbal_handle(){
 
 }
+
 
 
 

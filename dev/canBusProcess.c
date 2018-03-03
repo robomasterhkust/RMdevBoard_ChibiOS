@@ -4,6 +4,7 @@
  * @brief   CAN driver configuration file
  * @reference   RM2017_Archive
  */
+#include <canBusProcess.h>
 #include "ch.h"
 #include "hal.h"
 
@@ -12,6 +13,8 @@
 static volatile GimbalEncoder_canStruct  gimbal_encoder[GIMBAL_MOTOR_NUM];
 static volatile ChassisEncoder_canStruct chassis_encoder[CHASSIS_MOTOR_NUM];
 static volatile ChassisEncoder_canStruct extra_encoder[EXTRA_MOTOR_NUM];
+
+static volatile Gimbal_Send_Dbus_canStruct gimbal_send_dbus;
 
 /*
  * 500KBaud, automatic wakeup, automatic recover
@@ -40,6 +43,21 @@ volatile ChassisEncoder_canStruct* can_getChassisMotor(void)
 volatile ChassisEncoder_canStruct* can_getExtraMotor(void)
 {
   return extra_encoder;
+}
+
+volatile Gimbal_Send_Dbus_canStruct* can_get_sent_dbus(void){
+    return &gimbal_send_dbus;
+}
+
+static inline void  can_processSendDbusEncoder
+        (volatile Gimbal_Send_Dbus_canStruct* cm, const CANRxFrame* const rxmsg){
+    chSysLock();
+    cm->channel0 = (uint16_t)(rxmsg->data8[0]) << 8 | rxmsg->data8[1];
+    cm->channel1 = (uint16_t)(rxmsg->data8[2]) << 8 | rxmsg->data8[3];
+    cm->s1       = (uint8_t) (rxmsg->data8[4]);
+    cm->s2       = (uint8_t) (rxmsg->data8[5]);
+    cm->key_code = (uint16_t)(rxmsg->data8[6]) << 8 | rxmsg->data8[7];
+    chSysUnlock();
 }
 
 static inline void can_getMotorOffset
@@ -123,6 +141,8 @@ static void can_processEncoderMessage(CANDriver* const canp, const CANRxFrame* c
         case CAN_GIMBAL_PITCH_FEEDBACK_MSG_ID:
             can_processGimbalEncoder(&gimbal_encoder[GIMBAL_PITCH] ,rxmsg);
             break;
+        case CAN_GIMBAL_SEND_DBUS_ID:
+            can_processSendDbusEncoder(&gimbal_send_dbus,rxmsg);
     }
   }
   else
@@ -243,3 +263,4 @@ void can_processInit(void)
 
   chThdSleepMilliseconds(20);
 }
+
