@@ -45,31 +45,18 @@ else if((val) >= (max))\
 
 /* chassis motor use 3508 default */
 /* define CHASSIS_EC60 to use EC60 */
-#define CHASSIS_EC60
 
-#ifdef CHASSIS_EC60
-  /* chassis motor use EC60 */
-  /* the deceleration ratio of chassis motor */
-  #define CHASSIS_DECELE_RATIO (1.0f)
-  /* single 3508 motor maximum speed, unit is rpm */
-  #define MAX_WHEEL_RPM        400   //440rpm = 3500mm/s
-  /* chassis maximum translation speed, unit is mm/s */
-  #define MAX_CHASSIS_VX_SPEED 3300  //415rpm
-  #define MAX_CHASSIS_VY_SPEED 3300
-  /* chassis maximum rotation speed, unit is degree/s */
-  #define MAX_CHASSIS_VR_SPEED 300
-#else
   /* chassis motor use 3508 */
   /* the deceleration ratio of chassis motor */
-  #define CHASSIS_DECELE_RATIO (1.0f/19.0f)
-  /* single 3508 motor maximum speed, unit is rpm */
-  #define MAX_WHEEL_RPM        8500  //8347rpm = 3500mm/s
-  /* chassis maximum translation speed, unit is mm/s */
-  #define MAX_CHASSIS_VX_SPEED 3300  //8000rpm
-  #define MAX_CHASSIS_VY_SPEED 3300
+#define CHASSIS_DECELE_RATIO (1.0f/27.0f)
+/* single 3508 motor maximum speed, unit is rpm */
+#define MAX_WHEEL_RPM        8500  //8347rpm = 3500mm/s
+/* chassis maximum translation speed, unit is mm/s */
+#define MAX_CHASSIS_VX_SPEED 3300  //8000rpm
+#define MAX_CHASSIS_VY_SPEED 3300
   /* chassis maximum rotation speed, unit is degree/s */
-  #define MAX_CHASSIS_VR_SPEED 300   //5000rpm
-#endif
+#define MAX_CHASSIS_VR_SPEED 300   //5000rpm
+
 //Codes above are copied from Official
 
 
@@ -160,7 +147,7 @@ typedef struct{
  *
  *
  * */
-void mecanum_calc(void);
+void mecanum_calc(int s1);
 
 
 

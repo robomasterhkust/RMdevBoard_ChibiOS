@@ -132,7 +132,7 @@ static THD_FUNCTION(chassis_control, p)
       }break;
     }
     //drive_kinematics(pRC->rc.channel0, pRC->rc.channel1, pRC->rc.channel2);
-    mecanum_cal();
+    mecanum_cal(pRC->rc.s1);
     drive_motor();
   }
 }
@@ -192,7 +192,7 @@ void update_heading(void)
  *
  * */
 
-void mecanum_cal(){
+void mecanum_cal(int s1){
   static float rotate_ratio_fr;
   static float rotate_ratio_fl;
   static float rotate_ratio_br;
@@ -211,7 +211,7 @@ void mecanum_cal(){
     chassis.rotate_y_offset = 0; //glb_struct.gimbal_y_offset;
   }
 
-  if(1) //rotation_center_gimbal
+  if(s1 == 1) //rotation_center_gimbal
   {
     rotate_ratio_fr = ((WHEELBASE+ WHEELTRACK)/2.0f \
                         - chassis.rotate_x_offset + chassis.rotate_y_offset)/RADIAN_COEF;
@@ -229,7 +229,7 @@ void mecanum_cal(){
     rotate_ratio_bl = ((WHEELBASE+WHEELTRACK)/2.0f)/RADIAN_COEF;
     rotate_ratio_br = ((WHEELBASE+WHEELTRACK)/2.0f)/RADIAN_COEF;
   }
-  wheel_rpm_ratio = 60.0f/(PERIMETER*CHASSIS_SPEED_PSC);
+  wheel_rpm_ratio = 60.0f/(PERIMETER*CHASSIS_DECELE_RATIO);
   chSysUnlock();
 
 
@@ -239,12 +239,13 @@ void mecanum_cal(){
 
   chassis._motors[FRONT_RIGHT].speed_sp =
     (chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp*rotate_ratio_fr)*wheel_rpm_ratio;   // CAN ID: 0x201
-  chassis._motors[BACK_RIGHT].speed_sp =
-    (-1*chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp*rotate_ratio_br)*wheel_rpm_ratio;       // CAN ID: 0x202
   chassis._motors[FRONT_LEFT].speed_sp =
-    (chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp*rotate_ratio_fl)*wheel_rpm_ratio;       // CAN ID: 0x203
+    (chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp*rotate_ratio_fl)*wheel_rpm_ratio;       // CAN ID: 0x202
   chassis._motors[BACK_LEFT].speed_sp =
-    (-1*chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp*rotate_ratio_bl)*wheel_rpm_ratio;     // CAN ID: 0x204
+    (-1*chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp*rotate_ratio_bl)*wheel_rpm_ratio;     // CAN ID: 0x203
+  chassis._motors[BACK_RIGHT].speed_sp =
+    (-1*chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp*rotate_ratio_br)*wheel_rpm_ratio;       // CAN ID: 0x204
+
 
 
 }
@@ -355,7 +356,8 @@ void separate_gimbal_handle(int RX_X2, int RX_Y1, int RX_X1){
   float heading_correction = chassis_controlHeading(&chassis, &heading_controller);
   chassis.strafe_sp = (int16_t)map(RX_X2, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
   chassis.drive_sp =(int16_t)map(RX_Y1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
-  chassis.rotate_sp = (int16_t)map(RX_X1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX)-heading_correction;
+  chassis.rotate_sp = (int16_t)map(RX_X1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX);
+  //chassis.rotate_sp = (int16_t)map(RX_X1, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX, RPM_MIN, RPM_MAX)-heading_correction;
 }
 void follow_gimbal_handle(){
   /*Develop later
