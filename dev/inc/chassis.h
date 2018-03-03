@@ -48,26 +48,26 @@ else if((val) >= (max))\
 
   /* chassis motor use 3508 */
   /* the deceleration ratio of chassis motor */
-#define CHASSIS_DECELE_RATIO (1.0f/27.0f)
-/* single 3508 motor maximum speed, unit is rpm */
-#define MAX_WHEEL_RPM        8500  //8347rpm = 3500mm/s
-/* chassis maximum translation speed, unit is mm/s */
-#define MAX_CHASSIS_VX_SPEED 3300  //8000rpm
-#define MAX_CHASSIS_VY_SPEED 3300
+
+//  #define CHASSIS_DECELE_RATIO (1.0f/27.0f)
+  /* single 3508 motor maximum speed, unit is rpm */
+  #define MAX_WHEEL_RPM        310 //8000  //8347rpm = 3500mm/s
+  /* chassis maximum translation speed, unit is mm/s */
+  #define MAX_CHASSIS_VX_SPEED 3300  //8000rpm
+  #define MAX_CHASSIS_VY_SPEED 3300
   /* chassis maximum rotation speed, unit is degree/s */
-#define MAX_CHASSIS_VR_SPEED 300   //5000rpm
+  #define MAX_CHASSIS_VR_SPEED 300   //5000rpm
+
 
 //Codes above are copied from Official
 
 
 // DBUS MACRO
 #define CHASSIS_GEAR_RATIO    27U
-#define RPM_MAX    ((int16_t) 350)              //
-#define RPM_MIN    ((int16_t) -350)              //
+//#define RPM_MAX    ((int16_t) 350)              //
+//#define RPM_MIN    ((int16_t) -350)              //
 #define HEADING_MIN     ((float) -3.14159) // - pi
 #define HEADING_MAX     ((float) 3.14159)   // pi
-//#define HEADING_MIN     ((float) -1) // - pi
-//#define HEADING_MAX     ((float) 1)   // pi
 #define HEADING_SCALE   ((uint16_t) 1)
 #define ABS(x)     ( ((x) > 0) ? (x) : (-(x)) ) //return abs value of x
 #define RADIAN_COEF 57.3f
