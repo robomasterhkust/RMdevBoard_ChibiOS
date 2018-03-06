@@ -13,12 +13,20 @@
 #include "chassis.h"
 #include "adis16265.h"
 #include "math_misc.h"
+#include "math.h"
 
 static volatile chassisStruct chassis;
+GimbalEncoder_canStruct* gimbal_p;
+Gimbal_Send_Dbus_canStruct* Dbus_p;
 pi_controller_t motor_vel_controllers[CHASSIS_MOTOR_NUM];
 pid_controller_t heading_controller;
+pid_controller_t chassis_heading_controller;
 lpfilterStruct lp_speed[CHASSIS_MOTOR_NUM];
 int rotation_center_gimbal = 1;
+float gimbal_initP = 0;
+#define TWIST_ANGLE 40
+#define TWIST_PERIOD 3000
+
 
 chassis_error_t chassis_getError(void){
   return chassis.errorFlag;
@@ -60,7 +68,6 @@ static void chassis_encoderUpdate(void)
   #ifdef CHASSIS_USE_POS_MOTOR
   #endif
 }
-
 #define OUTPUT_MAX  16384
 static int16_t chassis_controlSpeed(motorStruct* motor, pi_controller_t* controller)
 {
@@ -71,6 +78,7 @@ static int16_t chassis_controlSpeed(motorStruct* motor, pi_controller_t* control
   float output = error*controller->kp + controller->error_int;
   return (int16_t)(boundOutput(output,OUTPUT_MAX));
 }
+
 
 #define H_MAX  200  // Heading PID_outputx
 static int16_t chassis_controlHeading(chassisStruct* chassis, pid_controller_t* controller)
@@ -91,11 +99,19 @@ static THD_FUNCTION(chassis_control, p)
   chRegSetThreadName("chassis controller");
 
   Gimbal_Send_Dbus_canStruct* pRC = can_get_sent_dbus();
-
+  gimbal_p = can_getGimbalMotor();
+  Dbus_p = can_get_sent_dbus();
+  bool done = false;
   uint32_t tick = chVTGetSystemTimeX();
   chassis.ctrl_mode = MANUAL_SEPARATE_GIMBAL;
   while(!chThdShouldTerminateX())
   {
+    if(Dbus_p->updated == true && !done){
+      done = true;
+      chassis.position_ref = gimbal_p[0].radian_angle;
+      gimbal_initP = gimbal_p[0].radian_angle;
+      chassis.ctrl_mode = DODGE_MODE;
+    }
     tick += US2ST(CHASSIS_UPDATE_PERIOD_US);
     if(tick > chVTGetSystemTimeX())
       chThdSleepUntil(tick);
@@ -127,13 +143,12 @@ static THD_FUNCTION(chassis_control, p)
         separate_gimbal_handle(pRC->channel0, pRC->channel1, 1024);
       }break;
       case MANUAL_FOLLOW_GIMBAL:{
-        follow_gimbal_handle();
+        follow_gimbal_handle(pRC->channel0, pRC->channel1,gimbal_p[0].radian_angle);
       }break;
       default:{
         chassis_stop_handle();
       }break;
     }
-    //drive_kinematics(pRC->rc.channel0, pRC->rc.channel1, pRC->rc.channel2);
     mecanum_cal(pRC->s1);
     drive_motor();
   }
@@ -169,6 +184,16 @@ void chassis_init(void)
   heading_controller.error_int_max = 0.0f;
   heading_controller.ki = 0.0f;
   heading_controller.kp = 0.0f;
+
+  for(int i=0;i<3;i++){
+    chassis_heading_controller.error[i] = 0.0f;
+  }
+  chassis_heading_controller.error_int = 0.0f;
+
+  chassis_heading_controller.error_int_max = 0.0f;
+  chassis_heading_controller.ki = 0.0f;
+  chassis_heading_controller.kp = 0.0f;
+  chassis_heading_controller.kd = 0.0f;
   //**************************************************************
 //  params_set(&motor_vel_controllers[FRONT_LEFT], 9,2,FLvelName,subname_PI,PARAM_PUBLIC);
 //  params_set(&motor_vel_controllers[FRONT_RIGHT], 10,2,FRvelName,subname_PI,PARAM_PUBLIC);
@@ -226,7 +251,7 @@ void mecanum_cal(int s1){
     chassis.rotate_y_offset = 0; //glb_struct.gimbal_y_offset;
   }
 
-  if(s1 == 1) //rotation_center_gimbal
+  if(1) //rotation_center_gimbal
   {
     rotate_ratio_fr = ((WHEELBASE+ WHEELTRACK)/2.0f \
                         - chassis.rotate_x_offset + chassis.rotate_y_offset)/RADIAN_COEF;
@@ -245,7 +270,7 @@ void mecanum_cal(int s1){
     rotate_ratio_br = ((WHEELBASE+WHEELTRACK)/2.0f)/RADIAN_COEF;
   }
 
-  wheel_rpm_ratio = 60.0f/(PERIMETER);//*CHASSIS_SPEED_PSC);
+  wheel_rpm_ratio = 60.0f/(PERIMETER);
   chSysUnlock();
 
 
@@ -289,9 +314,15 @@ void drive_motor(){
     chassis.current[FRONT_RIGHT], chassis.current[FRONT_LEFT],chassis.current[BACK_LEFT], chassis.current[BACK_RIGHT]); //BR,FR,--,--
 }
 
+uint32_t twist_count;
 void chassis_twist_handle(){
+  int16_t twist_period = TWIST_PERIOD;
+  int16_t twist_angle  = TWIST_ANGLE;
+  twist_count++;
+  chassis.position_ref = gimbal_initP + twist_angle*sin(2*M_PI/twist_period*twist_count)*M_PI/180;
   /*Develop later
    * */
+  chassis.rotate_sp = chassis_heading_control(&chassis_heading_controller,gimbal_p[0].radian_angle, chassis.position_ref);
 }
 void chassis_stop_handle(){
   chassis.strafe_sp =0;
@@ -316,9 +347,23 @@ void separate_gimbal_handle(int RX_X2, int RX_Y1, int RX_X1){
   chassis_operation_func(RX_X2 - 1024, RX_Y1 - 1024, RX_X1 - 1024);
 
 }
-void follow_gimbal_handle(){
+
+void follow_gimbal_handle(int forward_back, int left_right, float get){
+  chassis.strafe_sp =  (forward_back-1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
+  chassis.drive_sp = -(left_right-1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
+  chassis.rotate_sp = chassis_heading_control(&chassis_heading_controller,get, gimbal_initP);
+}
+float chassis_heading_control(pid_controller_t* controller,float get, float set){
+  controller->error[0] = set - get;
+  float output = controller->error[0]*controller->kp+controller->kd*(controller->error[0]-2*controller->error[2]+controller->error[3]);
+  controller->error[1] = controller->error[0];
+  controller->error[2] = controller->error[1];
+
+  return output;
 
 }
+
+
 
 
 

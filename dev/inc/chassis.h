@@ -125,7 +125,7 @@ typedef struct{
   int16_t         rotate_x_offset;
   int16_t         rotate_y_offset;
   int16_t         current[4];
-
+  float           position_ref;
 //  int16_t       position_ref;
 //  uint8_t       follow_gimbal;
 
@@ -157,11 +157,11 @@ chassisStruct* chassis_get(void);
 void chassis_init(void);
 void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1);
 void drive_motor(void);
-
+float chassis_heading_control(pid_controller_t*,float, float);
 void chassis_twist_handle(void);
 void chassis_stop_handle(void);
 void separate_gimbal_handle(int RX_X2, int RX_Y1, int RX_X1);
-void follow_gimbal_handle(void);
+void follow_gimbal_handle(int,int,float);
 
 
 

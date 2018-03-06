@@ -13,7 +13,6 @@
 static volatile GimbalEncoder_canStruct  gimbal_encoder[GIMBAL_MOTOR_NUM];
 static volatile ChassisEncoder_canStruct chassis_encoder[CHASSIS_MOTOR_NUM];
 static volatile ChassisEncoder_canStruct extra_encoder[EXTRA_MOTOR_NUM];
-
 static volatile Gimbal_Send_Dbus_canStruct gimbal_send_dbus;
 
 /*
@@ -50,13 +49,14 @@ volatile Gimbal_Send_Dbus_canStruct* can_get_sent_dbus(void){
 }
 
 static inline void  can_processSendDbusEncoder
-        (volatile Gimbal_Send_Dbus_canStruct* cm, const CANRxFrame* const rxmsg){
+        (volatile Gimbal_Send_Dbus_canStruct* db, const CANRxFrame* const rxmsg){
     chSysLock();
-    cm->channel0 = (uint16_t)(rxmsg->data8[0]) << 8 | rxmsg->data8[1];
-    cm->channel1 = (uint16_t)(rxmsg->data8[2]) << 8 | rxmsg->data8[3];
-    cm->s1       = (uint8_t) (rxmsg->data8[4]);
-    cm->s2       = (uint8_t) (rxmsg->data8[5]);
-    cm->key_code = (uint16_t)(rxmsg->data8[6]) << 8 | rxmsg->data8[7];
+    db->channel0 = rxmsg->data16[0];
+    db->channel1 = rxmsg->data16[1];
+    db->s1       = rxmsg->data8[4];
+    db->s2       = rxmsg->data8[5];
+    db->key_code = rxmsg->data16[3];
+    db->updated = true;
     chSysUnlock();
 }
 
