@@ -54,6 +54,7 @@ typedef struct{
   param_t kp;
   param_t ki;
   param_t kd;
+  float error[3];
   float error_int;
   float error_int_max;
 } __attribute__((packed)) pid_controller_t;

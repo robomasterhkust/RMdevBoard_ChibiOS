@@ -8,7 +8,7 @@
 #ifndef INC_CHASSIS_H_
 #define INC_CHASSIS_H_
 
-#define CHASSIS_CAN  &CAND1         // Later should be CAND2
+#define CHASSIS_CAN  &CAND2        // Later should be CAND2
 #define CHASSIS_CAN_EID  0x200
 
 #define CHASSIS_UPDATE_FREQ 500
@@ -48,6 +48,7 @@ else if((val) >= (max))\
 
   /* chassis motor use 3508 */
   /* the deceleration ratio of chassis motor */
+
 //  #define CHASSIS_DECELE_RATIO (1.0f/27.0f)
   /* single 3508 motor maximum speed, unit is rpm */
   #define MAX_WHEEL_RPM        310 //8000  //8347rpm = 3500mm/s
@@ -56,6 +57,7 @@ else if((val) >= (max))\
   #define MAX_CHASSIS_VY_SPEED 3300
   /* chassis maximum rotation speed, unit is degree/s */
   #define MAX_CHASSIS_VR_SPEED 300   //5000rpm
+
 
 //Codes above are copied from Official
 
@@ -123,7 +125,7 @@ typedef struct{
   int16_t         rotate_x_offset;
   int16_t         rotate_y_offset;
   int16_t         current[4];
-
+  float           position_ref;
 //  int16_t       position_ref;
 //  uint8_t       follow_gimbal;
 
@@ -145,7 +147,7 @@ typedef struct{
  *
  *
  * */
-void mecanum_calc(void);
+void mecanum_calc(int s1);
 
 
 
@@ -155,11 +157,11 @@ chassisStruct* chassis_get(void);
 void chassis_init(void);
 void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1);
 void drive_motor(void);
-
+float chassis_heading_control(pid_controller_t*,float, float);
 void chassis_twist_handle(void);
 void chassis_stop_handle(void);
 void separate_gimbal_handle(int RX_X2, int RX_Y1, int RX_X1);
-void follow_gimbal_handle(void);
+void follow_gimbal_handle(int,int,float);
 
 
 
