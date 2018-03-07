@@ -24,7 +24,9 @@ pid_controller_t chassis_heading_controller;
 lpfilterStruct lp_speed[CHASSIS_MOTOR_NUM];
 int rotation_center_gimbal = 1;
 float gimbal_initP = 0;
-#define TWIST_ANGLE 40
+float record = 0;
+
+#define TWIST_ANGLE 50
 #define TWIST_PERIOD 3000
 
 
@@ -110,7 +112,7 @@ static THD_FUNCTION(chassis_control, p)
       done = true;
       chassis.position_ref = gimbal_p[0].radian_angle;
       gimbal_initP = gimbal_p[0].radian_angle;
-      chassis.ctrl_mode = DODGE_MODE;
+      chassis.ctrl_mode = MANUAL_FOLLOW_GIMBAL;
     }
     tick += US2ST(CHASSIS_UPDATE_PERIOD_US);
     if(tick > chVTGetSystemTimeX())
@@ -279,13 +281,13 @@ void mecanum_cal(int s1){
 //  VAL_LIMIT(chassis.rotate_sp, -MAX_CHASSIS_VR_SPEED, MAX_CHASSIS_VR_SPEED);  //deg/s
 
   chassis._motors[FRONT_RIGHT].speed_sp =
-    (chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp*rotate_ratio_fr)*wheel_rpm_ratio;   // CAN ID: 0x201
+    (chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp*rotate_ratio_fr)*wheel_rpm_ratio;   // CAN ID: 0x201
   chassis._motors[BACK_RIGHT].speed_sp =
-    (-1*chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp*rotate_ratio_br)*wheel_rpm_ratio;       // CAN ID: 0x202
+    (-1*chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp*rotate_ratio_br)*wheel_rpm_ratio;       // CAN ID: 0x202
   chassis._motors[FRONT_LEFT].speed_sp =
-    (chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp*rotate_ratio_fl)*wheel_rpm_ratio;       // CAN ID: 0x203
+    (chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp*rotate_ratio_fl)*wheel_rpm_ratio;       // CAN ID: 0x203
   chassis._motors[BACK_LEFT].speed_sp =
-    (-1*chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp*rotate_ratio_bl)*wheel_rpm_ratio;     // CAN ID: 0x204
+    (-1*chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp*rotate_ratio_bl)*wheel_rpm_ratio;     // CAN ID: 0x204
   float max = 0.0f;
   //find max item
     {int i;
@@ -338,7 +340,7 @@ float CHASSIS_RC_MAX_SPEED_R = 300.0f;
 static void chassis_operation_func(int16_t forward_back, int16_t left_right, int16_t rotate)
 {
   chassis.strafe_sp =  forward_back / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
-  chassis.drive_sp = -left_right / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
+  chassis.drive_sp =    left_right / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
   chassis.rotate_sp =  rotate / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_R;
 }
 
@@ -349,8 +351,24 @@ void separate_gimbal_handle(int RX_X2, int RX_Y1, int RX_X1){
 }
 
 void follow_gimbal_handle(int forward_back, int left_right, float get){
+
+  float vy = (left_right-1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
+  float vx = (forward_back-1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
+  float angle = (get - gimbal_initP)*(2.0/3.0);
+  if(angle > 0){
+    chassis.drive_sp = (vy*cos(angle)+vx*sin(angle));
+    chassis.strafe_sp = (-1)*vy*sin(angle) + vx*cos(angle);
+  }
+  else{
+    chassis.drive_sp = (vy* cos(-angle)+(-1)*vx*sin(-angle));
+    chassis.strafe_sp = vy*sin(-angle) + vx*cos(-angle);
+  }
+
+
+  /*
   chassis.strafe_sp =  (forward_back-1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
   chassis.drive_sp = -(left_right-1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
+  */
   chassis.rotate_sp = chassis_heading_control(&chassis_heading_controller,get, gimbal_initP);
 }
 float chassis_heading_control(pid_controller_t* controller,float get, float set){
