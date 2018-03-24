@@ -14,7 +14,7 @@ add_custom_target(Ozone COMMAND make -C ${RMdevBoard_ChibiOS_SOURCE_DIR}/dev
 
 
 include_directories(dev/inc)
-include_directories(dev)
+include_directories(dev/conf)
 file(GLOB_RECURSE DEV_SRC "dev/*.c")
 
 include_directories(3_driver/inc)
@@ -130,7 +130,7 @@ add_library(SHELL ${SHELL_SRC})
 #SET(LINKER_SCRIPT os/common/ports/ARMCMx/compilers/GCC/ld/STM32F429xI.ld)
 
 add_definitions(-DSTM32F427xx)
-add_executable(${PROJECT_NAME}.elf ${DEV_SRC} ${DRIVER_SRC} ${MODULE_SRC} ${TASK_SRC} ${TOOL_SRC} ${LINKER_SCRIPT})
+add_executable(${PROJECT_NAME}.elf ${DEV_SRC} ${LINKER_SCRIPT})
 target_link_libraries(${PROJECT_NAME}.elf
         STARTUP
         HAL
@@ -142,6 +142,10 @@ target_link_libraries(${PROJECT_NAME}.elf
         SHELL
         STARTUP_ASM
         PORT_ASM
+        DRIVER
+        MODULE
+        TASK
+        TOOL
         )
 
 set(HEX_FILE ${PROJECT_SOURCE_DIR}/cmake-build-debug/${PROJECT_NAME}.hex)

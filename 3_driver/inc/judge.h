@@ -8,10 +8,6 @@
 #ifndef INC_JUDGE_H_
 #define INC_JUDGE_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define JUDGE_USE_2017
 //#define JUDGE_USE_2018
 
@@ -165,7 +161,11 @@ typedef struct projectile_fb_t{
   float     golfFreq;
 }__attribute__((packed)) projectile_fb_t;
 
-#endif 
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void judgedecode(void);
 

@@ -8,9 +8,6 @@
 #ifndef INC_CHASSIS_H_
 #define INC_CHASSIS_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #define CHASSIS_CAN  &CAND1         // Later should be CAND2
 #define CHASSIS_CAN_EID  0x200
@@ -81,6 +78,10 @@ typedef struct{
   PGyroStruct _pGyro;
 } chassisStruct;
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 // MATH definition
 
 chassis_error_t chassis_getError(void);
