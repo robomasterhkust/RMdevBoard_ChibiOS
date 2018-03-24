@@ -99,31 +99,32 @@ int main(void) {
 //    sdlog_init();
     can_processInit();
     RC_init();
-    extiinit(); //*
+//    extiinit(); //*
 //    pGyro = gyro_init();
 //    tempControllerInit(); //*
 
-    mavlinkComm_init();
+//    mavlinkComm_init();
 
-    chassis_init();
-    gimbal_sys_iden_init(); //*
-    gimbal_init();
-    pwm_shooter_init(); // *
-    error_init();
+//    chassis_init();
+//    gimbal_sys_iden_init(); //*
+//    gimbal_init();
+//    pwm_shooter_init(); // *
+//    error_init();
 //  pwm12init();
 //
 //  ultrasonic_init();
 
-    mavlinkComm_heartbeat_publish(&packet_test, 100);
-    mavlink_heartbeat_t* mavlink_rx = mavlinkComm_heartbeat_subscribe();
+//    mavlinkComm_heartbeat_publish(&packet_test, 1);
+//
+//    mavlink_heartbeat_t* mavlink_rx = mavlinkComm_heartbeat_subscribe();
 
 //  tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
 
   pIMU = imu_get(); //*
 
-  chThdCreateStatic(Attitude_thread_wa, sizeof(Attitude_thread_wa),
-                    NORMALPRIO + 5,
-                    Attitude_thread, NULL); //*
+//  chThdCreateStatic(Attitude_thread_wa, sizeof(Attitude_thread_wa),
+//                    NORMALPRIO + 5,
+//                    Attitude_thread, NULL); //*
 
 
 
@@ -132,7 +133,6 @@ int main(void) {
 
     chThdSleepMilliseconds(500);
     LEDR_TOGGLE();
-
   }
 
   return 0;

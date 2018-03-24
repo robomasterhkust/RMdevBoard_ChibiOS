@@ -6,6 +6,7 @@
 #include "main.h"
 #include "shell.h"
 #include <string.h>
+#include "serial_usb.h"
 
 #define SHELL_USE_USB
 
@@ -273,7 +274,6 @@ void cmd_ultrasonic(BaseSequentialStream * chp, int argc, char *argv[])
 //      chprintf(chp,"Distance: %f\n", *pDist);
 }
 
-
 /**
  * @brief array of shell commands, put the corresponding command and functions below
  * {"command", callback_function}
@@ -283,9 +283,9 @@ static const ShellCommand commands[] =
   {"test", cmd_test},
   {"cal", cmd_calibrate},
   {"\xEE", cmd_data},
-#ifdef MAVLINK_COMM_TEST
-  {"mavlink", cmd_mavlink},
-#endif
+//#ifdef MAVLINK_COMM_TEST
+//  {"mavlink", cmd_mavlink},
+//#endif
 #ifdef PARAMS_USE_USB
   {"\xFD",cmd_param_scale},
   {"\xFB",cmd_param_update},

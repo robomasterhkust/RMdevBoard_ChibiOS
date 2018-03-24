@@ -29,11 +29,14 @@ extern "C" {
 
 pTPIDStruct TPID_get(void);
 
-void tempPID_Init(pTPIDStruct tempPID, const TPIDConfigStruct* const tpid_conf);
+void tempPID_Init(pTPIDStruct tempPID, const TPIDConfigStruct *const tpid_conf);
+
 int tempPID_Update(pTPIDStruct tempPID, PIMUStruct pIMU);
+
 void tempControllerInit(void);
 
 #ifdef __cplusplus
+}
 #endif
 
 #endif /* _IMU_TEMP_H_ */
