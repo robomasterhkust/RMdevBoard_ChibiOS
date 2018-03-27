@@ -93,6 +93,7 @@ int main(void) {
   RC_init();
   gimbal_sys_iden_init(); //*
   gimbal_init();
+  startMiceTrack();
 
   pwm_shooter_init();
 

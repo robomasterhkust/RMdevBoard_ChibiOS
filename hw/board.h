@@ -930,8 +930,8 @@
                                      PIN_OSPEED_HIGH(GPIOF_PIN13) |         \
                                      PIN_OSPEED_HIGH(GPIOF_LED_G) |         \
                                      PIN_OSPEED_HIGH(GPIOF_PIN15))
-#define VAL_GPIOF_PUPDR             (PIN_PUPDR_FLOATING(GPIOF_I2C2_SDA) |       \
-                                     PIN_PUPDR_FLOATING(GPIOF_I2C2_SCL) |       \
+#define VAL_GPIOF_PUPDR             (PIN_PUPDR_PULLUP(GPIOF_I2C2_SDA) |       \
+                                     PIN_PUPDR_PULLUP(GPIOF_I2C2_SCL) |       \
                                      PIN_PUPDR_FLOATING(GPIOF_PIN2) |       \
                                      PIN_PUPDR_FLOATING(GPIOF_PIN3) |       \
                                      PIN_PUPDR_FLOATING(GPIOF_PIN4) |       \
