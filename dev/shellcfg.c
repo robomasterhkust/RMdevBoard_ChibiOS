@@ -5,7 +5,7 @@
  */
 #include "main.h"
 #include "shell.h"
-#include <string.h>
+#include "string.h"
 #include "serial_usb.h"
 
 #define SHELL_USE_USB
@@ -98,7 +98,8 @@ void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
 {
   (void) argc,argv;
   PIMUStruct PIMU = imu_get();
-  GimbalStruct* gimbal = gimbal_get();
+//  GimbalStruct* gimbal = gimbal_get();
+  GimbalStruct* gimbal = get_gimbal_simple_controller();
 
   chprintf(chp,"AccelX: %f\r\n",PIMU->accelData[X]);
   chprintf(chp,"AccelY: %f\r\n",PIMU->accelData[Y]);
@@ -169,42 +170,67 @@ void cmd_data(BaseSequentialStream * chp, int argc, char *argv[])
   }
 }
 
+
 void cmd_calibrate(BaseSequentialStream * chp, int argc, char *argv[])
 {
-  PIMUStruct pIMU = imu_get();
-  PGyroStruct pGyro = gyro_get();
-  if(argc)
-  {
-    if(!strcmp(argv[0], "accl"))
+    PIMUStruct pIMU = imu_get();
+    PGyroStruct pGyro = gyro_get();
+
+    if(argc)
     {
-      pIMU->accelerometer_not_calibrated = true;
-      chThdSleepMilliseconds(10);
-      calibrate_accelerometer(pIMU);
-      chThdResume(&(pIMU->imu_Thd), MSG_OK);
+        if(!strcmp(argv[0], "accl"))
+        {
+            if(pIMU->state == IMU_STATE_READY)
+            {
+                pIMU->accelerometer_not_calibrated = true;
+
+                pIMU->state == IMU_STATE_CALIBRATING;
+
+                chThdSleepMilliseconds(10);
+                calibrate_accelerometer(pIMU);
+                chThdResume(&(pIMU->imu_Thd), MSG_OK);
+
+                pIMU->state == IMU_STATE_READY;
+            }
+            else
+                chprintf(chp, "IMU initialization not complete\r\n");
+        }
+        else if(!strcmp(argv[0], "gyro"))
+        {
+            if(pIMU->state == IMU_STATE_READY)
+            {
+                pIMU->gyroscope_not_calibrated = true;
+
+                pIMU->state == IMU_STATE_CALIBRATING;
+
+                chThdSleepMilliseconds(10);
+                calibrate_gyroscope(pIMU);
+                chThdResume(&(pIMU->imu_Thd), MSG_OK);
+
+                pIMU->state == IMU_STATE_READY;
+            }
+            else
+                chprintf(chp, "IMU initialization not complete\r\n");
+
+        }
+        else if(!strcmp(argv[0], "adi"))
+        {
+            pGyro->adis_gyroscope_not_calibrated = true;
+            chThdSleepMilliseconds(10);
+            calibrate_adi(pGyro,false); //fast calibration ~30s
+            chThdResume(&(pGyro->adis_Thd), MSG_OK);
+        }
+        else if(!strcmp(argv[0], "adi-full"))
+        {
+            pGyro->adis_gyroscope_not_calibrated = true;
+            chThdSleepMilliseconds(10);
+            calibrate_adi(pGyro,true); //full calibration ~5min
+            chThdResume(&(pGyro->adis_Thd), MSG_OK);
+        }
+        param_save_flash();
     }
-    else if(!strcmp(argv[0], "gyro"))
-    {
-      pIMU->gyroscope_not_calibrated = true;
-      chThdSleepMilliseconds(10);
-      calibrate_gyroscope(pIMU);
-      chThdResume(&(pIMU->imu_Thd), MSG_OK);
-    }
-    else if(!strcmp(argv[0], "adi"))
-    {
-      pGyro->adis_gyroscope_not_calibrated = true;
-      chThdSleepMilliseconds(10);
-      if(argc && !strcmp(argv[1],"fast"))
-        gyro_cal(pGyro,false); //fast calibration ~30s
-      else if(argc && strcmp(argv[1],"full"))
-        chprintf(chp,"Invalid parameter!\r\n");
-      else
-        gyro_cal(pGyro,true); //full calibration ~5min
-      chThdResume(&(pGyro->adis_Thd), MSG_OK);
-    }
-    param_save_flash();
-  }
-  else
-    chprintf(chp,"Calibration: gyro, accl, adi fast, adi full\r\n");
+    else
+        chprintf(chp,"Calibration: gyro, accl, adi, adi-full\r\n");
 }
 
 void cmd_temp(BaseSequentialStream * chp, int argc, char *argv[])

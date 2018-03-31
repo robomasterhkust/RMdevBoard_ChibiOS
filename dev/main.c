@@ -27,86 +27,78 @@ PGyroStruct pGyro;
 
 #define MPU6500_UPDATE_PERIOD_US 1000000U/MPU6500_UPDATE_FREQ
 static THD_WORKING_AREA(Attitude_thread_wa, 4096);
+
 static THD_FUNCTION(Attitude_thread, p)
 {
-  chRegSetThreadName("IMU Attitude Estimator");
+    chRegSetThreadName("IMU Attitude Estimator");
 
-  (void)p;
+    (void) p;
 
-  imuInit(pIMU, &imu1_conf);
-  ist8310_init(&mag1_conf);
+    imuInit(pIMU, &imu1_conf);
+    ist8310_init(&mag1_conf);
 
-  uint32_t tick = chVTGetSystemTimeX();
+    uint32_t tick = chVTGetSystemTimeX();
 
-  while(true)
-  {
-    tick += US2ST(MPU6500_UPDATE_PERIOD_US);
-    if(chVTGetSystemTimeX() < tick)
-      chThdSleepUntil(tick);
-    else
-    {
-      tick = chVTGetSystemTimeX();
-      pIMU->errorCode |= IMU_LOSE_FRAME;
+    while (true) {
+        tick += US2ST(MPU6500_UPDATE_PERIOD_US);
+        if (chVTGetSystemTimeX() < tick)
+            chThdSleepUntil(tick);
+        else {
+            tick = chVTGetSystemTimeX();
+            pIMU->errorCode |= IMU_LOSE_FRAME;
+        }
+
+        imuGetData(pIMU);
+        ist8310_update();
+
+        if (pIMU->accelerometer_not_calibrated || pIMU->gyroscope_not_calibrated) {
+            chSysLock();
+            chThdSuspendS(&(pIMU->imu_Thd));
+            chSysUnlock();
+        }
     }
-
-    imuGetData(pIMU);
-    ist8310_update();
-    if(pIMU->inited == 2)
-      attitude_update(pIMU);
-
-    if(pIMU->accelerometer_not_calibrated || pIMU->gyroscope_not_calibrated)
-    {
-      chSysLock();
-      chThdSuspendS(&(pIMU->imu_Thd));
-      chSysUnlock();
-    }
-  }
 }
 
 mavlink_heartbeat_t packet_test = {
-    963497464,
-    17,
-    84,
-    151,
-    218,
-    3
+        963497464,
+        17,
+        84,
+        151,
+        218,
+        3
 };
 
 /*
  * Application entry point.
  */
-int main(void) {
+int main(void)
+{
+    /*
+     * System initializations.
+     * - HAL initialization, this also initializes the configured device drivers
+     *   and performs the board-specific initializations.
+     * - Kernel initialization, the main() function becomes a thread and the
+     *   RTOS is active.
+     */
+    halInit();
+    chSysInit();
 
-  /*
-   * System initializations.
-   * - HAL initialization, this also initializes the configured device drivers
-   *   and performs the board-specific initializations.
-   * - Kernel initialization, the main() function becomes a thread and the
-   *   RTOS is active.
-   */
-  halInit();
-  chSysInit();
-
-
-  palSetPad(GPIOE, GPIOE_LED_R);
-  palSetPad(GPIOF, GPIOF_LED_G);
-  palClearPad(GPIOA, GPIOA_LED_Y);
-  palClearPad(GPIOA, GPIOA_LED_B);
-
-
+    /* Init sequence 1: central controller, utility */
     shellStart();
     params_init();
 //    sdlog_init();
+//    extiinit();
+
     can_processInit();
     RC_init();
-//    extiinit(); //*
+
+
 //    pGyro = gyro_init();
 //    tempControllerInit(); //*
 
 //    mavlinkComm_init();
 
 //    chassis_init();
-//    gimbal_sys_iden_init(); //*
 //    gimbal_init();
 //    pwm_shooter_init(); // *
 //    error_init();
@@ -120,7 +112,10 @@ int main(void) {
 
 //  tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
 
-  pIMU = imu_get(); //*
+    pIMU = imu_get();
+
+    command_mixer_init();
+    gimbal_simpler_controller_init();
 
 //  chThdCreateStatic(Attitude_thread_wa, sizeof(Attitude_thread_wa),
 //                    NORMALPRIO + 5,
@@ -128,12 +123,11 @@ int main(void) {
 
 
 
-  while (!chThdShouldTerminateX())
-  {
+    while (!chThdShouldTerminateX()) {
+//        chprintf(chp, "The usb shell chprintf still workings\n");
+        chThdSleepMilliseconds(500);
+        LEDR_TOGGLE();
+    }
 
-    chThdSleepMilliseconds(500);
-    LEDR_TOGGLE();
-  }
-
-  return 0;
+    return 0;
 }

@@ -380,13 +380,13 @@ void calibrate_gyroscope(PIMUStruct pIMU)
 }
 
 
-uint8_t gyro_cal(PGyroStruct pGyro, const uint8_t full_cal)
+uint8_t calibrate_adi(PGyroStruct pGyro, const uint8_t full_cal)
 {
   float gyro_zero = 0.0f;
   uint16_t i = 0;
 
-	if (pGyro->state == NOT_INITED)
-	{
+  if (pGyro->state == NOT_INITED)
+  {
     chprintf(chp,"Gyro not inited!\r\n");
     return -1;
   }
@@ -406,15 +406,15 @@ uint8_t gyro_cal(PGyroStruct pGyro, const uint8_t full_cal)
 
   for (i = 0; i < sample_num; i++)
   {
-      gyro_zero += gyro_get_raw_vel(pGyro);
+    gyro_zero += gyro_get_raw_vel(pGyro);
 
-      if(i > count_samplenum_20)
-      {
-        chprintf(chp,"=");
-        count_samplenum_20 += sample_num_mod_20;
-      }
+    if(i > count_samplenum_20)
+    {
+      chprintf(chp,"=");
+      count_samplenum_20 += sample_num_mod_20;
+    }
 
-			chThdSleepMilliseconds(5);
+    chThdSleepMilliseconds(5);
   }
 
   gyro_zero *= pGyro->psc;
@@ -436,21 +436,8 @@ uint8_t gyro_cal(PGyroStruct pGyro, const uint8_t full_cal)
 
 //  float test;
 //  flashRead(GYRO_CAL_FLASH, &test,4);
-    chprintf(chp,"gyro_offset: %f\r\n",  pGyro->offset ); //* 180.0f/M_PI
+  chprintf(chp,"gyro_offset: %f\r\n",  pGyro->offset ); //* 180.0f/M_PI
 
-	pGyro->state = INITED;
+  pGyro->state = INITED;
   return 0;
 }
-/*
-void cmd_calibrate_gyro(BaseSequentialStream * chp, int argc, char *argv[])
-{
-  PGyroStruct pGyro = gyro_get();
-
-  if(argc && !strcmp(argv[0],"fast"))
-    gyro_cal(pGyro,false); //fast calibration ~30s
-  else if(argc && strcmp(argv[0],"full"))
-    chprintf(chp,"Invalid parameter!\r\n");
-  else
-    gyro_cal(pGyro,true); //full calibration ~5min
-}
-*/

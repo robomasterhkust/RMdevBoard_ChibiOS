@@ -163,8 +163,7 @@ TCPPSRC =
 
 # List ASM source files here
 ASMSRC = $(STARTUPASM) $(PORTASM) $(OSALASM)
-#define SERIAL_CMD       &SDU1
-#define SERIAL_DATA      &SDU1
+
 INCDIR =    $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
             $(HALINC) $(PLATFORMINC) $(BOARDINC) $(TESTINC) \
             $(DEVINC)    \
@@ -176,8 +175,6 @@ INCDIR =    $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
             $(CHIBIOS)/os/various \
             $(CHIBIOS)/os/hal/lib/streams
 
-##define SERIAL_CMD       &SDU1
-#define SERIAL_DATA      &SDU1
 # Project, sources and paths
 ##############################################################################
 
@@ -190,12 +187,12 @@ MCU  = cortex-m4
 #TRGT = arm-elf-
 TRGT = arm-none-eabi-
 CC   = $(TRGT)gcc
-CPPC = $(TRGT)g++ -std=C11
+CPPC = $(TRGT)g++
 # Enable loading with g++ only if you need C++ runtime support.
 # NOTE: You can use C++ even without C++ support if you are careful. C++
 #       runtime support makes code size explode.
-LD   = $(TRGT)gcc
-#LD   = $(TRGT)g++
+#LD   = $(TRGT)gcc
+LD   = $(TRGT)g++
 CP   = $(TRGT)objcopy
 AS   = $(TRGT)gcc -x assembler-with-cpp
 AR   = $(TRGT)ar

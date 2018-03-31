@@ -15,6 +15,7 @@ add_custom_target(Ozone COMMAND make -C ${RMdevBoard_ChibiOS_SOURCE_DIR}/dev
 
 include_directories(dev/inc)
 include_directories(dev/conf)
+#include_directories(dev/pclint)
 file(GLOB_RECURSE DEV_SRC "dev/*.c")
 
 include_directories(3_driver/inc)
