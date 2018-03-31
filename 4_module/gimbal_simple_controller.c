@@ -5,11 +5,13 @@
  *          Used for initial installation and system identification
  * @input: RM6623 encoder, onboard IMU
  */
+#include <command_mixer.h>
 #include "gimbal.h"
 #include "ch.h"
 #include "hal.h"
 #include "canBusProcess.h"
 #include "arm_math.h"
+#include "command_mixer.h"
 
 GimbalStruct gimbal;
 static arm_pid_instance_f32 pid_yaw_pos;
@@ -104,6 +106,8 @@ static THD_FUNCTION(gimbal_simple_controller, p)
     uint32_t tick = chVTGetSystemTimeX();
     gimbal.timestamp = tick;
 
+    GimbalCommandStruct* gimbal_cmd;
+
     while (!chThdShouldTerminateX()) {
         gimbal_encoderUpdate();
 
@@ -113,10 +117,10 @@ static THD_FUNCTION(gimbal_simple_controller, p)
         pid_initialize(&pid_yaw_vel, _yaw_vel.kp, _yaw_vel.ki, 0); // 1000, 0, 0
 
         gimbal.pitch_speed_cmd = arm_pid_f32(&pid_pitch_pos,
-                                             gimbal.pitch_atti_cmd + gimbal.axis_init_pos[GIMBAL_PITCH] -
+                                             gimbal_cmd->pitch_atti_cmd + gimbal.axis_init_pos[GIMBAL_PITCH] -
                                              gimbal.pitch_angle);
         gimbal.yaw_speed_cmd = arm_pid_f32(&pid_yaw_pos,
-                                           gimbal.yaw_atti_cmd + gimbal.axis_init_pos[GIMBAL_YAW] - gimbal.yaw_angle);
+                                           gimbal_cmd->yaw_atti_cmd + gimbal.axis_init_pos[GIMBAL_YAW] - gimbal.yaw_angle);
 
         gimbal.pitch_iq_cmd = arm_pid_f32(&pid_pitch_vel, gimbal.pitch_speed_cmd - gimbal._pIMU->gyroData[Y]);
         gimbal.yaw_iq_cmd = arm_pid_f32(&pid_yaw_vel, gimbal.yaw_speed_cmd - gimbal._pIMU->gyroData[Z]);

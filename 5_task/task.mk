@@ -3,6 +3,7 @@ TASKSRC =   \
             $(CHIBIOS)/5_task/canBusProcess.c \
             $(CHIBIOS)/5_task/chassis.c \
             $(CHIBIOS)/5_task/error.c \
+            $(CHIBIOS)/5_task/command_mixer.c
             # $(CHIBIOS)/5_task/mavlink_comm.c \
             # $(CHIBIOS)/5_task/mavlink_topic.c
 
