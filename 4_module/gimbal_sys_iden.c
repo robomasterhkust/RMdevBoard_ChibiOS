@@ -4,7 +4,6 @@
  *          and a gimbal system identification system
  */
 
-#include <gimbal.h>
 #include "ch.h"
 #include "hal.h"
 #include "canBusProcess.h"
@@ -242,7 +241,7 @@ static const char yaw_pos_name[] =   "Gimbal Yaw Pos";
 static const char pitch_pos_name[] = "Gimbal Pitch Pos";
 
 /**
- * @Note    Requires to run can_processInit() first
+ * @Note    Requires to run can_processInit() and gimbal_simple_controller_init() first
  */
 void gimbal_sys_iden_init(void)
 {

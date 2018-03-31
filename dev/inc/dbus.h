@@ -9,6 +9,13 @@
 
 #define UART_DBUS                     &UARTD1
 
+#define RC_SAFE_LOCK 		// Way to unlock: Same as arming a DJI phantom drone
+#define RC_INFANTRY_HERO
+
+#ifdef RC_SAFE_LOCK
+	#define RC_LOCK_TIME_S		 15
+#endif
+
 #define KEY_V       0x4000
 #define KEY_C       0x2000
 #define KEY_X       0x1000
@@ -24,45 +31,61 @@
 #define KEY_A       0x0004
 #define KEY_S       0x0002
 #define KEY_W       0x0001
-typedef struct{
-		struct{
-			uint16_t channel0;
-			uint16_t channel1;
-			uint16_t channel2;
-			uint16_t channel3;
-			uint8_t  s1;
-			uint8_t  s2;
-		}rc;
 
-		struct{
-		  /*
-		   * Range: [-32768,32767]
-		   *
-		   * */
-		  int16_t x;
-		  int16_t y;
-		  int16_t z;
-		  /*
-		   * Range: [0 || 1]
-		   * 0 : Not pressed
-		   * 1:  Pressed
-		   * */
-		  uint8_t LEFT;
-		  uint8_t RIGHT;
-		}mouse;
-
-		struct{
-	        /*
-	            Bitmap:
-	                15  14  13  12  11  10  9   8   7   6   5   4   3   2   1
-	                V   C   X   Z   G   F   R   E   Q CTR SHT   D   A   S   W
-	        */
-		  uint16_t key_code;
-		}keyboard;
-}RC_Ctl_t;
 typedef bool dbus_error_t;
+
+typedef enum{
+	RC_S_DUMMY = 0,
+	RC_S_UP = 1,
+	RC_S_DOWN = 2,
+	RC_S_MIDDLE = 3,
+} rc_switch_t;
+
+typedef enum{
+	RC_LOCKED = 0,
+	RC_UNLOCKING,
+	RC_UNLOCKED
+} rc_lock_state_t;
+
+typedef struct{
+	struct{
+		uint16_t channel0;
+		uint16_t channel1;
+		uint16_t channel2;
+		uint16_t channel3;
+		uint8_t  s1;
+		uint8_t  s2;
+	}rc;
+
+	struct{
+		/*
+         * Range: [-32768,32767]
+         *
+         * */
+		int16_t x;
+		int16_t y;
+		int16_t z;
+		/*
+         * Range: [0 || 1]
+         * 0 : Not pressed
+         * 1:  Pressed
+         * */
+		uint8_t LEFT;
+		uint8_t RIGHT;
+	}mouse;
+
+	struct{
+		/*
+            Bitmap:
+                15  14  13  12  11  10  9   8   7   6   5   4   3   2   1
+                V   C   X   Z   G   F   R   E   Q CTR SHT   D   A   S   W
+        */
+		uint16_t key_code;
+	}keyboard;
+}RC_Ctl_t;
 
 RC_Ctl_t* RC_get(void);
 void RC_init(void);
 dbus_error_t dbus_getError(void);
+
 #endif
