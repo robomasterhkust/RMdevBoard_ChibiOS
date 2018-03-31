@@ -6,6 +6,7 @@
 #include "main.h"
 #include "shell.h"
 #include <string.h>
+#include <canBusProcess.h>
 
 #define SHELL_USE_USB
 
@@ -98,10 +99,15 @@ void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
   (void) argc,argv;
   PIMUStruct PIMU = imu_get();
   GimbalStruct* gimbal = gimbal_get();
+  UWB_canStruct* uwb = can_getUWB();
 
   chprintf(chp,"AccelX: %f\r\n",PIMU->accelData[X]);
   chprintf(chp,"AccelY: %f\r\n",PIMU->accelData[Y]);
   chprintf(chp,"AccelZ: %f\r\n",PIMU->accelData[Z]);
+
+  chprintf(chp, "x:%d\r\n", uwb->x_world_cm);
+  chprintf(chp, "y:%d\r\n", uwb->y_world_cm);
+  chprintf(chp, "theta:%d\r\n", uwb->theta_world_deg);
 
   chprintf(chp,"Gimbal Pitch: %f\r\n",gimbal->pitch_angle);
   chprintf(chp,"Gimbal Yaw: %f\r\n",gimbal->yaw_angle);
