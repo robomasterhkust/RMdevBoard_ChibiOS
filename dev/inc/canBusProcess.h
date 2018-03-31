@@ -84,7 +84,7 @@ typedef struct {
 typedef struct {
     int16_t x_world_cm;
     int16_t y_world_cm;
-    uint16_t theta_world_deg;
+    uint16_t theta_world_deg_100;
 } UWB_canStruct;
 
 volatile GimbalEncoder_canStruct *can_getGimbalMotor(void);

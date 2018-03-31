@@ -58,7 +58,7 @@ static inline void can_process_uwb(volatile UWB_canStruct *uwb_pointer, const CA
     chSysLock();
     uwb_pointer->x_world_cm = (int16_t) rxmsg->data16[0];
     uwb_pointer->y_world_cm = (int16_t) rxmsg->data16[1];
-    uwb_pointer->theta_world_deg = rxmsg->data16[2];
+    uwb_pointer->theta_world_deg_100 = (uint16_t) rxmsg->data16[2];
     chSysUnlock();
 }
 
