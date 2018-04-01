@@ -4,6 +4,7 @@
  *  Created on: 10 Jan, 2018
  *      Author: ASUS
  */
+#include "canBusProcess.h"
 
 #ifndef INC_CHASSIS_H_
 #define INC_CHASSIS_H_
@@ -97,7 +98,13 @@ typedef struct{
   float _pos;
   uint8_t _wait_count;
 } motorPosStruct;
+typedef struct
+{
+  float vx;
+  float vy;
+  float vw;
 
+} rc_ctrl_t;
 typedef enum {
   CHASSIS_MOTOR_0_NOT_CONNECTED = 1 << 0,
   CHASSIS_MOTOR_1_NOT_CONNECTED = 1 << 1,
@@ -147,7 +154,7 @@ typedef struct{
  *
  *
  * */
-void mecanum_calc(int s1);
+void mecanum_calc();
 
 
 
@@ -160,8 +167,8 @@ void drive_motor(void);
 float chassis_heading_control(pid_controller_t*,float, float);
 void chassis_twist_handle(void);
 void chassis_stop_handle(void);
-void separate_gimbal_handle(int RX_X2, int RX_Y1, int RX_X1);
-void follow_gimbal_handle(int,int,float);
+void separate_gimbal_handle();
+void follow_gimbal_handle();
 
 
 
