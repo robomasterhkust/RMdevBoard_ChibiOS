@@ -129,7 +129,7 @@ static lpfilterStruct accel_lpf[3];
  * @param  pIMU       pointer to IMU data structure;
  * @param  imu_conf   IMU Initialization structure
  */
-static void imuStructureInit(PIMUStruct pIMU, IMUConfigStruct *imu_conf)
+static void imuStructureInit(PIMUStruct pIMU, const IMUConfigStruct *const imu_conf)
 {
     memset((void *) pIMU, 0, sizeof(IMUStruct));
     pIMU->_imu_spi = imu_conf->_imu_spi;

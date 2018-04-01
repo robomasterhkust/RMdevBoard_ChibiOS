@@ -9,7 +9,7 @@
 
 #include "params.h"
 #include "flash.h"
-#include  <string.h>
+#include "string.h"
 
 #define PARAM_FLASH_SECTOR           11U
 #define PARAM_FLASH_ADDR      0x080E0000

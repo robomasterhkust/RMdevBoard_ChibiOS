@@ -106,7 +106,7 @@ static THD_FUNCTION(gimbal_simple_controller, p)
     uint32_t tick = chVTGetSystemTimeX();
     gimbal.timestamp = tick;
 
-    GimbalCommandStruct* gimbal_cmd;
+    GimbalCommandStruct* gimbal_cmd = gimbal_cmd_get();
 
     while (!chThdShouldTerminateX()) {
         gimbal_encoderUpdate();
@@ -166,11 +166,11 @@ void gimbal_simpler_controller_init(void)
 //    params_set(&_yaw_pos,   3, 3, yaw_pos_name,   subname_PID,   PARAM_PUBLIC);
 //    params_set(&_pitch_pos, 4, 3, pitch_pos_name, subname_PID,   PARAM_PUBLIC);
 
-    params_set(&_yaw_vel, 0, 2, _yaw_vel_name, subname_PI, PARAM_PUBLIC);
-    params_set(&_pitch_vel, 1, 2, _pitch_vel_name, subname_PI, PARAM_PUBLIC);
+    params_set((param_t*)&_yaw_vel, 0, 2, _yaw_vel_name, subname_PI, PARAM_PUBLIC);
+    params_set((param_t*)&_pitch_vel, 1, 2, _pitch_vel_name, subname_PI, PARAM_PUBLIC);
 
-    params_set(&_yaw_atti, 7, 3, _yaw_atti_name, subname_PID, PARAM_PUBLIC);
-    params_set(&_pitch_atti, 8, 3, _pitch_atti_name, subname_PID, PARAM_PUBLIC);
+    params_set((param_t*)&_yaw_atti, 7, 3, _yaw_atti_name, subname_PID, PARAM_PUBLIC);
+    params_set((param_t*)&_pitch_atti, 8, 3, _pitch_atti_name, subname_PID, PARAM_PUBLIC);
 
     arm_pid_init_f32(&pid_pitch_pos, 1);
     arm_pid_init_f32(&pid_pitch_vel, 1);

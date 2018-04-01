@@ -464,14 +464,14 @@ void gimbal_init(void)
   params_set(gimbal.axis_ff_weight, 2, 6, axis_ff_name,   subname_ff,      PARAM_PUBLIC);
   params_set(gimbal.axis_ff_accel,  6, 6, accl_name,      subname_accl,    PARAM_PUBLIC);
 
-  params_set(&_yaw_pos,   3, 3, yaw_pos_name,   subname_PID,   PARAM_PUBLIC);
-  params_set(&_pitch_pos, 4, 3, pitch_pos_name, subname_PID,   PARAM_PUBLIC);
+  params_set((param_t*)&_yaw_pos,   3, 3, yaw_pos_name,   subname_PID,   PARAM_PUBLIC);
+  params_set((param_t*)&_pitch_pos, 4, 3, pitch_pos_name, subname_PID,   PARAM_PUBLIC);
 
-  params_set(&_yaw_vel,     0, 2, _yaw_vel_name,   subname_PI,      PARAM_PUBLIC);
-  params_set(&_pitch_vel,   1, 2, _pitch_vel_name, subname_PI,      PARAM_PUBLIC);
+  params_set((param_t*)&_yaw_vel,     0, 2, _yaw_vel_name,   subname_PI,      PARAM_PUBLIC);
+  params_set((param_t*)&_pitch_vel,   1, 2, _pitch_vel_name, subname_PI,      PARAM_PUBLIC);
 
-  params_set(&_yaw_atti,     7, 3, _yaw_atti_name,   subname_PID,      PARAM_PUBLIC);
-  params_set(&_pitch_atti,   8, 3, _pitch_atti_name, subname_PID,      PARAM_PUBLIC);
+  params_set((param_t*)&_yaw_atti,     7, 3, _yaw_atti_name,   subname_PID,      PARAM_PUBLIC);
+  params_set((param_t*)&_pitch_atti,   8, 3, _pitch_atti_name, subname_PID,      PARAM_PUBLIC);
 
 //  chThdCreateStatic(gimbal_init_thread_wa, sizeof(gimbal_init_thread_wa),
 //                    NORMALPRIO - 5, gimbal_init_thread, NULL);

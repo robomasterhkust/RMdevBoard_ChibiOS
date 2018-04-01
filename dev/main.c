@@ -53,6 +53,7 @@ int main(void)
     /* Init sequence 3: actuators, display */
     can_processInit();
     RC_init();
+    command_mixer_init();
 
 
 //    pGyro = gyro_init();

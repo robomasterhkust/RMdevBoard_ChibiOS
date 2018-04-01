@@ -1,6 +1,11 @@
 #ifndef _DBUS_H_
 #define _DBUS_H_
 
+#include "stdint.h"
+#include "stdbool.h"
+#include "chsystypes.h"
+#include "hal.h"
+
 /* ----------------------- RC Channel Definition---------------------------- */
 #define RC_CH_VALUE_MIN              ((uint16_t)364 )
 #define RC_CH_VALUE_OFFSET           ((uint16_t)1024)
@@ -9,9 +14,17 @@
 
 #define UART_DBUS                     &UARTD1
 
+/**
+ * RC_SAFE_LOCK
+ *	Robot weight > 10kg: 			ALWAYS
+ *	Robot weight <= 10kg: 		OPTIONAL
+ *	DJI drone:								NEVER
+ */
 #define RC_SAFE_LOCK 		// Way to unlock: Same as arming a DJI phantom drone
 #define RC_INFANTRY_HERO
+//#define RC_DJI_DRONE
 
+// Way to unlock: Same as arming a DJI drone, pull the both sticks down and outside
 #ifdef RC_SAFE_LOCK
 	#define RC_LOCK_TIME_S		 15
 #endif
@@ -32,7 +45,16 @@
 #define KEY_S       0x0002
 #define KEY_W       0x0001
 
-typedef bool dbus_error_t;
+typedef enum{
+	RC_INDEX_PILOT = 0,
+	RC_INDEX_GIMBAL,
+} rc_index_t;
+
+typedef enum{
+	RC_STATE_UNINIT = 0,
+	RC_STATE_LOST = 1,
+	RC_STATE_CONNECTED = 2,
+} rc_state_t;
 
 typedef enum{
 	RC_S_DUMMY = 0,
@@ -48,6 +70,13 @@ typedef enum{
 } rc_lock_state_t;
 
 typedef struct{
+    rc_state_t state;
+	uint8_t rxbuf[DBUS_BUFFER_SIZE];
+	bool rx_start_flag;
+
+	UARTDriver* uart;
+	thread_reference_t thread_handler;
+
 	struct{
 		uint16_t channel0;
 		uint16_t channel1;
@@ -84,8 +113,16 @@ typedef struct{
 	}keyboard;
 }RC_Ctl_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 RC_Ctl_t* RC_get(void);
 void RC_init(void);
-dbus_error_t dbus_getError(void);
+rc_state_t dbus_getError(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

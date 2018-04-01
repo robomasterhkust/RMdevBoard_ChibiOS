@@ -20,15 +20,20 @@
 #include "gimbal.h"
 #include "chassis.h"
 #include "shell.h"
-#include <string.h>
+#include "string.h"
 
-typedef struct{
-  dbus_error_t dbus_error;
-  imu_att_error_t imu_error;
-  gimbal_error_t gimbal_error;
-  ist8310_error_flag_t ist8310_error;
-  chassis_error_t chassis_error;
-}ERRORStruct, *pEStruct;
+typedef struct
+{
+    rc_state_t dbus_error;
+    imu_att_error_t imu_error;
+    gimbal_error_t gimbal_error;
+    ist8310_error_flag_t ist8310_error;
+    chassis_error_t chassis_error;
+} ERRORStruct, *pEStruct;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 pEStruct get_EMsg(void);
 
@@ -60,7 +65,7 @@ void EMsg_update(void);
 //  "W:Gimbal control lose frame"
 //};
 
-void printError_Gimbal(BaseSequentialStream * chp, gimbal_error_t error_Index);
+void printError_Gimbal(BaseSequentialStream *chp, gimbal_error_t error_Index);
 
 /*
  * IST8310 Error List
@@ -69,7 +74,7 @@ void printError_Gimbal(BaseSequentialStream * chp, gimbal_error_t error_Index);
  * IST8310_INVALID_SAMPLE_RATE = 1
  */
 
-void printError_Ist8310(BaseSequentialStream * chp, ist8310_error_flag_t error_Index);
+void printError_Ist8310(BaseSequentialStream *chp, ist8310_error_flag_t error_Index);
 
 /*
  * IMU Error List
@@ -80,7 +85,7 @@ void printError_Ist8310(BaseSequentialStream * chp, ist8310_error_flag_t error_I
  * IMU_LOSE_FRAME = 1<<31
  */
 
-void printError_IMU(BaseSequentialStream * chp, imu_att_error_t error_Index);
+void printError_IMU(BaseSequentialStream *chp, imu_att_error_t error_Index);
 
 /*
  * Dbus Error List
@@ -88,7 +93,7 @@ void printError_IMU(BaseSequentialStream * chp, imu_att_error_t error_Index);
  *          false = not connected
  */
 
-void printError_dbus(BaseSequentialStream * chp, dbus_error_t error_Index);
+void printError_dbus(BaseSequentialStream *chp, rc_state_t error_Index);
 
 /*
  * Chassis Error List
@@ -100,7 +105,7 @@ void printError_dbus(BaseSequentialStream * chp, dbus_error_t error_Index);
  * CHASSIS_MOTOR_3_NOT_CONNECTED = 1 <<3
  */
 
-void printError_chassis(BaseSequentialStream * chp, chassis_error_t error_Index);
+void printError_chassis(BaseSequentialStream *chp, chassis_error_t error_Index);
 
 
 //
@@ -119,9 +124,13 @@ void printError_chassis(BaseSequentialStream * chp, chassis_error_t error_Index)
 //
 
 
-void cmd_error(BaseSequentialStream * chp, int argc, char *argv[]);
+void cmd_error(BaseSequentialStream *chp, int argc, char *argv[]);
 
 void error_init(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INC_ERROR_H_ */
 
