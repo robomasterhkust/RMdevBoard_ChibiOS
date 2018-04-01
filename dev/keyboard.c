@@ -12,8 +12,9 @@ int bitmap[15] = {};
 kb_ctrl_t km;
 
 void keyboard_to_bitmap(){
-  for (int i=0;i<15;i++){
-    bitmap[i] = (pRC->key_code/ (2^i)) % 2;
+  uint8_t i;
+  for (i=0;i<15;i++){
+    bitmap[i] = (pRC->key_code/ (2^i))% 2;
   }
 }
 bool keyboard_enable(){
