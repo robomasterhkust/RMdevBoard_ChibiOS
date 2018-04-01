@@ -85,7 +85,7 @@ volatile GimbalEncoder_canStruct* can_getGimbalMotor(void);
 volatile ChassisEncoder_canStruct* can_getChassisMotor(void);
 volatile ChassisEncoder_canStruct* can_getExtraMotor(void);
 volatile Gimbal_Send_Dbus_canStruct* can_get_sent_dbus(void);
-
+extern Gimbal_Send_Dbus_canStruct* pRC;
 void can_processInit(void);
 void can_motorSetCurrent(CANDriver *const CANx,
   const uint16_t EID,

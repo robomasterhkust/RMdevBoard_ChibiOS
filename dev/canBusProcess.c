@@ -14,7 +14,7 @@ static volatile GimbalEncoder_canStruct  gimbal_encoder[GIMBAL_MOTOR_NUM];
 static volatile ChassisEncoder_canStruct chassis_encoder[CHASSIS_MOTOR_NUM];
 static volatile ChassisEncoder_canStruct extra_encoder[EXTRA_MOTOR_NUM];
 static volatile Gimbal_Send_Dbus_canStruct gimbal_send_dbus;
-
+Gimbal_Send_Dbus_canStruct* pRC;
 /*
  * 500KBaud, automatic wakeup, automatic recover
  * from abort mode.
@@ -175,7 +175,7 @@ static THD_FUNCTION(can_rx, p) {
   CANDriver* canp = (CANDriver*)p;
   event_listener_t el;
   CANRxFrame rxmsg;
-
+  pRC = can_get_sent_dbus();
   (void)p;
   chRegSetThreadName("can receiver");
   chEvtRegister(&canp->rxfull_event, &el, 0);

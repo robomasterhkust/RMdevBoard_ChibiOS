@@ -8,7 +8,7 @@
 #define DBUS_BUFFER_SIZE             ((uint8_t)18) 
  
 #define UART_DBUS                     &UARTD1 
- 
+/*
 #define KEY_V       0x4000 
 #define KEY_C       0x2000 
 #define KEY_X       0x1000 
@@ -24,7 +24,14 @@
 #define KEY_A       0x0004 
 #define KEY_S       0x0002 
 #define KEY_W       0x0001 
- 
+ */
+
+enum
+{
+  UP = 1,
+  MI = 3,
+  DN = 2,
+};
  
 typedef struct{ 
 		struct{ 
