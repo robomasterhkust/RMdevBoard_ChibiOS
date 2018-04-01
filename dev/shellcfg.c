@@ -193,7 +193,7 @@ void cmd_calibrate(BaseSequentialStream * chp, int argc, char *argv[])
                 pIMU->state == IMU_STATE_READY;
             }
             else
-                chprintf(chp, "IMU initialization not complete\r\n");
+                chprintf(chp, "IMU is not heated or the initialization not complete, connected to the battery first.\r\n");
         }
         else if(!strcmp(argv[0], "gyro"))
         {
@@ -210,7 +210,7 @@ void cmd_calibrate(BaseSequentialStream * chp, int argc, char *argv[])
                 pIMU->state == IMU_STATE_READY;
             }
             else
-                chprintf(chp, "IMU initialization not complete\r\n");
+                chprintf(chp, "IMU is not heated or the initialization not complete, connected to the battery first.\r\n");
 
         }
         else if(!strcmp(argv[0], "adi"))

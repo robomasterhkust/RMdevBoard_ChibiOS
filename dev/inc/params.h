@@ -6,9 +6,16 @@
 //#define PARAMS_USE_UART
 #define PARAMS_USE_USB
 
+#include "stdint.h"
+#include "ch.h"
+
 #if (defined(PARAMS_USE_UART) && defined(PARAMS_USE_USB)) || \
  (!defined(PARAMS_USE_UART) && (!defined(PARAMS_USE_USB)))
   #error "Please specify the comm port for param manager, UART/USB"
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 #ifdef PARAMS_USE_UART
@@ -58,17 +65,21 @@ typedef enum {
 static const char subname_PI[] = "KP KI";
 static const char subname_PID[] = "KP KI KD";
 
-uint8_t params_set(param_t* const     p_param,
-                  const uint8_t       param_pos,
-                  const uint8_t       param_num,
-                  param_name_t const  Param_name,
-                  param_name_t const  subParam_name,
-                  param_public_flag_t param_private);
+uint8_t params_set(param_t*      p_param,
+                   uint8_t       param_pos,
+                   uint8_t       param_num,
+                   param_name_t  Param_name,
+                   param_name_t  subParam_name,
+                   param_public_flag_t param_private);
 void params_init(void);
 void param_save_flash(void);
 
 extern p_param_t* param_p;
 extern void* param_valid;
 extern void* param_private;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

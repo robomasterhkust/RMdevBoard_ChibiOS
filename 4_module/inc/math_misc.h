@@ -118,10 +118,10 @@ static inline uint8_t matrix_invert3(const float src[3][3], float dst[3][3])
 static inline void q_derivative(const float q[4], const float v[3],
   float dq[4])
 {
-  dq[0] = 0.5 * (v[0] * -q[1] + v[1] * -q[2] + v[2] * -q[3]);
-  dq[1] = 0.5 * (v[0] *  q[0] + v[1] * -q[3] + v[2] *  q[2]);
-  dq[2] = 0.5 * (v[0] *  q[3] + v[1] *  q[0] + v[2] * -q[1]);
-  dq[3] = 0.5 * (v[0] * -q[2] + v[1] *  q[1] + v[2] *  q[0]);
+  dq[0] = 0.5f * (v[0] * -q[1] + v[1] * -q[2] + v[2] * -q[3]);
+  dq[1] = 0.5f * (v[0] *  q[0] + v[1] * -q[3] + v[2] *  q[2]);
+  dq[2] = 0.5f * (v[0] *  q[3] + v[1] *  q[0] + v[2] * -q[1]);
+  dq[3] = 0.5f * (v[0] * -q[2] + v[1] *  q[1] + v[2] *  q[0]);
 }
 
 /**
@@ -155,7 +155,7 @@ static inline void matrix33_multiply_vector3(const float A[3][3], const float x[
   }
 }
 
-static inline void rotm2quarternion(const float rotm[3][3], float q[4])
+static inline void rotm2quarternion(float rotm[3][3], float q[4])
 {
   float tr = rotm[0][0] + rotm[1][1] + rotm[2][2];
 

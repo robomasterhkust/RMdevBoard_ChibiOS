@@ -211,7 +211,7 @@ TOPT = -mthumb -DTHUMB
 CWARN = -Wall -Wstrict-prototypes \
         -Wno-unused-variable -Wno-unused-function \
         -Wno-unused-value -Wno-implicit-function-declaration \
-        -Wno-int-conversion -Wno-makeimplicit-int
+        -Wno-int-conversion
 
 # Define C++ warning options here -Wextra -Wundef
 CPPWARN = -Wall

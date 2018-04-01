@@ -16,48 +16,6 @@
 #include "main.h"
 
 //static BaseSequentialStream* chp = (BaseSequentialStream*)&SDU1;
-static const IMUConfigStruct imu1_conf =
-        {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_250, MPU6500_AXIS_REV_Z};
-
-static const magConfigStruct mag1_conf =
-        {IST8310_ADDR_FLOATING, 200, IST8310_AXIS_REV_NO};
-
-PIMUStruct pIMU;
-PGyroStruct pGyro;
-
-#define MPU6500_UPDATE_PERIOD_US 1000000U/MPU6500_UPDATE_FREQ
-static THD_WORKING_AREA(Attitude_thread_wa, 4096);
-
-static THD_FUNCTION(Attitude_thread, p)
-{
-    chRegSetThreadName("IMU Attitude Estimator");
-
-    (void) p;
-
-    imuInit(pIMU, &imu1_conf);
-    ist8310_init(&mag1_conf);
-
-    uint32_t tick = chVTGetSystemTimeX();
-
-    while (true) {
-        tick += US2ST(MPU6500_UPDATE_PERIOD_US);
-        if (chVTGetSystemTimeX() < tick)
-            chThdSleepUntil(tick);
-        else {
-            tick = chVTGetSystemTimeX();
-            pIMU->errorCode |= IMU_LOSE_FRAME;
-        }
-
-        imuGetData(pIMU);
-        ist8310_update();
-
-        if (pIMU->accelerometer_not_calibrated || pIMU->gyroscope_not_calibrated) {
-            chSysLock();
-            chThdSuspendS(&(pIMU->imu_Thd));
-            chSysUnlock();
-        }
-    }
-}
 
 mavlink_heartbeat_t packet_test = {
         963497464,
@@ -89,6 +47,10 @@ int main(void)
 //    sdlog_init();
 //    extiinit();
 
+    /* Init sequence 2: sensors, comm */
+    attitude_estimator_init();
+
+    /* Init sequence 3: actuators, display */
     can_processInit();
     RC_init();
 
@@ -112,7 +74,6 @@ int main(void)
 
 //  tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
 
-    pIMU = imu_get();
 
     command_mixer_init();
     gimbal_simpler_controller_init();

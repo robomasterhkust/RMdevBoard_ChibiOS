@@ -13,17 +13,17 @@
 
 //Type of Gyro
 #ifndef GYRO
-  #define GYRO
-  #define GYRO_ADIS
-  #define GYRO_INTERFACE_SPI
+#define GYRO
+#define GYRO_ADIS
+#define GYRO_INTERFACE_SPI
 #else
-  #error "Multiple gyro config file found, stop"
+#error "Multiple gyro config file found, stop"
 #endif
 
 typedef enum{
-  GYRO_PSC_320 = 0,
-  GYRO_PSC_160,
-  GYRO_PSC_80
+    GYRO_PSC_320 = 0,
+    GYRO_PSC_160,
+    GYRO_PSC_80
 } gyro_psc_conf_t;
 
 /*==================USER CONFIGURATION==================*/
@@ -42,8 +42,8 @@ typedef enum{
 #define GYRO_NSS_port           GPIOE
 
 /* Sensor specific configuration*/
-//#define GYRO_RESET_PIN          GPIOA_PIN15
-//#define GYRO_RESET_PORT         GPIOA
+#define GYRO_RESET_PIN          GPIOI_PIN9
+#define GYRO_RESET_PORT         GPIOI
 
 /*==========END OF USER CONFIGURATION==================*/
 
@@ -69,32 +69,25 @@ typedef enum{
 typedef uint16_t gyrodata_t;
 
 typedef enum{
-  NOT_INITED = 0,
-  INITED = 1,
-  CALIBRATING = 2
+    NOT_INITED = 0,
+    INITED = 1,
+    CALIBRATING = 2
 } gyro_state_t;
 
-typedef enum {
-  GYRO_OK = 0,
-  GYRO_CORRUPTED_Q_DATA = 1<<1,
-  GYRO_LOSE_FRAME = 1<<7
-} gyro_error_t;
-
-
 typedef struct {
-  gyro_state_t state;
-  uint8_t error_flag;
-  SPIDriver* spid;
+    gyro_state_t state;
+    uint8_t error_flag;
+    SPIDriver* spid;
 
-  thread_reference_t adis_Thd;
-  float psc;
-  float angle_vel;
-  param_t offset; // float offset
-  lpfilterStruct* lpf; //low pass filter for gyro
+    thread_reference_t adis_Thd;
+    float psc;
+    float angle_vel;
+    param_t offset; // float offset
+    lpfilterStruct* lpf; //low pass filter for gyro
 
-  volatile float angle; //Measured Gyro Angle In Rad
+    volatile float angle; //Measured Gyro Angle In Rad
 
-  uint8_t adis_gyroscope_not_calibrated;
+    uint8_t adis_gyroscope_not_calibrated;
 
 } GyroStruct, *PGyroStruct;
 
@@ -113,8 +106,6 @@ uint16_t gyro_get_flash(PGyroStruct pGyro);                     //read number of
 uint16_t gyro_get_power(PGyroStruct pGyro);                     //return milli-volt
 uint16_t gyro_get_adc(PGyroStruct pGyro);                       //return milli-volt
 uint16_t gyro_get_temp(PGyroStruct pGyro);                      //return milli-degree
-gyro_state_t gyro_getState(void);                               //return state
-uint8_t gyro_getError(void);                                    //return errorFlag
 
 extern float yaw_pid_output_angle;
 

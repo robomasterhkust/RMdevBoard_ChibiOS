@@ -380,7 +380,7 @@ void calibrate_gyroscope(PIMUStruct pIMU)
 }
 
 
-uint8_t calibrate_adi(PGyroStruct pGyro, const uint8_t full_cal)
+int calibrate_adi(PGyroStruct pGyro, const uint8_t full_cal)
 {
   float gyro_zero = 0.0f;
   uint16_t i = 0;
@@ -391,7 +391,7 @@ uint8_t calibrate_adi(PGyroStruct pGyro, const uint8_t full_cal)
     return -1;
   }
 
-  int32_t sample_num;
+  uint32_t sample_num;
   if(full_cal)
     sample_num = 50000;
   else
@@ -402,7 +402,7 @@ uint8_t calibrate_adi(PGyroStruct pGyro, const uint8_t full_cal)
   chprintf(chp, "                    ]\r[");
 
   uint16_t count_samplenum_20 = 0;
-  uint16_t sample_num_mod_20 = sample_num/20;
+  uint32_t sample_num_mod_20 = sample_num/20;
 
   for (i = 0; i < sample_num; i++)
   {
