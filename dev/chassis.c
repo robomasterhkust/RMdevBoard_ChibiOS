@@ -214,7 +214,7 @@ void chassis_init(void)
   heading_controller.ki = 0.0f; 
   heading_controller.kp = 0.0f; 
  
-  for(int i=0;i<3;i++){ 
+  for(i=0;i<3;i++){
     chassis_heading_controller.error[i] = 0.0f; 
   } 
   chassis_heading_controller.error_int = 0.0f; 
