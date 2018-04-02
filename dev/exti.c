@@ -32,7 +32,7 @@ static THD_FUNCTION(MotorToggleThread, arg)
 
     (void) arg;
     chSysLock();
-    while (TRUE) {
+    while (!chThdShouldTerminateX()) {
 
         chSysUnlock();
         if (MotorOn) {

@@ -35,12 +35,13 @@ int main(void)
     /* Init sequence 1: central controller, utility */
     shellStart();
     params_init();
+    detect_error_task_init();
 //    sdlog_init();
 //    extiinit();
 
     /* Init sequence 2: sensors, comm */
     attitude_estimator_init();
-    can_processInit();
+//    can_processInit();
     RC_init();
 //    mavlinkComm_init();
 

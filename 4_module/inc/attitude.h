@@ -8,15 +8,12 @@
 #define ATT_W_GYRO      0.1f
 #define GYRO_BIAS_MAX  0.05f
 
-#define IMU_TEMP_SETPOINT 61.0f
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 uint8_t attitude_imu_init(PIMUStruct pIMU);
-uint8_t attitude_update(PIMUStruct pIMU, PGyroStruct pGyro);
-void attitude_estimator_init(void);
+uint8_t attitude_update_fused(PIMUStruct pIMU, PGyroStruct pGyro);
 
 #ifdef __cplusplus
 }

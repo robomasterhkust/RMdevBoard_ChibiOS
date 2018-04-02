@@ -1,32 +1,27 @@
 /**
- * Edward ZHANG, 20170910
+ * Edward ZHANG, 20180315
  * @file        attitude.c
  * @brief       Attitude estimator using quaternion and complementary filter
  * @reference   PX4  src/lib/ecl/attitude_estimator_q.cpp
+ * @comment     Fused MPU6500 with ADIS16265
  */
 
-#include <adis16265.h>
 #include "ch.h"
 #include "hal.h"
 
 #include "attitude.h"
 #include "math_misc.h"
-#include "imu_temp.h"
-
-
-#define MPU6500_UPDATE_PERIOD_US 1000000U/MPU6500_UPDATE_FREQ
-static THD_WORKING_AREA(Attitude_thread_wa, 4096);
 
 static float _error_int[3] = {0.0f, 0.0f, 0.0f};
 
 /**
- * Fuse filtered IMU6500 accelerometer and gyro with single axial adis16265
+ * Fuse filtered MPU6500 accelerometer and gyro with single axial ADIS16265
  * @param pIMU, mpu6500
  * @param pGyro, adis16265
  * @return Euler angle, in ZYX representation Roll, Pitch, Yaw
  * @return Euler angle derivative, in Pitch and Yaw
  */
-uint8_t attitude_update(PIMUStruct pIMU, PGyroStruct pGyro)
+uint8_t attitude_update_fused(PIMUStruct pIMU, PGyroStruct pGyro)
 {
     float corr[3] = {0.0f, 0.0f, 0.0f};
     float angle_vel[3];
@@ -127,83 +122,9 @@ uint8_t attitude_imu_init(PIMUStruct pIMU)
     vector3_cross(rot_matrix[2], rot_matrix[0], rot_matrix[1]);
     rotm2quarternion(rot_matrix, pIMU->qIMU);
 
+#ifdef  IMU_USE_EULER_ANGLE
+    pIMU->prev_yaw = 0.0f;         /* used to detect zero-crossing */
+#endif
+
     return IMU_OK;
-}
-
-/**
- * Initialize the accelerometer, gyroscope, and magnetometer
- *  And start the attitude calculation and sensor fusion.
- *  Also start the temperature control thread
- * @related: driver/mpu6500.c, driver/adis16265.c, driver/ist8310.c
- * @related: dev/imu_temp.h
- */
-static THD_FUNCTION(Attitude_thread, p)
-{
-    chRegSetThreadName("IMU Attitude Estimator");
-
-    (void) p;
-
-    PIMUStruct pIMU = imu_get();    // mpu6500 tri-axial imu
-    PGyroStruct pGyro = gyro_get(); // adis16265 single axial gyroscope
-
-    // Initialize accelerometer and gyroscope from the main SPI bus
-    static const IMUConfigStruct imu1_conf =
-            {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_250, MPU6500_AXIS_REV_X};
-    imuInit(pIMU, &imu1_conf);
-
-    // Initialize ADIS16265 single axial gyroscope
-    gyro_init();
-
-//    // Initialize magnetometer from the additional I2C bus
-//    static const magConfigStruct mag1_conf =
-//            {IST8310_ADDR_FLOATING, 200, IST8310_AXIS_REV_NO};
-//    ist8310_init(&mag1_conf);
-
-    // Check temperature feedback before starting temp controller thread
-    imuGetData(pIMU);
-    if (pIMU->temperature > 0.0f)
-        tempControllerInit();
-    else
-        pIMU->errorCode |= IMU_TEMP_ERROR;
-
-    while(pIMU->temperature < IMU_TEMP_SETPOINT)
-    {
-        imuGetData(pIMU);
-        chThdSleepMilliseconds(50);
-    }
-
-    pIMU->state = IMU_STATE_READY;
-    attitude_imu_init(pIMU);
-
-    uint32_t tick = chVTGetSystemTimeX();
-
-    while (!chThdShouldTerminateX()) {
-        // Hardware coded synchronization
-        tick += US2ST(MPU6500_UPDATE_PERIOD_US);
-        if (chVTGetSystemTimeX() < tick)
-            chThdSleepUntil(tick);
-        else {
-            tick = chVTGetSystemTimeX();
-            pIMU->errorCode |= IMU_LOSE_FRAME;
-        }
-
-        if(pIMU->temperature < IMU_TEMP_SETPOINT - 6.0f || pIMU->temperature > IMU_TEMP_SETPOINT + 6.0f )
-            pIMU->errorCode |= IMU_TEMP_WARNING;
-
-        imuGetData(pIMU);
-//        ist8310_update();
-        attitude_update(pIMU, pGyro);
-
-        if (pIMU->accelerometer_not_calibrated || pIMU->gyroscope_not_calibrated) {
-            chSysLock();
-            chThdSuspendS(&(pIMU->imu_Thd));
-            chSysUnlock();
-        }
-    }
-}
-
-void attitude_estimator_init(void)
-{
-    chThdCreateStatic(Attitude_thread_wa, sizeof(Attitude_thread_wa),
-                      NORMALPRIO + 5, Attitude_thread, NULL);
 }

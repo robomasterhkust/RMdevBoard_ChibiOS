@@ -4,7 +4,8 @@ TASK_PATH = $(CHIBIOS)/5_task
 TASKSRC =   \
             $(TASK_PATH)/canBusProcess.c \
             $(TASK_PATH)/chassis.c \
-            $(TAKS_PATH)/detect_error_task.c \
+            $(TASK_PATH)/detect_error_task.c \
+            $(TASK_PATH)/attitude_estimator_task.c \
             $(TASK_PATH)/command_mixer_task.c
             # $(TASK_PATH)/error.c \
             # $(TASK_PATH)/mavlink_comm.c \

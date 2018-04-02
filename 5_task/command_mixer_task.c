@@ -3,11 +3,10 @@
  * Mixing the command from joystick, keyboard, and computer vision
  */
 
-#include <command_mixer.h>
 #include "ch.h"
 #include "dbus.h"
 #include "math_misc.h"
-#include "command_mixer.h"
+#include "command_mixer_task.h"
 #include "string.h"
 
 // create a new thread for this

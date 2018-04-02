@@ -21,6 +21,11 @@ static THD_FUNCTION(detect_error_task, p)
     }
 }
 
+void detect_error_task_init(void)
+{
+    chThdCreateStatic(detect_error_task_wa, sizeof(detect_error_task_wa),
+                      NORMALPRIO, detect_error_task, NULL);
+}
 /**
  *
         //Control the flashing of green LED // TODO: Shift to Error.c

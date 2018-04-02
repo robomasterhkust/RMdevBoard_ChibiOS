@@ -3,10 +3,8 @@
  * @file    shellcfg.c
  * @brief   definitions of shell command functions
  */
-#include "main.h"
-#include "shell.h"
-#include "string.h"
-#include "serial_usb.h"
+
+#include "shellcfg.h"
 
 #define SHELL_USE_USB
 
@@ -170,7 +168,6 @@ void cmd_data(BaseSequentialStream * chp, int argc, char *argv[])
   }
 }
 
-
 void cmd_calibrate(BaseSequentialStream * chp, int argc, char *argv[])
 {
     PIMUStruct pIMU = imu_get();
@@ -250,7 +247,6 @@ void cmd_temp(BaseSequentialStream * chp, int argc, char *argv[])
 //  }
 }
 
-
 void cmd_dbus(BaseSequentialStream * chp, int argc, char *argv[])
 {
   (void) argc,argv;
@@ -322,7 +318,7 @@ static const ShellCommand commands[] =
   {"dbus", cmd_dbus},
   {"gyro", cmd_gyro},
   {"ultra", cmd_ultrasonic},
-  {"error", cmd_error},
+//  {"error", cmd_error},
   {NULL, NULL}
 };
 

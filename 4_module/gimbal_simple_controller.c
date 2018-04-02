@@ -5,13 +5,12 @@
  *          Used for initial installation and system identification
  * @input: RM6623 encoder, onboard IMU
  */
-#include <command_mixer.h>
 #include "gimbal.h"
 #include "ch.h"
 #include "hal.h"
 #include "canBusProcess.h"
 #include "arm_math.h"
-#include "command_mixer.h"
+#include "command_mixer_task.h"
 
 GimbalStruct gimbal;
 static arm_pid_instance_f32 pid_yaw_pos;
