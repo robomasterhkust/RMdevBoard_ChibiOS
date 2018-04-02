@@ -154,10 +154,8 @@ static THD_FUNCTION(uart_dbus_thread, p)
     RC_Ctl_t *rc = (RC_Ctl_t *) p;
     chRegSetThreadName("uart dbus receiver");
 
-    size_t rx_size;
     msg_t rxmsg;
     systime_t timeout = MS2ST(DBUS_INIT_WAIT_TIME_MS);
-    uint32_t count = 0;
 
     rc->state = RC_STATE_LOST;
 
@@ -191,24 +189,6 @@ static THD_FUNCTION(uart_dbus_thread, p)
             RC_reset(rc);
             timeout = MS2ST(DBUS_INIT_WAIT_TIME_MS);
         }
-
-        //Control the flashing of green LED // TODO: Shift to Error.c
-        if (!(count % 25)) {
-            uint32_t blink_count = count / 25;
-            if (!(blink_count % 8))
-                LEDB_OFF();
-            if (rc->state == RC_STATE_UNINIT || rc->state == RC_STATE_LOST ||
-                #ifdef RC_SAFE_LOCK
-                (lock_state != RC_UNLOCKED && (blink_count % 8 < 2)) ||
-                (lock_state == RC_UNLOCKED && (blink_count % 8 < 4))
-#else
-                (blink_count % 8 < 4)
-#endif
-                    )
-                LEDB_TOGGLE();
-        }
-
-        count++;
     }
 }
 
@@ -221,7 +201,6 @@ void RC_init(void)
 
     RC_Ctl.uart = UART_DBUS;
     RC_Ctl.thread_handler = NULL;
-
 
     uartStart(RC_Ctl.uart, &uart_cfg);
     dmaStreamRelease(RC_Ctl.uart->dmatx);

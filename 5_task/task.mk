@@ -1,13 +1,16 @@
 # choose the tasks in your board to run
+TASK_PATH = $(CHIBIOS)/5_task
+
 TASKSRC =   \
-            $(CHIBIOS)/5_task/canBusProcess.c \
-            $(CHIBIOS)/5_task/chassis.c \
-            $(CHIBIOS)/5_task/error.c \
-            $(CHIBIOS)/5_task/command_mixer.c
-            # $(CHIBIOS)/5_task/mavlink_comm.c \
-            # $(CHIBIOS)/5_task/mavlink_topic.c
+            $(TASK_PATH)/canBusProcess.c \
+            $(TASK_PATH)/chassis.c \
+            $(TAKS_PATH)/detect_error_task.c \
+            $(TASK_PATH)/command_mixer_task.c
+            # $(TASK_PATH)/error.c \
+            # $(TASK_PATH)/mavlink_comm.c \
+            # $(TASK_PATH)/mavlink_topic.c
 
 # Required include directories
-TASKINC =   $(CHIBIOS)/5_task/inc \
-            $(CHIBIOS)/5_task/mavlink \
-            $(CHIBIOS)/5_task/mavlink/minimal
+TASKINC =   $(TASK_PATH)/inc \
+            $(TASK_PATH)/mavlink \
+            $(TASK_PATH)/mavlink/minimal

@@ -151,6 +151,9 @@ static THD_FUNCTION(Attitude_thread, p)
             {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_250, MPU6500_AXIS_REV_X};
     imuInit(pIMU, &imu1_conf);
 
+    // Initialize ADIS16265 single axial gyroscope
+    gyro_init();
+
 //    // Initialize magnetometer from the additional I2C bus
 //    static const magConfigStruct mag1_conf =
 //            {IST8310_ADDR_FLOATING, 200, IST8310_AXIS_REV_NO};

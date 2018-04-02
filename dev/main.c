@@ -17,15 +17,6 @@
 
 //static BaseSequentialStream* chp = (BaseSequentialStream*)&SDU1;
 
-mavlink_heartbeat_t packet_test = {
-        963497464,
-        17,
-        84,
-        151,
-        218,
-        3
-};
-
 /*
  * Application entry point.
  */
@@ -49,44 +40,19 @@ int main(void)
 
     /* Init sequence 2: sensors, comm */
     attitude_estimator_init();
-
-    /* Init sequence 3: actuators, display */
     can_processInit();
     RC_init();
-    command_mixer_init();
-
-
-//    pGyro = gyro_init();
-//    tempControllerInit(); //*
-
 //    mavlinkComm_init();
 
+    /* Init sequence 3: actuators, display */
+//    command_mixer_init();
+//    gimbal_simpler_controller_init();
 //    chassis_init();
 //    gimbal_init();
-//    pwm_shooter_init(); // *
-//    error_init();
-//  pwm12init();
-//
-//  ultrasonic_init();
-
-//    mavlinkComm_heartbeat_publish(&packet_test, 1);
-//
-//    mavlink_heartbeat_t* mavlink_rx = mavlinkComm_heartbeat_subscribe();
-
-//  tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
-
-
-    command_mixer_init();
-    gimbal_simpler_controller_init();
-
-//  chThdCreateStatic(Attitude_thread_wa, sizeof(Attitude_thread_wa),
-//                    NORMALPRIO + 5,
-//                    Attitude_thread, NULL); //*
-
-
+//    shooter_init();
+//    feeder_init();
 
     while (!chThdShouldTerminateX()) {
-//        chprintf(chp, "The usb shell chprintf still workings\n");
         chThdSleepMilliseconds(500);
         LEDR_TOGGLE();
     }
