@@ -14,6 +14,7 @@
 #include "dbus.h"
 #include "params.h"
 #include "error.h"
+#include "judge.h"
 
 #include "mpu6500.h"
 #include "ist8310.h"
@@ -22,15 +23,13 @@
 #include "calibrate_sensor.h"
 #include "hcsr04.h"
 
-#include "mavlink_comm.h"
 #include "gimbal.h"
 #include "chassis.h"
 
 #include "exti.h"
-#include "judge.h"
 #include "imu_temp.h"
 #include "sdlog.h"
-#include "shoot_pwm.h"
+#include "barrelStatus.h"
 
 void shellStart(void);
 
