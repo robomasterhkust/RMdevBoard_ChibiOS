@@ -337,7 +337,8 @@ void drive_motor(){
  
   uint8_t i; 
   for (i = 0; i < CHASSIS_MOTOR_NUM; i++){ 
-    chassis.current[i] = chassis_controlSpeed(&chassis._motors[i], &motor_vel_controllers[i]); 
+    //chassis.current[i] = chassis_controlSpeed(&chassis._motors[i], &motor_vel_controllers[i]);
+    chassis.current[i] = 0;
   } 
   can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID, 
     chassis.current[FRONT_RIGHT], chassis.current[FRONT_LEFT],chassis.current[BACK_LEFT], chassis.current[BACK_RIGHT]); //BR,FR,--,-- 
