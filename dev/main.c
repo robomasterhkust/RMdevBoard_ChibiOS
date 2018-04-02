@@ -15,12 +15,12 @@
 */
 #include "main.h"
 
-//static BaseSequentialStream* chp = (BaseSequentialStream*)&SDU1;
+static BaseSequentialStream* chp = (BaseSequentialStream*)&SDU1;
 static const IMUConfigStruct imu1_conf =
-        {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_250, MPU6500_AXIS_REV_Z};
+  {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_250, MPU6500_AXIS_REV_Z};
 
 static const magConfigStruct mag1_conf =
-        {IST8310_ADDR_FLOATING, 200, IST8310_AXIS_REV_NO};
+  {IST8310_ADDR_FLOATING, 200, IST8310_AXIS_REV_NO};
 
 PIMUStruct pIMU;
 PGyroStruct pGyro;
@@ -63,14 +63,7 @@ static THD_FUNCTION(Attitude_thread, p)
   }
 }
 
-mavlink_heartbeat_t packet_test = {
-    963497464,
-    17,
-    84,
-    151,
-    218,
-    3
-};
+
 
 /*
  * Application entry point.
@@ -94,45 +87,39 @@ int main(void) {
   palClearPad(GPIOA, GPIOA_LED_B);
 
 
-    shellStart();
-    params_init();
-//    sdlog_init();
-    can_processInit();
-    RC_init();
-    extiinit(); //*
-//    pGyro = gyro_init();
-//    tempControllerInit(); //*
+  shellStart();
+  params_init();
+  can_processInit();
+  RC_init();
+  gimbal_sys_iden_init(); //*
+  gimbal_init();
 
-    mavlinkComm_init();
+  pwm_shooter_init();
+  judgeinit();
+  barrelHeatLimitControl_init();
+  extiinit(); //*
+  tempControllerInit(); //*
+  chassis_init();
+  pGyro = gyro_init();
+  error_init();
+  //pwm12init();
+  sdlog_init();
+  ultrasonic_init();
 
-    chassis_init();
-    //gimbal_sys_iden_init(); //*
-    gimbal_init();
-    pwm_shooter_init(); // *
-    error_init();
-//  pwm12init();
-//
-
-//  ultrasonic_init();
-
-    mavlinkComm_heartbeat_publish(&packet_test, 100);
-    mavlink_heartbeat_t* mavlink_rx = mavlinkComm_heartbeat_subscribe();
-
-//  tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
+  //tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
 
   pIMU = imu_get(); //*
 
   chThdCreateStatic(Attitude_thread_wa, sizeof(Attitude_thread_wa),
-                    NORMALPRIO + 5,
+  NORMALPRIO + 5,
                     Attitude_thread, NULL); //*
 
 
 
-  while (!chThdShouldTerminateX())
+  while (true)
   {
 
     chThdSleepMilliseconds(500);
-    LEDR_TOGGLE();
 
   }
 

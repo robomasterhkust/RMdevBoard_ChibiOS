@@ -16,10 +16,14 @@
  *  Performance Characteristics and Specifications 26/1/2018
  *  -2017 Judgment system firmware
  *  -10134 data packet captured
- *  -Mix of all 3 types of data packet sent from judgment system
- *  -Ozone sampling frequency: 10kHz , performance will be better than shown below
  *  Maximum number of data packets skipped in a row : 3 packets (Worst case)
- *  Probability of not reading sent data packets : 3.686%
+ *  Error rate (missing packets) : 3.686%
+ *
+ *  Performance Characteristics and Specifications 25/3/2018
+ *  -2018 Judgment system firmware
+ *  -10034 data packet captured, missed 43 packets
+ *  Maximum number of data packets skipped in a row : 1 packets (Worst case)
+ *  Error rate (missing packets) : 0.428%
  *
  *
  *  Created on: 2 Jan 2018
@@ -30,7 +34,6 @@
 #include "hal.h"
 #include "judge.h"
 #include <string.h>
-
 
 
 /***********************************  CRC  ***********************************/
@@ -221,36 +224,75 @@ static const SerialConfig SERIAL_JUDGE_CONFIG = {
   0                     //CR3 Register
 };
 
-void bytememcpy(void *des, void *src, uint32_t n) {
-
-  uint8_t *desbyte = des;
-  uint8_t *srcbyte = src;
-  uint32_t i;
-  for (i = 0; i < n; i++) {
-    *(desbyte++) = *(srcbyte++);
-  }
-
-}
-
 static mutex_t inqueue_mutex;
+static uint8_t foundheader = 0;
 static uint8_t headerloc = 0;
 static uint8_t datalength = 0;
 static uint8_t packetdatalength = 0;
-static bool foundheader = false;
-static volatile bool foundhlth = false;
 static uint8_t sdrxbuf[JUDGE_BUFFER_SIZE];
+
+static uint8_t outcount = 0;
+static size_t outsize = 0;
+static uint8_t sdtxbuf[30];
+
+#ifdef JUDGE_USE_2017
 static game_info_t gameInfo[1];
 static hlth_delta_info_t hlthInfo[1];
 static projectile_fb_t  projectileInfo[1];
+static volatile void* datagroups[JUDGE_DATA_TYPES + 1];
+#endif
+
 #ifdef TESTJUDGEPERF
 static volatile uint8_t packetID = 0;
 static volatile uint8_t deltapacketID = 0;
 static volatile uint8_t lastpacketID = 0;
 #endif
-static volatile void* datagroups[JUDGE_DATA_TYPES + 1];
 
-void** judgeData_get(void){
-  return &datagroups;
+#ifdef JUDGE_USE_2018
+static judge_fb_t judgeInData;
+static void* datagroups[JUDGE_DATA_TYPES + 1];
+#endif
+
+/*
+ * returns all judgment system sata
+ */
+judge_fb_t judgeDataGet(void) {
+
+  return judgeInData;
+
+}
+
+/*
+ * Sends user data to operator screen through judgment system
+ * input: 3 float and 1 byte of data
+ * return: length of data sent (in bytes)
+ */
+
+size_t judgeDataWrite(float a, float b, float c, uint8_t mask) {
+
+  memset((void*)sdtxbuf, 0, sizeof(sdtxbuf));
+
+  sdtxbuf[0] = JUDGE_FRAMEHEAD;                             //Append frame head
+  sdtxbuf[1] = 0;                                           //Append frame length : 1
+  sdtxbuf[2] = 17;                                          //Append frame length : 0
+  sdtxbuf[3] = outcount;                                    //Append frame count
+  outcount++;
+  Append_CRC8_Check_Sum(sdtxbuf, 5);    //Append frame CRC8
+
+  sdtxbuf[6] = 1;                                           //Append frame type : 1
+  sdtxbuf[7] = 0;                                           //Append frame type : 0
+
+  memcpy(sdtxbuf + 8, &a, 4);                         //Append frame data
+  memcpy(sdtxbuf + 12, &b, 4);                        //Append frame data
+  memcpy(sdtxbuf + 16, &c, 4);                        //Append frame data
+  memcpy(sdtxbuf + 17, &mask, 1);                     //Append frame data
+
+  Append_CRC16_Check_Sum(sdtxbuf, 20);               //Append frame CRC16
+
+  outsize = sdWriteTimeout(SERIAL_JUDGE, sdtxbuf, 20, 20);  //Send frame
+
+  return outsize;
+
 }
 
 /*
@@ -361,11 +403,6 @@ void judgedecode() {
       lastpacketID = packetID;
 #endif
       packetdatalength = sdrxbuf[headerloc + JUDGE_SHIFT_PACSIZE];  //Get datalength from packet to avoid overhead from repeated addition operation
-      if (sdrxbuf[headerloc + JUDGE_SHIFT_PACTYPE] == 2) {
-        foundhlth = true;
-      } else {
-        foundhlth = false;
-      }
       memcpy((void*) datagroups[sdrxbuf[headerloc + JUDGE_SHIFT_PACTYPE]],  //Gotta love pointers
              (void*) sdrxbuf + headerloc + JUDGE_SHIFT_DATA,
              packetdatalength);                                     //Copy rx packet data to correct data field
@@ -414,11 +451,24 @@ void judgedatainit(void) {
 
 #endif
 
+#ifdef JUDGE_USE_2018
+
+  memset((void*)&judgeInData, 0, sizeof(judge_fb_t));
+
+  datagroups[GAMEINFO] = &judgeInData.gameInfo;
+  datagroups[HLTHINFO] = &judgeInData.hlthInfo;
+  datagroups[PROJECTILEINFO] = &judgeInData.projectileInfo;
+  datagroups[POWERINFO] = &judgeInData.powerInfo;
+  datagroups[RFIDINFO] = &judgeInData.rfidInfo;
+  datagroups[ENDGAMEINFO] = &judgeInData.gameOverInfo;
+  datagroups[BUFFERINFO] = &judgeInData.bufferInfo;
+  datagroups[POSITIONINFO] = &judgeInData.locationInfo;
+
+#endif
+
 }
 
 void judgeinit(void) {
-
-  foundhlth = false;
 
   judgedatainit();
 
