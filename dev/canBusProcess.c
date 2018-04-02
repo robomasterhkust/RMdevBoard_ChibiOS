@@ -15,6 +15,7 @@ static volatile ChassisEncoder_canStruct chassis_encoder[CHASSIS_MOTOR_NUM];
 static volatile ChassisEncoder_canStruct extra_encoder[EXTRA_MOTOR_NUM];
 static volatile Gimbal_Send_Dbus_canStruct gimbal_send_dbus;
 Gimbal_Send_Dbus_canStruct* pRC;
+static volatile BarrelStatus_canStruct chassis_send_barrel;
 /*
  * 500KBaud, automatic wakeup, automatic recover
  * from abort mode.
@@ -48,6 +49,11 @@ volatile Gimbal_Send_Dbus_canStruct* can_get_sent_dbus(void){
     return &gimbal_send_dbus;
 }
 
+volatile BarrelStatus_canStruct* can_get_sent_barrelStatus(void){
+    return &chassis_send_barrel;
+}
+
+
 static inline void  can_processSendDbusEncoder
         (volatile Gimbal_Send_Dbus_canStruct* db, const CANRxFrame* const rxmsg){
     chSysLock();
@@ -56,7 +62,17 @@ static inline void  can_processSendDbusEncoder
     db->s1       = rxmsg->data8[4];
     db->s2       = rxmsg->data8[5];
     db->key_code = rxmsg->data16[3];
-    db->updated = true;
+    //db->updated = true;
+    chSysUnlock();
+}
+
+static inline void  can_processSendBarrelStatus
+  (volatile BarrelStatus_canStruct* db, const CANRxFrame* const rxmsg)
+{
+    chSysLock();
+    db->heatLimit           = (uint16_t)rxmsg->data16[0];
+    db->currentHeatValue    = (uint16_t)rxmsg->data16[1];
+    db->firingStatus        = (uint8_t)(rxmsg->data8[4]);
     chSysUnlock();
 }
 
@@ -143,6 +159,9 @@ static void can_processEncoderMessage(CANDriver* const canp, const CANRxFrame* c
             break;
         case CAN_GIMBAL_SEND_DBUS_ID:
             can_processSendDbusEncoder(&gimbal_send_dbus,rxmsg);
+            break;
+        case CAN_CHASSIS_SEND_BARREL_ID:
+            can_processSendBarrelStatus(&chassis_send_barrel, rxmsg);
     }
   }
   else
@@ -236,6 +255,7 @@ void can_processInit(void)
   memset((void *)gimbal_encoder,  0, sizeof(GimbalEncoder_canStruct) *GIMBAL_MOTOR_NUM);
   memset((void *)chassis_encoder, 0, sizeof(ChassisEncoder_canStruct)*CHASSIS_MOTOR_NUM);
   memset((void *)extra_encoder, 0, sizeof(ChassisEncoder_canStruct)*EXTRA_MOTOR_NUM);
+  memset((void *)&chassis_send_barrel, 0, sizeof(BarrelStatus_canStruct));
 
   uint8_t i;
   for (i = 0; i < CAN_FILTER_NUM; i++)
