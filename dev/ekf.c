@@ -4,11 +4,19 @@
 
 #include <canBusProcess.h>
 #include <gsl/gsl_matrix.h>
-#include "ekf_new.h"
+#include "ekf.h"
 #include "mpu6500.h"
 
 static ekf_state ekfState;
 static ekf_config ekfConfig;
+
+ekf_state* get_ekf_state(void){
+    return &ekfState;
+}
+
+ekf_config* get_ekf_config(void){
+    return &ekfConfig;
+}
 
 void init_ekf(void) {
     ekfState.x_mu = gsl_vector_alloc(STATE_X_NUM);

@@ -6,7 +6,7 @@
 #define RMDEVBOARD_CHIBIOS_EKF_NEW_H
 
 #include "gsl/gsl_blas.h"
-#include <gsl/gsl_linalg.h>
+#include "gsl/gsl_linalg.h"
 #include "stdint.h"
 
 #define STATE_X_NUM                     8U
@@ -66,6 +66,10 @@ typedef struct {
     gsl_matrix *C;
     uint32_t t_prev; //in system ticks
 } ekf_config;
+
+ekf_config* get_ekf_config(void);
+
+ekf_state* get_ekf_state(void);
 
 void init_ekf(void);
 
