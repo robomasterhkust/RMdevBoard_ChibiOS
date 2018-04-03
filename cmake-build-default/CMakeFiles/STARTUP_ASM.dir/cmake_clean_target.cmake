@@ -1,0 +1,3 @@
+file(REMOVE_RECURSE
+  "libSTARTUP_ASM.a"
+)

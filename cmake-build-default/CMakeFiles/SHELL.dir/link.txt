@@ -1,0 +1,2 @@
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar qc libSHELL.a  CMakeFiles/SHELL.dir/os/various/shell.c.o CMakeFiles/SHELL.dir/os/various/evtimer.c.o CMakeFiles/SHELL.dir/os/various/syscalls.c.o CMakeFiles/SHELL.dir/os/hal/lib/streams/memstreams.c.o CMakeFiles/SHELL.dir/os/hal/lib/streams/chprintf.c.o
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib libSHELL.a

@@ -223,9 +223,9 @@
 #define STM32_PWM_USE_TIM3                  TRUE
 #define STM32_PWM_USE_TIM4                  TRUE
 #define STM32_PWM_USE_TIM5                  FALSE
-#define STM32_PWM_USE_TIM8                  FALSE // TRUE
+#define STM32_PWM_USE_TIM8                  TRUE
 #define STM32_PWM_USE_TIM9                  FALSE
-#define STM32_PWM_USE_TIM12                 TRUE
+#define STM32_PWM_USE_TIM12                 FALSE
 #define STM32_PWM_TIM1_IRQ_PRIORITY         7
 #define STM32_PWM_TIM2_IRQ_PRIORITY         7
 #define STM32_PWM_TIM3_IRQ_PRIORITY         7
@@ -254,7 +254,7 @@
 #define STM32_SERIAL_USE_USART3             FALSE
 #define STM32_SERIAL_USE_UART4              FALSE
 #define STM32_SERIAL_USE_UART5              FALSE
-#define STM32_SERIAL_USE_USART6             TRUE
+#define STM32_SERIAL_USE_USART6             FALSE
 #define STM32_SERIAL_USART1_PRIORITY        12
 #define STM32_SERIAL_USART2_PRIORITY        12
 #define STM32_SERIAL_USART3_PRIORITY        12
@@ -302,7 +302,7 @@
  * UART driver system settings.
  */
 #define STM32_UART_USE_USART1               TRUE
-#define STM32_UART_USE_USART2               TRUE
+#define STM32_UART_USE_USART2               FALSE
 #define STM32_UART_USE_USART3               TRUE
 #define STM32_UART_USE_UART4                FALSE
 #define STM32_UART_USE_UART5                FALSE
@@ -349,6 +349,6 @@
 /*
  * WDG driver system settings.
  */
-#define STM32_WDG_USE_IWDG                  FALSE
+#define STM32_WDG_USE_IWDG                  TRUE
 
 #endif /* _MCUCONF_H_ */
