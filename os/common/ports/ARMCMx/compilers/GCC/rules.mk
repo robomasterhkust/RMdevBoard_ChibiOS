@@ -155,6 +155,8 @@ CPPFLAGS += -MD -MP -MF .dep/$(@F).d
 # Paths where to search for sources
 VPATH     = $(SRCPATHS)
 
+LDFLAGS += --specs=nosys.specs
+
 #
 # Makefile rules
 #

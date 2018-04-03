@@ -132,7 +132,7 @@ CSRC = $(STARTUPSRC) \
        canBusProcess.c dbus.c gimbal.c params.c usbcfg.c \
        calibrate_sensor.c gimbal_sys_iden.c shoot_pwm.c \
        exti.c pwm_struct.c imu_temp.c chassis.c\
-       adis16265.c error.c judge.c mavlink_comm.c mavlink_topic.c
+       adis16265.c error.c judge.c mavlink_comm.c mavlink_topic.c ekf_new.c
 
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
@@ -171,7 +171,8 @@ INCDIR = $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          $(CHIBIOS)/os/hal/lib/streams \
          $(CHIBIOS)/mavlink \
          $(CHIBIOS)/mavlink/minimal \
-         inc -lm
+         inc -lm \
+         arm_gsl_lib/include
 
 ##define SERIAL_CMD       &SDU1
 #define SERIAL_DATA      &SDU1
@@ -231,10 +232,10 @@ UADEFS =
 UINCDIR =
 
 # List the user directory to look for the libraries here
-ULIBDIR =
+ULIBDIR = arm_gsl_lib/lib
 
 # List all user libraries here
-ULIBS = -lm
+ULIBS = -lm -lgsl -lgslcblas
 
 #
 # End of user defines

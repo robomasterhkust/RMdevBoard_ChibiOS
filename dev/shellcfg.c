@@ -4,9 +4,11 @@
  * @brief   definitions of shell command functions
  */
 #include "main.h"
+#include "gsl/gsl_blas.h"
 #include "shell.h"
 #include <string.h>
 #include <canBusProcess.h>
+#include <gsl/gsl_matrix.h>
 
 #define SHELL_USE_USB
 
@@ -98,6 +100,22 @@ void cmd_test(BaseSequentialStream *chp, int argc, char *argv[]) {
     PIMUStruct PIMU = imu_get();
     GimbalStruct *gimbal = gimbal_get();
     UWB_canStruct *uwb = can_getUWB();
+
+//    double a_data[] = {2, 0, 0,
+//                       0, 2, 0,
+//                       0, 0, 2};
+//    double b_data[] = {PIMU->accelData[X], 0, 0,
+//                       0, PIMU->accelData[Y], 0,
+//                       0, 0, PIMU->accelData[Z]};
+//    double c_data[] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+//    gsl_matrix_view a = gsl_matrix_view_array(a_data, 3, 3);
+//    gsl_matrix_view b = gsl_matrix_view_array(b_data, 3, 3);
+//    gsl_matrix_view c = gsl_matrix_view_array(c_data, 3, 3);
+//    gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &a.matrix, &b.matrix, 0.0, &c.matrix);
+//
+//    chprintf(chp, "c(0,0):%f\r\n", gsl_matrix_get(&c.matrix, 0, 0));
+//    chprintf(chp, "c(1,1):%f\r\n", gsl_matrix_get(&c.matrix, 1, 1));
+//    chprintf(chp, "c(2,2):%f\r\n", gsl_matrix_get(&c.matrix, 2, 2));
 
     chprintf(chp, "AccelX: %f\r\n", PIMU->accelData[X]);
     chprintf(chp, "AccelY: %f\r\n", PIMU->accelData[Y]);
