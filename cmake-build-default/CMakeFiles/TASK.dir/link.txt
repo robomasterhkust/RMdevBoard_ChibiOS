@@ -1,2 +1,0 @@
-/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar qc libTASK.a  CMakeFiles/TASK.dir/5_task/attitude_estimator_task.c.o CMakeFiles/TASK.dir/5_task/canBusProcess.c.o CMakeFiles/TASK.dir/5_task/chassis.c.o CMakeFiles/TASK.dir/5_task/command_mixer_task.c.o CMakeFiles/TASK.dir/5_task/detect_error_task.c.o CMakeFiles/TASK.dir/5_task/error.c.o CMakeFiles/TASK.dir/5_task/mavlink_comm.c.o CMakeFiles/TASK.dir/5_task/mavlink_topic.c.o
-/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib libTASK.a

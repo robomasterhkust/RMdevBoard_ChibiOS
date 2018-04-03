@@ -49,6 +49,7 @@
 build/
 dev/build/
 cmake-build-debug/
+cmake-build-default/
 .idea/
 *.DS_Store
 MDK-ARM/RMv3testDemo

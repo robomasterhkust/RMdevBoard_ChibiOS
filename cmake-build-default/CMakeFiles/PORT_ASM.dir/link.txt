@@ -1,2 +1,0 @@
-/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar cr libPORT_ASM.a  CMakeFiles/PORT_ASM.dir/os/rt/ports/ARMCMx/compilers/GCC/chcoreasm_v7m.s.o 
-/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib libPORT_ASM.a 
