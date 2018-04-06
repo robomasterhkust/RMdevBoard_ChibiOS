@@ -35,13 +35,15 @@ int main(void)
     /* Init sequence 1: central controller, utility */
     shellStart();
     params_init();
-    detect_error_task_init();
+//    detect_error_task_init();
 //    sdlog_init();
 //    extiinit();
 
     /* Init sequence 2: sensors, comm */
-    attitude_estimator_init();
+//    attitude_estimator_init();
+//    imu_init_adis16470();
 //    can_processInit();
+    can_bus_init();
     RC_init();
 //    mavlinkComm_init();
 
@@ -53,10 +55,17 @@ int main(void)
 //    shooter_init();
 //    feeder_init();
 
+    /**
+     * DEBUGGIN
+     */
+//    liftInit();
+
     while (!chThdShouldTerminateX()) {
         chThdSleepMilliseconds(500);
         LEDR_TOGGLE();
+        LASER_OFF();
+//        can_motorSetCurrent(&CAND1, CAN_CHASSIS_CAN_EID, 1000, 1000, 1000, 1000);
+//        can_motorSetCurrent(&CAND1, CAN_GIMBAL_CAN_EID, 1000, 1000, 1000, 1000);
     }
-
     return 0;
 }

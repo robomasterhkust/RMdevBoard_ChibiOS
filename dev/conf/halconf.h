@@ -44,6 +44,8 @@
 #define LEDB_OFF()       (palClearPad(GPIOA, GPIOA_LED_B))
 #define LEDB_ON()      (palSetPad(GPIOA, GPIOA_LED_B))
 #define LEDB_TOGGLE()   (palTogglePad(GPIOA, GPIOA_LED_B))
+#define LASER_ON()      (palSetPad(GPIOG, GPIOG_PIN13_LASER))
+#define LASER_OFF()     (palClearPad(GPIOG, GPIOG_PIN13_LASER))
 
 //Sets of command for Pneumatics Output
 #define PN1_ON()        (palSetPad(GPIOD, GPIOD_PNEUMATICS1))
@@ -125,7 +127,7 @@
  * @brief   Enables the ICU subsystem.
  */
 #if !defined(HAL_USE_ICU) || defined(__DOXYGEN__)
-#define HAL_USE_ICU                 TRUE
+#define HAL_USE_ICU                 FALSE
 #endif
 
 /**
@@ -167,7 +169,7 @@
  * @brief   Enables the SERIAL subsystem.
  */
 #if !defined(HAL_USE_SERIAL) || defined(__DOXYGEN__)
-#define HAL_USE_SERIAL              FALSE
+#define HAL_USE_SERIAL              TRUE
 #endif
 
 /**
