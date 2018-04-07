@@ -8,9 +8,11 @@
 #include "gimbal.h"
 #include "ch.h"
 #include "hal.h"
-#include "canBusProcess.h"
+//#include "canBusProcess.h"
+#include "can_motor_task.h"
 #include "arm_math.h"
 #include "command_mixer_task.h"
+#include "math_misc.h"
 
 GimbalStruct gimbal;
 static arm_pid_instance_f32 pid_yaw_pos;

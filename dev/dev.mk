@@ -10,6 +10,7 @@ DEVSRC =    \
             $(DEV_PATH)/params.c \
             $(DEV_PATH)/pwm_struct.c \
             $(DEV_PATH)/shoot_pwm.c \
+            $(DEV_PATH)/can_bus.c \
             $(DEV_PATH)/usbcfg.c
 
 

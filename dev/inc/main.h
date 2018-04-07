@@ -12,12 +12,14 @@
 #include "detect_error_task.h"
 
 #include "math_misc.h"
-#include "canBusProcess.h"
+//#include "canBusProcess.h"
+#include "can_bus.h"
 #include "dbus.h"
 #include "sdlog.h"
 #include "mavlink_comm.h"
 
 #include "attitude_estimator_task.h"
+#include "adis16470.h"
 #include "calibrate_sensor.h"
 
 #include "gimbal.h"
@@ -29,5 +31,10 @@
 
 #include "command_mixer_task.h"
 #include "gimbal_simple_controller.h"
+
+/**
+ * DEBUGGING
+ */
+//#include "lift_claw_logan.h"
 
 #endif

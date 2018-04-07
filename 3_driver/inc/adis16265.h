@@ -91,17 +91,25 @@ typedef struct {
 
 } GyroStruct, *PGyroStruct;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int32_t gyro_comb;
 extern int32_t gyro_temp;
 
 PGyroStruct gyro_get(void);
+
 PGyroStruct gyro_init(void);
 //init ADIS gyro
 
 int16_t gyro_get_raw_vel(PGyroStruct pGyro);
-float gyro_get_offs(PGyroStruct pGyro);                         //read offset(result of callibration) for angular velocity
+
+float
+gyro_get_offs(PGyroStruct pGyro);                         //read offset(result of callibration) for angular velocity
 void gyro_update_offs(PGyroStruct pGyro, const int16_t offs);   //update offset from calibration value
 void gyro_set_angle(const float angle);
+
 uint16_t gyro_get_flash(PGyroStruct pGyro);                     //read number of flash for the rom un gyro
 uint16_t gyro_get_power(PGyroStruct pGyro);                     //return milli-volt
 uint16_t gyro_get_adc(PGyroStruct pGyro);                       //return milli-volt
@@ -109,12 +117,16 @@ uint16_t gyro_get_temp(PGyroStruct pGyro);                      //return milli-d
 
 extern float yaw_pid_output_angle;
 
-void polar_coordinate(int16_t x, int16_t y,int32_t current_angle);
+void polar_coordinate(int16_t x, int16_t y, int32_t current_angle);
 
-extern float polar_angle ;
+extern float polar_angle;
 extern float polar_distance;
 
 extern float Vx_by_polar;
 extern float Vy_by_polar;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INC_ADIS16265_H_ */

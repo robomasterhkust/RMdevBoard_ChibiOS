@@ -11,7 +11,8 @@
 #include "ch.h"
 #include "hal.h"
 #include "exti.h"
-#include "canBusProcess.h"
+//#include "canBusProcess.h"
+#include "can_motor_task.h"
 #include "can.h"
 
 //comment out the line below to disable motor testing

@@ -1,7 +1,8 @@
 #ifndef _GIMBAL_H_
 #define _GIMBAL_H_
 
-#include "canBusProcess.h"
+//#include "canBusProcess.h"
+#include "can_motor_task.h"
 #include "mpu6500.h"
 #include "params.h"
 
