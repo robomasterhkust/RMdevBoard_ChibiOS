@@ -4,6 +4,7 @@
  *  Created on: 07 April, 2018
  *      Author: Kuang Zeng, modified by Beck Pang
  */
+#include <main.h>
 #include "ch.h"
 #include "hal.h"
 
@@ -22,7 +23,7 @@
 static chassisStruct chassis;
 GimbalStruct *gimbal_p;
 pi_controller_t motor_vel_controllers[CHASSIS_MOTOR_NUM];
-pid_controller_t heading_controller;
+//pid_controller_t heading_controller;
 pid_controller_t chassis_heading_controller;
 lpfilterStruct lp_speed[CHASSIS_MOTOR_NUM];
 rc_ctrl_t rm;
@@ -48,7 +49,7 @@ chassisStruct *chassis_get(void)
 }
 
 #define   CHASSIS_ANGLE_PSC 7.6699e-4 //2*M_PI/0x1FFF
-#define   CHASSIS_SPEED_PSC 1.0f/((float)CHASSIS_GEAR_RATIO)
+#define   CHASSIS_SPEED_PSC ( 1.0f/((float)CHASSIS_GEAR_RATIO) )
 #define   CHASSIS_CONNECTION_ERROR_COUNT  20U
 
 static void chassis_encoderUpdate(void)
@@ -75,19 +76,6 @@ static void chassis_encoderUpdate(void)
 #endif
 }
 
-#define OUTPUT_MAX  16384
-
-static int16_t chassis_controlSpeed(motorStruct *motor, pi_controller_t *controller)
-{
-//  float wheel_rpm_ratio = 60.0f/(PERIMETER*CHASSIS_SPEED_PSC);
-    float error = motor->speed_sp - motor->_speed;//*wheel_rpm_ratio;
-    controller->error_int += error * controller->ki;
-    controller->error_int = boundOutput(controller->error_int, controller->error_int_max);
-    float output = error * controller->kp + controller->error_int;
-    return (int16_t) (boundOutput(output, OUTPUT_MAX));
-}
-
-
 #define H_MAX  200  // Heading PID_outputx
 
 static int16_t chassis_controlHeading(chassisStruct *chassis, pid_controller_t *controller)
@@ -105,10 +93,11 @@ float CHASSIS_RC_MAX_SPEED_Y = 3300.0f;
 float CHASSIS_RC_MAX_SPEED_R = 300.0f;
 float RC_RESOLUTION = 660.0f;
 
+/* handle dbus mixer */
 static void rm_chassis_process(void)
 {
-    rm.vx = (pRC->rc.channel0 - 1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
-    rm.vy = (pRC->rc.channel1 - 1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
+    rm.vx = (pRC->rc.channel0 - RC_CH_VALUE_OFFSET) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
+    rm.vy = (pRC->rc.channel1 - RC_CH_VALUE_OFFSET) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
 }
 
 void mecanum_cal()
@@ -181,6 +170,33 @@ void mecanum_cal()
     }
 }
 
+
+#define OUTPUT_MAX  16384
+
+/* pid controller for the motor velocity */
+static int16_t chassis_controlSpeed(motorStruct *motor, pi_controller_t *controller)
+{
+//  float wheel_rpm_ratio = 60.0f/(PERIMETER*CHASSIS_SPEED_PSC);
+    float error = motor->speed_sp - motor->_speed;//*wheel_rpm_ratio;
+    controller->error_int += error * controller->ki;
+    controller->error_int = boundOutput(controller->error_int, controller->error_int_max);
+    float output = error * controller->kp + controller->error_int;
+    return (int16_t) (boundOutput(output, OUTPUT_MAX));
+}
+
+/* pid controller for the heading */
+float chassis_heading_control(pid_controller_t *controller, float get, float set)
+{
+    controller->error[0] = set - get;
+    float output = controller->error[0] * controller->kp +
+                   controller->kd * (controller->error[0] - 2 * controller->error[2] + controller->error[3]);
+    controller->error[1] = controller->error[0];
+    controller->error[2] = controller->error[1];
+
+    return output;
+
+}
+
 void chassis_twist_handle()
 {
     int16_t twist_period = TWIST_PERIOD;
@@ -201,7 +217,6 @@ void chassis_stop_handle()
     chassis.rotate_sp = 0;
 }
 
-
 /*
 static void chassis_operation_func(int16_t left_right, int16_t front_back, int16_t rotate)
 {
@@ -217,19 +232,8 @@ void separate_gimbal_handle(void)
     chassis.rotate_sp = 0;
 }
 
-float chassis_heading_control(pid_controller_t *controller, float get, float set)
-{
-    controller->error[0] = set - get;
-    float output = controller->error[0] * controller->kp +
-                   controller->kd * (controller->error[0] - 2 * controller->error[2] + controller->error[3]);
-    controller->error[1] = controller->error[0];
-    controller->error[2] = controller->error[1];
 
-    return output;
-
-}
-
-void follow_gimbal_handle()
+void follow_gimbal_handle(void)
 {
     if (twist_count != 0) {
         twist_count = 0;
@@ -248,7 +252,7 @@ void follow_gimbal_handle()
 }
 
 
-static THD_WORKING_AREA(chassis_control_wa, 2048);
+static THD_WORKING_AREA(chassis_control_wa, 1024);
 
 static THD_FUNCTION(chassis_control, p)
 {
@@ -264,10 +268,15 @@ static THD_FUNCTION(chassis_control, p)
     uint32_t tick = chVTGetSystemTimeX();
     chassis.ctrl_mode = CHASSIS_STOP;
     while (!chThdShouldTerminateX()) {
-        if ( (gimbal_p->state == GIMBAL_STATE_INITING) | \
-             (gimbal_p->state == GIMBAL_STATE_READY) ) {
-            chassis.position_ref = gimbal_p->motor[0]._angle;
-            gimbal_initP = gimbal_p->motor[0]._angle;
+        if ( (gimbal_p->state == GIMBAL_STATE_INITING) )
+        {
+            chassis.position_ref = gimbal_p->axis_init_pos[0]; // Set the yaw as initial
+            gimbal_initP = gimbal_p->axis_init_pos[0];
+            chassis.ctrl_mode = MANUAL_FOLLOW_GIMBAL;
+        }
+        else if (gimbal_p->state == GIMBAL_STATE_READY) {
+//            chassis.position_ref = gimbal_p->motor[0]._angle;
+//            gimbal_initP = gimbal_p->motor[0]._angle;
             chassis.ctrl_mode = MANUAL_FOLLOW_GIMBAL;
         }
 
@@ -341,38 +350,26 @@ void chassis_init(void)
 {
     memset((void *) &chassis, 0, sizeof(chassisStruct));
     rotation_center_gimbal = 1;
-    chassis.drive_sp = 0.0f;
-    chassis.strafe_sp = 0.0f;
-    chassis.rotate_sp = 0.0f;
-    chassis.heading_sp = 0.0f;
-    chassis.rotate_x_offset = 0;
-    chassis.rotate_y_offset = 0;
+
+    chassis._pGyro = gyro_get();
+    chassis._encoders = can_getChassisMotor();
+
     uint8_t i;
     // *********************temporary section*********************
     {
         int j;
         for (j = 0; j < 4; j++) {
-            motor_vel_controllers[j].error_int = 0.0f;
-            motor_vel_controllers[j].error_int_max = 0.0f;
+            memset((void *) &motor_vel_controllers, 0, sizeof(pi_controller_t));
             motor_vel_controllers[j].ki = 0.5f;
-            motor_vel_controllers[j].kp = 55.0f;
+            motor_vel_controllers[j].kp = 25.0f;
         }
     }
-    heading_controller.error_int = 0.0f;
-    heading_controller.error_int_max = 0.0f;
-    heading_controller.ki = 0.0f;
-    heading_controller.kp = 0.0f;
 
-    for (i = 0; i < 3; i++) {
-        chassis_heading_controller.error[i] = 0.0f;
-    }
-    chassis_heading_controller.error_int = 0.0f;
-
-    chassis_heading_controller.error_int_max = 0.0f;
+    memset((void *) &chassis_heading_controller, 0, sizeof(pid_controller_t));
     chassis_heading_controller.ki = 0.0f;
-    chassis_heading_controller.kp = 20.0f;
+    chassis_heading_controller.kp = 200.0f;
     chassis_heading_controller.kd = 1.0f;
-    //**************************************************************
+    //**************************** Hardcoded parameters ******************************//
 //  params_set(&motor_vel_controllers[FRONT_LEFT], 9,2,FLvelName,subname_PI,PARAM_PUBLIC);
 //  params_set(&motor_vel_controllers[FRONT_RIGHT], 10,2,FRvelName,subname_PI,PARAM_PUBLIC);
 //  params_set(&motor_vel_controllers[BACK_LEFT], 11,2,BLvelName,subname_PI,PARAM_PUBLIC);
@@ -386,34 +383,13 @@ void chassis_init(void)
         motor_vel_controllers[i].error_int = 0.0f;
         motor_vel_controllers[i].error_int_max = MOTOR_VEL_INT_MAX;
     }
-    heading_controller.error_int = 0.0f;
-    heading_controller.error_int_max = 0.0f;
-    chassis._pGyro = gyro_get();
-    chassis._encoders = can_getChassisMotor();
 
     chThdCreateStatic(chassis_control_wa, sizeof(chassis_control_wa),
                       NORMALPRIO, chassis_control, NULL);
 }
 
-
-void update_heading(void)
-{
-    /*TODO THIS WILL MAKE YOU LOSE HEADING IN A COLLISION, add control*/
-    chassis.heading_sp = chassis._pGyro->angle;
-}
-
-/*
- *
- *
- *
- *
- *
- * */
-
-
 void drive_motor()
 {
-
     uint8_t i;
     for (i = 0; i < CHASSIS_MOTOR_NUM; i++) {
         chassis.current[i] = chassis_controlSpeed(&chassis._motors[i], &motor_vel_controllers[i]);

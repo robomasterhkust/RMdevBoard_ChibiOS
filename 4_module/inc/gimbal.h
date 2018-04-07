@@ -11,7 +11,7 @@
 
 //#define GIMBAL_ZERO
 //#define GIMBAL_INIT_TEST          //Set Initialization position and PID value
-//#define GIMBAL_FF_TEST              //Set Initialization position and PID value
+#define GIMBAL_FF_TEST              //Set Initialization position and PID value
 //#define GIMBAL_USE_MAVLINK_CMD
 #define GIMBAL_ENCODER_USE_SPEED
 
