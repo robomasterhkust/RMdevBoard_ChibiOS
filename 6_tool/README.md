@@ -10,13 +10,17 @@
     - 在 gimbal_attiCmd() function里查pitch_speed_limit，按pitch轴方向改加减号pitch speed limit;
     - 测方向结束，接下来是测数值。
 4. initialization feedback controller: 
+打开GIMBAL_INIT_TEST
     - 先调最简单的encoder的控制器，先调P，I再调D。encoder控制器会在温度达到的时候终结；
 5. software limit: 加软件限位值，注意是大地坐标系；TODO: 180度会有break point. fixed at the quaternion calculation
-6. attitude feedforward controller: 姿态前馈控制器，只调pitch；
+6. attitude feedforward controller: 
+关闭GIMBAL_INIT_TEST，打开GIMBAL_FF_TEST
+姿态前馈控制器，只调pitch；
     - 位置：pitch_w, 增加到重力与前馈项抵消时停止；注意方向。
     - 重力方向：pitchX, pitchY, pitchZ, 找到枪口朝前时的重力方向，测完之后看加速度计；pitchY应为0。
     这一项主要是
 7. velocity controller
+关闭GIMBAL_FF_TEST
     - 拿手握着，先确定Kp方向，有阻尼感为正确。
 8. attitude controller
     - 如果pitch轴高频震动，可能是由于pitch轴内环

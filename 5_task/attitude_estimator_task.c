@@ -33,10 +33,6 @@ static THD_FUNCTION(Attitude_thread, p)
     imuInit(pIMU, &imu1_conf);
     chThdSleepMilliseconds(50);
 
-    // Initialize ADIS16265 single axial gyroscope
-    // TODO: check if ADIS16265 exist
-//    gyro_init();
-
 //    // Initialize magnetometer from the additional I2C bus
 //    static const magConfigStruct mag1_conf =
 //            {IST8310_ADDR_FLOATING, 200, IST8310_AXIS_REV_NO};
@@ -80,9 +76,9 @@ static THD_FUNCTION(Attitude_thread, p)
         // if adis 16470 exist
 
         // else if adis16265 exist
-//        attitude_update_fused(pIMU, pGyro);
+        attitude_update_fused(pIMU, pGyro);
         // else
-        attitude_estimator_mpu6500_init(pIMU);
+//        attitude_estimator_mpu6500_init(pIMU);
 
         if (pIMU->accelerometer_not_calibrated || pIMU->gyroscope_not_calibrated) {
             chSysLock();

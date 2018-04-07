@@ -9,7 +9,7 @@ DRIVERSRC = \
             # $(DRIVER_PATH)/hcsr04.c  \
             # $(DRIVER_PATH)/ist8310.c \
             # $(DRIVER_PATH)/tft_display.c \
-                        # $(DRIVER_PATH)/adis16470.c \
+            # $(DRIVER_PATH)/adis16470.c \
 
 # Required include directories
 DRIVERINC = $(DRIVER_PATH)/inc

@@ -40,7 +40,10 @@ int main(void)
 //    extiinit();
 
     /* Init sequence 2: sensors, comm */
-//    attitude_estimator_init();
+    attitude_estimator_init();
+    // Initialize ADIS16265 single axial gyroscope
+    // TODO: check if ADIS16265 exist
+    gyro_init();
 //    imu_init_adis16470();
 //    can_processInit();
     can_bus_init();
@@ -51,7 +54,7 @@ int main(void)
 //    command_mixer_init();
 //    gimbal_simpler_controller_init();
     gimbal_init();
-    chassis_init();
+//    chassis_init();
 //    shooter_init();
 //    feeder_init();
 
@@ -61,7 +64,7 @@ int main(void)
         chThdSleepMilliseconds(500);
         LEDR_TOGGLE();
 
-//        can_motorSetCurrent(&CAND1, CAN_CHASSIS_CAN_EID, 1000, 1000, 1000, 1000);
+//        can_motorSetCurrent(&CAND1, CAN_CHASSIS_CAN_EID, 2000, 0, 0, 0);
 //        can_motorSetCurrent(&CAND1, CAN_GIMBAL_CAN_EID, 1000, 1000, 1000, 1000);
     }
     return 0;

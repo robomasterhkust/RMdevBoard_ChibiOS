@@ -671,6 +671,8 @@ void gimbal_init(void)
   params_set((param_t *)&_yaw_atti,     7, 3, _yaw_atti_name,   subname_PID,      PARAM_PUBLIC);
   params_set((param_t *)&_pitch_atti,   8, 3, _pitch_atti_name, subname_PID,      PARAM_PUBLIC);
 
+    _yaw_atti.kp = 30.0f;
+    _pitch_atti.kp = 30.0f;
   #ifdef GIMBAL_USE_MAVLINK_CMD
     mavlink_attitude = mavlinkComm_attitude_subscribe();
   #endif
