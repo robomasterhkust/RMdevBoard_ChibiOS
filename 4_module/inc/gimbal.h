@@ -8,15 +8,29 @@
 
 #define GIMBAL_CONTROL_FREQ 1000U
 #define GIMBAL_CUTOFF_FREQ    30U
-//#define GIMBAL_ENCODER_USE_SPEED
-#define GIMBAL_IQ_MAX 5000
+
+//#define GIMBAL_ZERO
+//#define GIMBAL_INIT_TEST          //Set Initialization position and PID value
+//#define GIMBAL_FF_TEST              //Set Initialization position and PID value
+//#define GIMBAL_USE_MAVLINK_CMD
+#define GIMBAL_ENCODER_USE_SPEED
 
 #define GIMBAL_CAN  &CAND1
 #define GIMBAL_CAN_EID  0x1FF
 
-#ifdef GIMBAL_ENCODER_USE_SPEED
-  #define GIMBAL_SPEED_BUFFER_LEN      10U
-#endif
+#define GIMBAL_YAW_GEAR 1.0f
+
+typedef enum {
+  GIMBAL_STATE_UNINIT = 0,
+  GIMBAL_STATE_INITING,
+  GIMBAL_STATE_READY,
+  GIMBAL_STATE_FALLOFF,               //The vehicle is turned over
+  GIMBAL_STATE_180DEG_TRANSITION,     //Reserved for sentry gimbal
+  GIMBAL_YAW_AT_UP_LIMIT = 1 << 7,
+  GIMBAL_YAW_AT_LOW_LIMIT = 1 << 6,
+  GIMBAL_PITCH_AT_UP_LIMIT = 1 << 5,
+  GIMBAL_PITCH_AT_LOW_LIMIT = 1 << 4,
+} gimbal_state_t;
 
 typedef enum {
   GIMBAL_YAW_NOT_CONNECTED = 1<<0,
@@ -27,52 +41,57 @@ typedef enum {
 
 #define GIMBAL_ERROR_COUNT    3U
 #define GIMBAL_WARNING_COUNT  1U
-#define GIMBAL_CONNECTION_ERROR_COUNT 20U
-#define GIMBAL_CONTROL_PERIOD_NEXT    US2ST(1000000U/GIMBAL_CONTROL_FREQ)
-
-static const char gimbal_error_messages[GIMBAL_ERROR_COUNT][50] =
+static const char gimbal_error_messages[GIMBAL_ERROR_COUNT][64] =
 {
   "E:Gimbal yaw not connected",
   "E:Gimbal pitch not connected",
   "E:Gimbal init timeout"
 };
 
-static const char gimbal_warning_messages[GIMBAL_WARNING_COUNT][50] =
+static const char gimbal_warning_messages[GIMBAL_WARNING_COUNT][64] =
 {
   "W:Gimbal control lose frame"
 };
 
 typedef struct{
-  bool inited;
-  volatile GimbalEncoder_canStruct* _encoder_can;
-  volatile IMUStruct* _pIMU;
-
-  uint32_t errorFlag;
-
-  /* motor status */
-  uint8_t yaw_wait_count;
-  uint8_t pitch_wait_count;
-  float yaw_angle;
-  float pitch_angle;
-  float yaw_current;
-  float pitch_current;
-    uint32_t timestamp;
+  uint8_t _wait_count;
+  float _angle;
+  float _current;
 
   #ifdef GIMBAL_ENCODER_USE_SPEED
-    float yaw_speed_enc;
-    float pitch_speed_enc;
+    float _speed_enc;
+    int8_t _dir;
   #endif
+
+  float _speed_cmd;
+  float _speed;
+} GimbalMotorStruct;
+
+typedef struct{
+  uint8_t state;
+
+  int32_t rev;
+  float prev_yaw_cmd;
+  uint32_t errorFlag;
+
+  volatile IMUStruct* _pIMU;
+  volatile GimbalEncoder_canStruct* _encoder;
+
+  /* motor status */
+  volatile GimbalMotorStruct motor[2];
 
   float yaw_atti_cmd;
   float pitch_atti_cmd;
-  float yaw_speed_cmd;
-  float pitch_speed_cmd;
-  float yaw_speed;
-  float pitch_speed;
+
+  float chassis_yaw;
+  float d_yaw;
 
   /*Mechanical parameters*/
-  param_t axis_init_pos[3];
-  param_t axis_ff_weight[6];
+  param_t axis_init_pos[2];
+  param_t axis_ff_ext[6];
+  param_t axis_ff_int[2];
+  param_t axis_limit[4];
+
   /*first three subparams: pitch axis accelerometer maximum in XYZ
   last three subparams: yaw axis accelerometer maximum in XYZ when pitch at maximum*/
   param_t axis_ff_accel[6];
@@ -87,18 +106,11 @@ typedef struct{
 
 }  GimbalStruct;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 GimbalStruct* gimbal_get(void);
+void gimbal_setRune(uint8_t cmd);
 GimbalStruct* gimbal_get_sys_iden(void);
-uint32_t gimbal_getError(void);
+uint32_t gimbal_get_error(void);
 void gimbal_init(void);
-void gimbal_sys_iden_init(void);
-
-#ifdef __cplusplus
-}
-#endif
+void gimbal_kill(void);
 
 #endif

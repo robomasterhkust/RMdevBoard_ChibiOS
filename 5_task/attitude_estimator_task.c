@@ -29,7 +29,7 @@ static THD_FUNCTION(Attitude_thread, p)
 
     // Initialize accelerometer and gyroscope from the main SPI bus
     static const IMUConfigStruct imu1_conf =
-            {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_250, MPU6500_AXIS_REV_X};
+            {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_250, MPU6500_AXIS_REV_Y};
     imuInit(pIMU, &imu1_conf);
     chThdSleepMilliseconds(50);
 

@@ -49,21 +49,18 @@ int main(void)
 
     /* Init sequence 3: actuators, display */
 //    command_mixer_init();
-    gimbal_simpler_controller_init();
+//    gimbal_simpler_controller_init();
+    gimbal_init();
     chassis_init();
-//    gimbal_init();
 //    shooter_init();
 //    feeder_init();
 
-    /**
-     * DEBUGGIN
-     */
-//    liftInit();
+    LASER_ON();
 
     while (!chThdShouldTerminateX()) {
         chThdSleepMilliseconds(500);
         LEDR_TOGGLE();
-//        LASER_OFF();
+
 //        can_motorSetCurrent(&CAND1, CAN_CHASSIS_CAN_EID, 1000, 1000, 1000, 1000);
 //        can_motorSetCurrent(&CAND1, CAN_GIMBAL_CAN_EID, 1000, 1000, 1000, 1000);
     }

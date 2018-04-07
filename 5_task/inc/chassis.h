@@ -11,7 +11,7 @@
 #ifndef INC_CHASSIS_H_
 #define INC_CHASSIS_H_
 
-#define CHASSIS_CAN  &CAND2        // Later should be CAND2
+#define CHASSIS_CAN  &CAND1        // Later should be CAND2\
 #define CHASSIS_CAN_EID  0x200
 
 #define CHASSIS_UPDATE_FREQ 500
@@ -37,9 +37,9 @@ else if((val) >= (max))\
 #define PERIMETER  478
 
 /* wheel track distance(mm) */
-#define WHEELTRACK  545 //403
+#define WHEELTRACK  530 //403
 /* wheelbase distance(mm) */
-#define WHEELBASE  340 //385
+#define WHEELBASE  520 //385
 
 /* gimbal is relative to chassis center x axis offset(mm) */
 #define GIMBAL_X_OFFSET 120 //150
@@ -80,26 +80,29 @@ typedef enum
 {
     CHASSIS_RELAX = 0,
     CHASSIS_STOP = 1,
-    MANUAL_SEPARATE_GIMBAL =2,
-    MANUAL_FOLLOW_GIMBAL =3,
+    MANUAL_SEPARATE_GIMBAL = 2,
+    MANUAL_FOLLOW_GIMBAL = 3,
     DODGE_MODE = 4,
-    AUTO_SEPARATE_GIMBAL =5,
-    AUTO_FOLLOW_GIMBAL =6,
-}chassis_mode_e;
+    AUTO_SEPARATE_GIMBAL = 5,
+    AUTO_FOLLOW_GIMBAL = 6,
+} chassis_mode_e;
 
-typedef struct{
+typedef struct
+{
     float speed_sp;
     float _speed;
     uint8_t _wait_count;
 } motorStruct;
 
-typedef struct{
+typedef struct
+{
     float speed_sp;
     float _speed;
     float pos_sp;
     float _pos;
     uint8_t _wait_count;
 } motorPosStruct;
+
 typedef struct
 {
     float vx;
@@ -107,20 +110,25 @@ typedef struct
     float vw;
 
 } rc_ctrl_t;
-typedef enum {
+
+typedef enum
+{
     CHASSIS_MOTOR_0_NOT_CONNECTED = 1 << 0,
     CHASSIS_MOTOR_1_NOT_CONNECTED = 1 << 1,
     CHASSIS_MOTOR_2_NOT_CONNECTED = 1 << 2,
     CHASSIS_MOTOR_3_NOT_CONNECTED = 1 << 3
-};
+}chassis_motor_error;
 
-typedef enum {
+typedef enum
+{
     CHASSIS_OK = 0,
-    CHASSIS_MOTOR_NOT_CONNECTED = 1 <<0
-};
+    CHASSIS_MOTOR_NOT_CONNECTED = 1 << 0
+}chassis_motor_summary;
+
 typedef uint8_t chassis_error_t;
 
-typedef struct{
+typedef struct
+{
     motorStruct _motors[CHASSIS_MOTOR_NUM];
 
 #ifdef CHASSIS_USE_POS_MOTOR
@@ -131,21 +139,21 @@ typedef struct{
     float rotate_sp;
     float drive_sp;
     float strafe_sp;
-    int16_t         rotate_x_offset;
-    int16_t         rotate_y_offset;
-    int16_t         current[4];
-    float           position_ref;
+    int16_t rotate_x_offset;
+    int16_t rotate_y_offset;
+    int16_t current[4];
+    float position_ref;
 //  int16_t       position_ref;
 //  uint8_t       follow_gimbal;
 
 
-    chassis_mode_e  ctrl_mode;
-    chassis_mode_e  last_ctrl_mode;
+    chassis_mode_e ctrl_mode;
+    chassis_mode_e last_ctrl_mode;
 
     float pid_last_error;
     uint8_t errorFlag;
 
-    volatile ChassisEncoder_canStruct* _encoders;
+    volatile ChassisEncoder_canStruct *_encoders;
     PGyroStruct _pGyro;
 } chassisStruct;
 
@@ -156,26 +164,29 @@ typedef struct{
  *
  *
  * */
-void mecanum_calc();
-
+void mecanum_cal(void);
 
 
 /*define by UST*/
 chassis_error_t chassis_getError(void);
-chassisStruct* chassis_get(void);
+
+chassisStruct *chassis_get(void);
+
 void chassis_init(void);
+
 void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1);
+
 void drive_motor(void);
-float chassis_heading_control(pid_controller_t*,float, float);
+
+float chassis_heading_control(pid_controller_t *, float, float);
+
 void chassis_twist_handle(void);
+
 void chassis_stop_handle(void);
-void separate_gimbal_handle();
-void follow_gimbal_handle();
 
+void separate_gimbal_handle(void);
 
-
-
-
+void follow_gimbal_handle(void);
 
 
 #endif /* INC_CHASSIS_H_ */

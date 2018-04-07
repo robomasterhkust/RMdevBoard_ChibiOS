@@ -21,7 +21,7 @@
  *	DJI drone:								NEVER
  */
 #define RC_SAFE_LOCK 		// Way to unlock: Same as arming a DJI phantom drone
-#define RC_INFANTRY_HERO
+//#define RC_INFANTRY_HERO
 //#define RC_DJI_DRONE
 
 // Way to unlock: Same as arming a DJI drone, pull the both sticks down and outside

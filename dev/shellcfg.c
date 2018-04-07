@@ -4,6 +4,7 @@
  * @brief   definitions of shell command functions
  */
 
+#include "main.h"
 #include "shellcfg.h"
 
 #define SHELL_USE_USB
@@ -96,42 +97,21 @@ void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
 {
   (void) argc,argv;
   PIMUStruct PIMU = imu_get();
-//  GimbalStruct* gimbal = gimbal_get();
-  GimbalStruct* gimbal = get_gimbal_simple_controller();
+  GimbalStruct* gimbal = gimbal_get();
+//  GimbalStruct* gimbal = get_gimbal_simple_controller();
+    RC_Ctl_t* pRC = RC_get();
+    volatile ChassisEncoder_canStruct* encoder = can_getChassisMotor();
 
   chprintf(chp,"AccelX: %f\r\n",PIMU->accelData[X]);
   chprintf(chp,"AccelY: %f\r\n",PIMU->accelData[Y]);
   chprintf(chp,"AccelZ: %f\r\n",PIMU->accelData[Z]);
 
-  chprintf(chp,"Gimbal Pitch: %f\r\n",gimbal->pitch_angle);
-  chprintf(chp,"Gimbal Yaw: %f\r\n",gimbal->yaw_angle);
+  chprintf(chp,"Gimbal Pitch: %f\r\n",gimbal->motor[1]._angle);
+  chprintf(chp,"Gimbal Yaw: %f\r\n",gimbal->motor[0]._angle);
   chprintf(chp,"IMU Pitch: %f\r\n",PIMU->euler_angle[Pitch]);
+    chprintf(chp, "rc command: %f\r\n", pRC->rc.channel0);
 
-  chprintf(chp,"param: %f\r\n",param_p[2][0]);
-  chprintf(chp,"param: %f\r\n",param_p[2][1]);
-  chprintf(chp,"param: %f\r\n",param_p[3][1]);
-  chprintf(chp,"param: %f\r\n",param_p[4][0]);
-  chprintf(chp,"param: %f\r\n",param_p[4][1]);
-
-  chprintf(chp,"valid: %x\r\n",*(uint32_t*)param_valid);
-  chprintf(chp,"private: %x\r\n",*(uint32_t*)param_private);
-
-  param_t test[6];
-
-  flashRead(0x080E0000 + 64U + 128U * 3 + 16,
-            (char*)(test), 12);
-
-  chprintf(chp,"flash: %f\r\n",test[0]);
-  chprintf(chp,"flash: %f\r\n",test[1]);
-  chprintf(chp,"flash: %f\r\n",test[2]);
-
-  flashRead(0x080E0000 + 64U + 128U * 2 + 16,
-            (char*)(test), 24);
-
-  chprintf(chp,"flash: %f\r\n",test[0]);
-  chprintf(chp,"flash: %f\r\n",test[1]);
-  chprintf(chp,"flash: %f\r\n",test[2]);
-
+    chprintf(chp, "encoder speed: %f\r\n", encoder[2].raw_speed);
 }
 
 /**
