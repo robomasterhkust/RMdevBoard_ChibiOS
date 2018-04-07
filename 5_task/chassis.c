@@ -4,7 +4,6 @@
  *  Created on: 07 April, 2018
  *      Author: Kuang Zeng, modified by Beck Pang
  */
-#include <main.h>
 #include "ch.h"
 #include "hal.h"
 
@@ -359,8 +358,8 @@ void chassis_init(void)
     {
         int j;
         for (j = 0; j < 4; j++) {
-            memset((void *) &motor_vel_controllers, 0, sizeof(pi_controller_t));
-            motor_vel_controllers[j].ki = 0.5f;
+            memset((void *) &motor_vel_controllers[j], 0, sizeof(pi_controller_t));
+            motor_vel_controllers[j].ki = 0.05f;
             motor_vel_controllers[j].kp = 25.0f;
         }
     }
