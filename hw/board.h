@@ -704,8 +704,8 @@
                                      PIN_PUPDR_FLOATING(GPIOD_UART2_TX) |\
                                      PIN_PUPDR_FLOATING(GPIOD_UART2_RX) |         \
                                      PIN_PUPDR_FLOATING(GPIOD_PIN7) |         \
-                                     PIN_PUPDR_FLOATING(GPIOD_UART3_TX) |         \
-                                     PIN_PUPDR_FLOATING(GPIOD_UART3_RX) |         \
+                                     PIN_PUPDR_PULLDOWN(GPIOD_UART3_TX) |         \
+                                     PIN_PUPDR_PULLDOWN(GPIOD_UART3_RX) |         \
                                      PIN_PUPDR_PULLUP(GPIOD_KEY) |        \
                                      PIN_PUPDR_FLOATING(GPIOD_PIN11) |        \
                                      PIN_PUPDR_PULLDOWN(GPIOD_TIM4_CH1) |       \
