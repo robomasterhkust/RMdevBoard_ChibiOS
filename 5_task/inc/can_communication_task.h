@@ -21,6 +21,7 @@ typedef struct{
 extern "C" {
 #endif
 
+volatile Gimbal_Send_Dbus_canStruct* can_get_sent_dbus(void);
 void can_process_communication(const CANRxFrame * rxmsg);
 
 #ifdef __cplusplus

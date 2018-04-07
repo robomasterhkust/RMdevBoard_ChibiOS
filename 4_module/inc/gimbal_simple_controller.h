@@ -5,6 +5,8 @@
 #ifndef RM_CHIBIOS_GIMBAL_SIMPLE_CONTROLLER_H
 #define RM_CHIBIOS_GIMBAL_SIMPLE_CONTROLLER_H
 
+#include "gimbal.h"
+
 GimbalStruct *get_gimbal_simple_controller(void);
 void gimbal_simpler_controller_init(void);
 

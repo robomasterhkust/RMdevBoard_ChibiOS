@@ -8,6 +8,10 @@
 
 static volatile Gimbal_Send_Dbus_canStruct gimbal_send_dbus;
 
+volatile Gimbal_Send_Dbus_canStruct* can_get_sent_dbus(void){
+    return &gimbal_send_dbus;
+}
+
 static inline void  can_processSendDbusEncoder
         (volatile Gimbal_Send_Dbus_canStruct* db, const CANRxFrame* const rxmsg)
 {
