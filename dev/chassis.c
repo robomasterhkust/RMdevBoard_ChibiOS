@@ -20,6 +20,7 @@
 static volatile chassisStruct chassis; 
 GimbalEncoder_canStruct* gimbal_p; 
 Gimbal_Send_Dbus_canStruct* Dbus_p; 
+RC_Ctl_t* Rc;
 pi_controller_t motor_vel_controllers[CHASSIS_MOTOR_NUM]; 
 pid_controller_t heading_controller; 
 pid_controller_t chassis_heading_controller; 
@@ -30,8 +31,8 @@ int rotation_center_gimbal = 1;
 float gimbal_initP = 0; 
 float record = 0; 
  
-#define TWIST_ANGLE 50 
-#define TWIST_PERIOD 3000 
+#define TWIST_ANGLE 90
+#define TWIST_PERIOD 1500
  
  
 chassis_error_t chassis_getError(void){ 
@@ -55,12 +56,15 @@ static void chassis_encoderUpdate(void)
     { 
       //Check validiaty of can connection 
       chassis._encoders[i].updated = false; 
- 
-      //float pos_input = chassis._encoders[i].raw_angle*CHASSIS_ANGLE_PSC; 
-      float speed_input = chassis._encoders[i].raw_speed*CHASSIS_SPEED_PSC; 
-      chassis._motors[i]._speed = lpfilter_apply(&lp_speed[i], speed_input); 
-      chassis._motors[i]._wait_count = 1; 
-    } 
+
+     //float pos_input = chassis._encoders[i].raw_angle*CHASSIS_ANGLE_PSC;
+     float speed_input = chassis._encoders[i].raw_speed*CHASSIS_SPEED_PSC;
+     chassis._motors[i]._speed = lpfilter_apply(&lp_speed[i], speed_input);
+     chassis._motors[i]._wait_count = 1;
+
+      //float pos_input = chassis._encoders[i].raw_angle*CHASSIS_ANGLE_PSC;
+
+    }
     else 
     { 
       chassis._motors[i]._wait_count++; 
@@ -102,8 +106,16 @@ float CHASSIS_RC_MAX_SPEED_R = 300.0f;
 float RC_RESOLUTION = 660.0f;
 
 static void rm_chassis_process(void){
+
     rm.vx =  (pRC->channel0 - 1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
     rm.vy =   (pRC->channel1 - 1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
+
+
+/*
+     rm.vx =  (Rc->rc.channel0 - 1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
+     rm.vy =   (Rc->rc.channel1 - 1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
+     rm.vw = (Rc->rc.channel2 - 1024) / RC_RESOLUTION * MAX_CHASSIS_VR_SPEED;
+*/
 }
  
 static THD_WORKING_AREA(chassis_control_wa, 2048); 
@@ -116,11 +128,13 @@ static THD_FUNCTION(chassis_control, p)
   //pRC = can_get_sent_dbus();
   gimbal_p = can_getGimbalMotor(); 
   Dbus_p = can_get_sent_dbus(); 
+  Rc = RC_get();
   bool done = false; 
   uint32_t tick = chVTGetSystemTimeX(); 
   chassis.ctrl_mode = CHASSIS_STOP; 
   while(!chThdShouldTerminateX()) 
   { 
+
     if(Dbus_p->updated && !done){
       done = true; 
       chassis.position_ref = gimbal_p[0].radian_angle;
@@ -128,10 +142,11 @@ static THD_FUNCTION(chassis_control, p)
       chassis.ctrl_mode = MANUAL_FOLLOW_GIMBAL; 
     } 
     if(done){ 
-      if(fabsf(gimbal_p[0].radian_angle - gimbal_initP) > M_PI/2){ 
+      if(fabsf(gimbal_p[0].radian_angle - gimbal_initP) > 3* M_PI/4){
         chassis.ctrl_mode = CHASSIS_STOP; 
       } 
     } 
+
     tick += US2ST(CHASSIS_UPDATE_PERIOD_US); 
     if(tick > chVTGetSystemTimeX()) 
       chThdSleepUntil(tick); 
@@ -148,9 +163,7 @@ static THD_FUNCTION(chassis_control, p)
     else{
       rm_chassis_process();
       keyboard_reset();
-      chassis.ctrl_mode =  MANUAL_FOLLOW_GIMBAL;
     }
-      // keyboardprocess(pRC->key_code);
     switch(chassis.ctrl_mode){ 
       case DODGE_MODE:{ 
         chassis.strafe_sp =0; 
@@ -206,8 +219,8 @@ void chassis_init(void)
   for(j = 0; j < 4; j++){ 
     motor_vel_controllers[j].error_int = 0.0f; 
     motor_vel_controllers[j].error_int_max = 0.0f; 
-    motor_vel_controllers[j].ki = 0.5f; 
-    motor_vel_controllers[j].kp = 55.0f; 
+    motor_vel_controllers[j].ki = 0.1f;
+    motor_vel_controllers[j].kp = 50.0f;
   }} 
   heading_controller.error_int = 0.0f; 
   heading_controller.error_int_max = 0.0f; 
@@ -221,7 +234,7 @@ void chassis_init(void)
  
   chassis_heading_controller.error_int_max = 0.0f; 
   chassis_heading_controller.ki = 0.0f; 
-  chassis_heading_controller.kp = 20.0f;
+  chassis_heading_controller.kp = 60.0f;
   chassis_heading_controller.kd = 1.0f; 
   //************************************************************** 
 //  params_set(&motor_vel_controllers[FRONT_LEFT], 9,2,FLvelName,subname_PI,PARAM_PUBLIC); 
@@ -337,8 +350,8 @@ void drive_motor(){
  
   uint8_t i; 
   for (i = 0; i < CHASSIS_MOTOR_NUM; i++){ 
-    //chassis.current[i] = chassis_controlSpeed(&chassis._motors[i], &motor_vel_controllers[i]);
-    chassis.current[i] = 0;
+    chassis.current[i] = chassis_controlSpeed(&chassis._motors[i], &motor_vel_controllers[i]);
+    //chassis.current[i] = 0;
   } 
   can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID, 
     chassis.current[FRONT_RIGHT], chassis.current[FRONT_LEFT],chassis.current[BACK_LEFT], chassis.current[BACK_RIGHT]); //BR,FR,--,-- 
@@ -373,7 +386,7 @@ static void chassis_operation_func(int16_t left_right, int16_t front_back, int16
 void separate_gimbal_handle(){
   chassis.drive_sp = rm.vy + km.vy;
   chassis.strafe_sp = rm.vx + km.vx;
-  chassis.rotate_sp = 0;
+  chassis.rotate_sp = rm.vw;
 } 
  
 void follow_gimbal_handle(){

@@ -81,6 +81,7 @@ typedef struct{
     uint8_t  s1;
     uint8_t  s2;
     uint16_t key_code;
+    bool updated;
 } Gimbal_Send_Dbus_canStruct;
 
 typedef struct{

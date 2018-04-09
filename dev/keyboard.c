@@ -12,13 +12,18 @@ int bitmap[15] = {};
 kb_ctrl_t km;
 
 void keyboard_to_bitmap(){
-  uint8_t i;
-  for (i=0;i<15;i++){
-    bitmap[i] = (pRC->key_code/ (2^i))% 2;
+  uint8_t i = 0;
+  //uint32_t n = RC_get()->keyboard.key_code;
+  uint32_t n = pRC->key_code;
+  for(int j=0 ; j< 15; j++){
+    bitmap[i] = n % 2;
+    n = n/2;
+    i++;
   }
 }
 bool keyboard_enable(){
-  return (pRC->s1 == UP && pRC->s2 == UP);
+  return (pRC->s1 == MI);
+  //return RC_get()->rc.s2 == UP;
 }
 void keyboard_reset(){
   km.vx = 0;
@@ -32,24 +37,24 @@ static void move_speed_ctrl(uint8_t fast, uint8_t slow)
   {
     km.move = FAST_MODE;
 
-    km.x_spd_limit = 0.7f * CHASSIS_KB_MAX_SPEED_X;
-    km.y_spd_limit = 0.7f * CHASSIS_KB_MAX_SPEED_Y;
+    km.x_spd_limit = 0.3f * CHASSIS_KB_MAX_SPEED_X ;
+    km.y_spd_limit = 0.3f * CHASSIS_KB_MAX_SPEED_Y ;
 
   }
   else if (slow)
   {
     km.move = SLOW_MODE;
 
-    km.x_spd_limit = 0.3f * CHASSIS_KB_MAX_SPEED_X;
-    km.y_spd_limit = 0.3f * CHASSIS_KB_MAX_SPEED_Y;
+    km.x_spd_limit = 0.1f * CHASSIS_KB_MAX_SPEED_X ;
+    km.y_spd_limit = 0.1f * CHASSIS_KB_MAX_SPEED_Y ;
 
   }
   else
   {
     km.move = NORMAL_MODE;
 
-    km.x_spd_limit = 0.5f * CHASSIS_KB_MAX_SPEED_X;
-    km.y_spd_limit = 0.5f * CHASSIS_KB_MAX_SPEED_Y;
+    km.x_spd_limit = 0.2f * CHASSIS_KB_MAX_SPEED_X ;
+    km.y_spd_limit = 0.2f * CHASSIS_KB_MAX_SPEED_Y ;
 
   }
 }
@@ -74,11 +79,11 @@ static void move_direction_ctrl(uint8_t forward, uint8_t back,
 
   if (left)
   {
-    km.vx = km.x_spd_limit ;
+    km.vx = -km.x_spd_limit ;
   }
   else if (right)
   {
-    km.vx = -km.x_spd_limit;
+    km.vx = km.x_spd_limit;
   }
   else
   {

@@ -62,7 +62,7 @@ static inline void  can_processSendDbusEncoder
     db->s1       = rxmsg->data8[4];
     db->s2       = rxmsg->data8[5];
     db->key_code = rxmsg->data16[3];
-    //db->updated = true;
+    db->updated = true;
     chSysUnlock();
 }
 
@@ -162,6 +162,7 @@ static void can_processEncoderMessage(CANDriver* const canp, const CANRxFrame* c
             break;
         case CAN_CHASSIS_SEND_BARREL_ID:
             can_processSendBarrelStatus(&chassis_send_barrel, rxmsg);
+            break;
     }
   }
   else
@@ -194,6 +195,10 @@ static THD_FUNCTION(can_rx, p) {
   CANDriver* canp = (CANDriver*)p;
   event_listener_t el;
   CANRxFrame rxmsg;
+  gimbal_send_dbus.channel0 = 1024;
+  gimbal_send_dbus.channel1 = 1024;
+  gimbal_send_dbus.key_code = 0;
+  gimbal_send_dbus.updated = false;
   pRC = can_get_sent_dbus();
   (void)p;
   chRegSetThreadName("can receiver");
