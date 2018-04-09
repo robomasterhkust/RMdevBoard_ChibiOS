@@ -3,18 +3,18 @@
  * 
  *  Created on: 10 Jan, 2018 
  *      Author: ASUS 
- */ 
-#include <canBusProcess.h> 
-#include "ch.h" 
-#include "hal.h" 
- 
-#include "canBusProcess.h" 
-#include "gimbal.h" 
-#include "dbus.h" 
+ */
+#include <canBusProcess.h>
+#include "ch.h"
+#include "hal.h"
+
+#include "canBusProcess.h"
+#include "gimbal.h"
+#include "dbus.h"
 #include "chassis.h"
-#include "adis16265.h" 
-#include "math_misc.h" 
-#include "math.h" 
+#include "adis16265.h"
+#include "math_misc.h"
+#include "math.h"
 #include "keyboard.h"
  
 static volatile chassisStruct chassis; 
@@ -82,24 +82,25 @@ static void chassis_encoderUpdate(void)
 static int16_t chassis_controlSpeed(motorStruct* motor, pi_controller_t* controller) 
 { 
 //  float wheel_rpm_ratio = 60.0f/(PERIMETER*CHASSIS_SPEED_PSC); 
-  float error = motor->speed_sp - motor->_speed;//*wheel_rpm_ratio; 
-  controller->error_int += error * controller->ki; 
-  controller->error_int = boundOutput(controller->error_int, controller->error_int_max); 
-  float output = error*controller->kp + controller->error_int; 
-  return (int16_t)(boundOutput(output,OUTPUT_MAX)); 
-} 
- 
- 
+    float error = motor->speed_sp - motor->_speed;//*wheel_rpm_ratio;
+    controller->error_int += error * controller->ki;
+    controller->error_int = boundOutput(controller->error_int, controller->error_int_max);
+    float output = error * controller->kp + controller->error_int;
+    return (int16_t) (boundOutput(output, OUTPUT_MAX));
+}
+
+
 #define H_MAX  200  // Heading PID_outputx 
-static int16_t chassis_controlHeading(chassisStruct* chassis, pid_controller_t* controller) 
-{ 
-  float error = chassis->heading_sp - chassis->_pGyro->angle; 
-  controller->error_int += error * controller->ki; 
-  controller->error_int = boundOutput(controller->error_int, controller->error_int_max); 
-  float output = error*controller->kp + controller->error_int + controller->kd * (error - chassis->pid_last_error); 
-  chassis->pid_last_error = error; 
-  return (int16_t)(boundOutput(output, H_MAX)); 
-} 
+
+static int16_t chassis_controlHeading(chassisStruct *chassis, pid_controller_t *controller) {
+    float error = chassis->heading_sp - chassis->_pGyro->angle;
+    controller->error_int += error * controller->ki;
+    controller->error_int = boundOutput(controller->error_int, controller->error_int_max);
+    float output = error * controller->kp + controller->error_int + controller->kd * (error - chassis->pid_last_error);
+    chassis->pid_last_error = error;
+    return (int16_t) (boundOutput(output, H_MAX));
+}
+
 float CHASSIS_RC_MAX_SPEED_X = 3300.0f;
 float CHASSIS_RC_MAX_SPEED_Y = 3300.0f;
 float CHASSIS_RC_MAX_SPEED_R = 300.0f;
@@ -237,89 +238,84 @@ void chassis_init(void)
   chassis_heading_controller.kp = 60.0f;
   chassis_heading_controller.kd = 1.0f; 
   //************************************************************** 
+
 //  params_set(&motor_vel_controllers[FRONT_LEFT], 9,2,FLvelName,subname_PI,PARAM_PUBLIC); 
 //  params_set(&motor_vel_controllers[FRONT_RIGHT], 10,2,FRvelName,subname_PI,PARAM_PUBLIC); 
 //  params_set(&motor_vel_controllers[BACK_LEFT], 11,2,BLvelName,subname_PI,PARAM_PUBLIC); 
 //  params_set(&motor_vel_controllers[BACK_RIGHT], 12,2,BRvelName,subname_PI,PARAM_PUBLIC); 
 //  params_set(&heading_controller, 13, 3, HeadingName,subname_PID,PARAM_PUBLIC); 
- 
-  for (i = 0; i < 4; i++) 
-  { 
-    chassis.current[i] =0; 
-    chassis._motors[i].speed_sp = 0.0f; 
-    lpfilter_init(lp_speed + i, CHASSIS_UPDATE_FREQ, 20); 
-    motor_vel_controllers[i].error_int = 0.0f; 
-    motor_vel_controllers[i].error_int_max = MOTOR_VEL_INT_MAX; 
-  } 
-  heading_controller.error_int = 0.0f; 
-  heading_controller.error_int_max = 0.0f; 
-  chassis._pGyro = gyro_get(); 
-  chassis._encoders = can_getExtraMotor(); 
- 
-  chThdCreateStatic(chassis_control_wa, sizeof(chassis_control_wa), 
-                          NORMALPRIO, chassis_control, NULL); 
-} 
- 
- 
-void update_heading(void) 
-{ 
-  /*TODO THIS WILL MAKE YOU LOSE HEADING IN A COLLISION, add control*/ 
-  chassis.heading_sp = chassis._pGyro->angle; 
-} 
+
+    for (i = 0; i < 4; i++) {
+        chassis.current[i] = 0;
+        chassis._motors[i].speed_sp = 0.0f;
+        lpfilter_init(lp_speed + i, CHASSIS_UPDATE_FREQ, 20);
+        motor_vel_controllers[i].error_int = 0.0f;
+        motor_vel_controllers[i].error_int_max = MOTOR_VEL_INT_MAX;
+    }
+    heading_controller.error_int = 0.0f;
+    heading_controller.error_int_max = 0.0f;
+    chassis._pGyro = gyro_get();
+    chassis._encoders = can_getExtraMotor();
+
+    chThdCreateStatic(chassis_control_wa, sizeof(chassis_control_wa),
+                      NORMALPRIO, chassis_control, NULL);
+}
+
+
+void update_heading(void) {
+    /*TODO THIS WILL MAKE YOU LOSE HEADING IN A COLLISION, add control*/
+    chassis.heading_sp = chassis._pGyro->angle;
+}
+
 /* 
  * 
  * 
  * 
  * 
  * 
- * */ 
- 
-void mecanum_cal(){
-  static float rotate_ratio_fr; 
-  static float rotate_ratio_fl; 
-  static float rotate_ratio_br; 
-  static float rotate_ratio_bl; 
-  static float wheel_rpm_ratio; 
-  chSysLock(); // ensure that the calculation is done in batch 
- 
-  if(chassis.ctrl_mode == DODGE_MODE) 
-  { 
-    chassis.rotate_x_offset = GIMBAL_X_OFFSET; 
-    chassis.rotate_y_offset = 0; 
-  } 
-  else 
-  { 
-    chassis.rotate_x_offset = 120; //glb_struct.gimbal_x_offset; 
-    chassis.rotate_y_offset = 0; //glb_struct.gimbal_y_offset; 
-  } 
- 
-  if(1) //rotation_center_gimbal 
-  { 
-    rotate_ratio_fr = ((WHEELBASE+ WHEELTRACK)/2.0f \ 
-                        - chassis.rotate_x_offset + chassis.rotate_y_offset)/RADIAN_COEF; 
-    rotate_ratio_fl = ((WHEELBASE+WHEELTRACK)/2.0f \ 
-                        - chassis.rotate_x_offset - chassis.rotate_y_offset)/RADIAN_COEF; 
-    rotate_ratio_bl = ((WHEELBASE+WHEELTRACK)/2.0f \ 
-                        + chassis.rotate_x_offset - chassis.rotate_y_offset)/RADIAN_COEF; 
-    rotate_ratio_br = ((WHEELBASE+WHEELTRACK)/2.0f \ 
-                        + chassis.rotate_x_offset + chassis.rotate_y_offset)/RADIAN_COEF; 
-  } 
-  else 
-  { 
-    rotate_ratio_fr = ((WHEELBASE+WHEELTRACK)/2.0f)/RADIAN_COEF; 
-    rotate_ratio_fl = ((WHEELBASE+WHEELTRACK)/2.0f)/RADIAN_COEF; 
-    rotate_ratio_bl = ((WHEELBASE+WHEELTRACK)/2.0f)/RADIAN_COEF; 
-    rotate_ratio_br = ((WHEELBASE+WHEELTRACK)/2.0f)/RADIAN_COEF; 
-  } 
- 
-  wheel_rpm_ratio = 60.0f/(PERIMETER); 
-  chSysUnlock(); 
- 
- 
+ * */
+
+void mecanum_cal() {
+    static float rotate_ratio_fr;
+    static float rotate_ratio_fl;
+    static float rotate_ratio_br;
+    static float rotate_ratio_bl;
+    static float wheel_rpm_ratio;
+    chSysLock(); // ensure that the calculation is done in batch
+
+    if (chassis.ctrl_mode == DODGE_MODE) {
+        chassis.rotate_x_offset = GIMBAL_X_OFFSET;
+        chassis.rotate_y_offset = 0;
+    } else {
+        chassis.rotate_x_offset = 120; //glb_struct.gimbal_x_offset;
+        chassis.rotate_y_offset = 0; //glb_struct.gimbal_y_offset;
+    }
+
+    if (1) //rotation_center_gimbal
+    {
+        rotate_ratio_fr = ((WHEELBASE + WHEELTRACK) / 2.0f \
+ - chassis.rotate_x_offset + chassis.rotate_y_offset) / RADIAN_COEF;
+        rotate_ratio_fl = ((WHEELBASE + WHEELTRACK) / 2.0f \
+ - chassis.rotate_x_offset - chassis.rotate_y_offset) / RADIAN_COEF;
+        rotate_ratio_bl = ((WHEELBASE + WHEELTRACK) / 2.0f \
+ + chassis.rotate_x_offset - chassis.rotate_y_offset) / RADIAN_COEF;
+        rotate_ratio_br = ((WHEELBASE + WHEELTRACK) / 2.0f \
+ + chassis.rotate_x_offset + chassis.rotate_y_offset) / RADIAN_COEF;
+    } else {
+        rotate_ratio_fr = ((WHEELBASE + WHEELTRACK) / 2.0f) / RADIAN_COEF;
+        rotate_ratio_fl = ((WHEELBASE + WHEELTRACK) / 2.0f) / RADIAN_COEF;
+        rotate_ratio_bl = ((WHEELBASE + WHEELTRACK) / 2.0f) / RADIAN_COEF;
+        rotate_ratio_br = ((WHEELBASE + WHEELTRACK) / 2.0f) / RADIAN_COEF;
+    }
+
+    wheel_rpm_ratio = 60.0f / (PERIMETER);
+    chSysUnlock();
+
+
 //  VAL_LIMIT(chassis.drive_sp, -MAX_CHASSIS_VX_SPEED, MAX_CHASSIS_VX_SPEED);  //mm/s 
 //  VAL_LIMIT(chassis.strafe_sp, -MAX_CHASSIS_VY_SPEED, MAX_CHASSIS_VY_SPEED);  //mm/s 
 //  VAL_LIMIT(chassis.rotate_sp, -MAX_CHASSIS_VR_SPEED, MAX_CHASSIS_VR_SPEED);  //deg/s 
- 
+
   chassis._motors[FRONT_RIGHT].speed_sp = 
     (chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp*rotate_ratio_fr)*wheel_rpm_ratio;   // CAN ID: 0x201 
   chassis._motors[BACK_RIGHT].speed_sp = 
@@ -375,9 +371,10 @@ void chassis_stop_handle(){
  
 
 
- /*
+/*
 static void chassis_operation_func(int16_t left_right, int16_t front_back, int16_t rotate)
 { 
+
   rc.vx =  left_right / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
   rc.vy =    front_back / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
   rc.vw =  rotate / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_R;

@@ -47,17 +47,17 @@ else if((val) >= (max))\
 /* chassis motor use 3508 default */
 /* define CHASSIS_EC60 to use EC60 */
 
-  /* chassis motor use 3508 */
-  /* the deceleration ratio of chassis motor */
+/* chassis motor use 3508 */
+/* the deceleration ratio of chassis motor */
 
 //  #define CHASSIS_DECELE_RATIO (1.0f/27.0f)
-  /* single 3508 motor maximum speed, unit is rpm */
-  #define MAX_WHEEL_RPM        310 //8000  //8347rpm = 3500mm/s
-  /* chassis maximum translation speed, unit is mm/s */
-  #define MAX_CHASSIS_VX_SPEED 3300  //8000rpm
-  #define MAX_CHASSIS_VY_SPEED 3300
-  /* chassis maximum rotation speed, unit is degree/s */
-  #define MAX_CHASSIS_VR_SPEED 300   //5000rpm
+/* single 3508 motor maximum speed, unit is rpm */
+#define MAX_WHEEL_RPM        310 //8000  //8347rpm = 3500mm/s
+/* chassis maximum translation speed, unit is mm/s */
+#define MAX_CHASSIS_VX_SPEED 3300  //8000rpm
+#define MAX_CHASSIS_VY_SPEED 3300
+/* chassis maximum rotation speed, unit is degree/s */
+#define MAX_CHASSIS_VR_SPEED 300   //5000rpm
 
 
 //Codes above are copied from Official
@@ -74,77 +74,75 @@ else if((val) >= (max))\
 #define RADIAN_COEF 57.3f
 //#define CHASSIS_USE_POS_MOTOR
 
-typedef enum
-{
-  CHASSIS_RELAX = 0,
-  CHASSIS_STOP = 1,
-  MANUAL_SEPARATE_GIMBAL =2,
-  MANUAL_FOLLOW_GIMBAL =3,
-  DODGE_MODE = 4,
-  AUTO_SEPARATE_GIMBAL =5,
-  AUTO_FOLLOW_GIMBAL =6,
-}chassis_mode_e;
+typedef enum {
+    CHASSIS_RELAX = 0,
+    CHASSIS_STOP = 1,
+    MANUAL_SEPARATE_GIMBAL = 2,
+    MANUAL_FOLLOW_GIMBAL = 3,
+    DODGE_MODE = 4,
+    AUTO_SEPARATE_GIMBAL = 5,
+    AUTO_FOLLOW_GIMBAL = 6,
+} chassis_mode_e;
 
-typedef struct{
-  float speed_sp;
-  float _speed;
-  uint8_t _wait_count;
+typedef struct {
+    float speed_sp;
+    float _speed;
+    uint8_t _wait_count;
 } motorStruct;
 
-typedef struct{
-  float speed_sp;
-  float _speed;
-  float pos_sp;
-  float _pos;
-  uint8_t _wait_count;
+typedef struct {
+    float speed_sp;
+    float _speed;
+    float pos_sp;
+    float _pos;
+    uint8_t _wait_count;
 } motorPosStruct;
-typedef struct
-{
-  float vx;
-  float vy;
-  float vw;
+typedef struct {
+    float vx;
+    float vy;
+    float vw;
 
 } rc_ctrl_t;
 typedef enum {
-  CHASSIS_MOTOR_0_NOT_CONNECTED = 1 << 0,
-  CHASSIS_MOTOR_1_NOT_CONNECTED = 1 << 1,
-  CHASSIS_MOTOR_2_NOT_CONNECTED = 1 << 2,
-  CHASSIS_MOTOR_3_NOT_CONNECTED = 1 << 3
+    CHASSIS_MOTOR_0_NOT_CONNECTED = 1 << 0,
+    CHASSIS_MOTOR_1_NOT_CONNECTED = 1 << 1,
+    CHASSIS_MOTOR_2_NOT_CONNECTED = 1 << 2,
+    CHASSIS_MOTOR_3_NOT_CONNECTED = 1 << 3
 };
 
 typedef enum {
-  CHASSIS_OK = 0,
-  CHASSIS_MOTOR_NOT_CONNECTED = 1 <<0
+    CHASSIS_OK = 0,
+    CHASSIS_MOTOR_NOT_CONNECTED = 1 << 0
 };
 typedef uint8_t chassis_error_t;
 
-typedef struct{
-  motorStruct _motors[CHASSIS_MOTOR_NUM];
+typedef struct {
+    motorStruct _motors[CHASSIS_MOTOR_NUM];
 
-  #ifdef CHASSIS_USE_POS_MOTOR
+#ifdef CHASSIS_USE_POS_MOTOR
     motorPosStruct pos_motors[4];
-  #endif
+#endif
 
-  float heading_sp;
-  float rotate_sp;
-  float drive_sp;
-  float strafe_sp;
-  int16_t         rotate_x_offset;
-  int16_t         rotate_y_offset;
-  int16_t         current[4];
-  float           position_ref;
+    float heading_sp;
+    float rotate_sp;
+    float drive_sp;
+    float strafe_sp;
+    int16_t rotate_x_offset;
+    int16_t rotate_y_offset;
+    int16_t current[4];
+    float position_ref;
 //  int16_t       position_ref;
 //  uint8_t       follow_gimbal;
 
 
-  chassis_mode_e  ctrl_mode;
-  chassis_mode_e  last_ctrl_mode;
+    chassis_mode_e ctrl_mode;
+    chassis_mode_e last_ctrl_mode;
 
-  float pid_last_error;
-  uint8_t errorFlag;
+    float pid_last_error;
+    uint8_t errorFlag;
 
-  ChassisEncoder_canStruct* _encoders;
-  PGyroStruct _pGyro;
+    ChassisEncoder_canStruct *_encoders;
+    PGyroStruct _pGyro;
 } chassisStruct;
 
 // MATH definition
@@ -157,23 +155,26 @@ typedef struct{
 void mecanum_calc();
 
 
-
 /*define by UST*/
 chassis_error_t chassis_getError(void);
-chassisStruct* chassis_get(void);
+
+chassisStruct *chassis_get(void);
+
 void chassis_init(void);
+
 void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1);
+
 void drive_motor(void);
-float chassis_heading_control(pid_controller_t*,float, float);
+
+float chassis_heading_control(pid_controller_t *, float, float);
+
 void chassis_twist_handle(void);
+
 void chassis_stop_handle(void);
+
 void separate_gimbal_handle();
+
 void follow_gimbal_handle();
-
-
-
-
-
 
 
 #endif /* INC_CHASSIS_H_ */

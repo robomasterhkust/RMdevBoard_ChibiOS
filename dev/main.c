@@ -1,3 +1,4 @@
+
 /*
     ChibiOS - Copyright (C) 2006..2015 Giovanni Di Sirio
 
@@ -122,3 +123,4 @@ int main(void) {
 
   return 0;
 }
+
