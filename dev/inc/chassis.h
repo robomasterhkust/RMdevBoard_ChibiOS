@@ -35,9 +35,9 @@ else if((val) >= (max))\
 #define PERIMETER  478
 
 /* wheel track distance(mm) */
-#define WHEELTRACK  545 //403
+#define WHEELTRACK  372 //403
 /* wheelbase distance(mm) */
-#define WHEELBASE  340 //385
+#define WHEELBASE  347 //385
 
 /* gimbal is relative to chassis center x axis offset(mm) */
 #define GIMBAL_X_OFFSET 120 //150

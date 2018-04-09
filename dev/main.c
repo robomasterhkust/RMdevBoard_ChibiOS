@@ -1,3 +1,4 @@
+
 /*
     ChibiOS - Copyright (C) 2006..2015 Giovanni Di Sirio
 
@@ -91,12 +92,9 @@ int main(void) {
   params_init();
   can_processInit();
   RC_init();
-  gimbal_sys_iden_init(); //*
-  gimbal_init();
-
   pwm_shooter_init();
   judgeinit();
-  barrelHeatLimitControl_init();
+  //barrelHeatLimitControl_init();
   extiinit(); //*
   tempControllerInit(); //*
   chassis_init();
@@ -125,3 +123,4 @@ int main(void) {
 
   return 0;
 }
+
