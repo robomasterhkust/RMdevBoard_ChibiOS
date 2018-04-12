@@ -20,6 +20,7 @@
 /*
  * Application entry point.
  */
+
 int main(void)
 {
     /*
@@ -56,7 +57,7 @@ int main(void)
 //    shooter_init();
     shooter_rm3508_init();
     feeder_init();
-    bullet_count_task_init();
+//    bullet_count_task_init();
 
     LASER_ON();
 
