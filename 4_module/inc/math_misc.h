@@ -2,6 +2,7 @@
 #define _MATH_MISC_H_
 #include "hal.h"
 #include <math.h>
+#include "stdbool.h"
 
 #define GRAV               9.80665f
 
@@ -241,5 +242,7 @@ static inline void rotm2eulerangle(const float rotm[3][3], float euler_angle[3])
 void lpfilter_init(lpfilterStruct* lp, float sample_freq, float cutoff_freq);
 
 float lpfilter_apply(lpfilterStruct* lp, float input);
+
+bool state_count(bool statement, uint16_t count, uint16_t* curr_count);
 
 #endif

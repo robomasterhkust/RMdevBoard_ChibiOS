@@ -89,6 +89,13 @@ static THD_FUNCTION(matlab_thread, p)
   }
 }
 
+
+extern volatile int32_t x_gyro;
+extern volatile int32_t y_gyro;
+extern volatile int32_t z_gyro;
+extern volatile int32_t x_accl;
+extern volatile int32_t y_accl;
+extern volatile int32_t z_accl;
 /*===========================================================================*/
 /* Definitions of shell command functions                                    */
 /*===========================================================================*/
@@ -101,6 +108,7 @@ void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
 //  GimbalStruct* gimbal = get_gimbal_simple_controller();
     RC_Ctl_t* pRC = RC_get();
     volatile ChassisEncoder_canStruct* encoder = can_getChassisMotor();
+    imuStructADIS16470* imu_adis = imu_adis_get();
 
   chprintf(chp,"AccelX: %f\r\n",PIMU->accelData[X]);
   chprintf(chp,"AccelY: %f\r\n",PIMU->accelData[Y]);
@@ -112,6 +120,13 @@ void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
     chprintf(chp, "rc command: %f\r\n", pRC->rc.channel0);
 
     chprintf(chp, "encoder speed: %f\r\n", encoder[2].raw_speed);
+
+    chprintf(chp, "adis16470 reading gyro x: %d \r\n", imu_adis->gyro_raw_data[0]);
+    chprintf(chp, "adis16470 reading gyro y: %d \r\n", imu_adis->gyro_raw_data[1]);
+    chprintf(chp, "adis16470 reading gyro z: %d \r\n", imu_adis->gyro_raw_data[2]);
+    chprintf(chp, "adis16470 reading accl x: %d \r\n", imu_adis->accl_raw_data[0]);
+    chprintf(chp, "adis16470 reading accl y: %d \r\n", imu_adis->accl_raw_data[1]);
+    chprintf(chp, "adis16470 reading accl z: %d \r\n", imu_adis->accl_raw_data[2]);
 }
 
 /**

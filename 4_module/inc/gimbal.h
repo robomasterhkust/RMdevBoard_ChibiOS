@@ -1,7 +1,7 @@
 #ifndef _GIMBAL_H_
 #define _GIMBAL_H_
 
-//#include "canBusProcess.h"
+#include "can_bus.h"
 #include "can_motor_task.h"
 #include "mpu6500.h"
 #include "params.h"
@@ -10,9 +10,11 @@
 #define GIMBAL_CUTOFF_FREQ    30U
 
 //#define GIMBAL_ZERO
+//#define GIMBAL_INIT_TEST_PITCH    //Set Initialization position and PID value
 //#define GIMBAL_INIT_TEST          //Set Initialization position and PID value
 //#define GIMBAL_FF_TEST              //Set Initialization position and PID value
 //#define GIMBAL_USE_MAVLINK_CMD
+#define GIMBAL_USE_CAN_CMD
 #define GIMBAL_ENCODER_USE_SPEED
 
 #define GIMBAL_CAN  &CAND1
@@ -41,14 +43,14 @@ typedef enum {
 
 #define GIMBAL_ERROR_COUNT    3U
 #define GIMBAL_WARNING_COUNT  1U
-static const char gimbal_error_messages[GIMBAL_ERROR_COUNT][64] =
+static const char gimbal_error_messages[][GIMBAL_ERROR_COUNT] =
 {
   "E:Gimbal yaw not connected",
   "E:Gimbal pitch not connected",
   "E:Gimbal init timeout"
 };
 
-static const char gimbal_warning_messages[GIMBAL_WARNING_COUNT][64] =
+static const char gimbal_warning_messages[][GIMBAL_WARNING_COUNT] =
 {
   "W:Gimbal control lose frame"
 };
@@ -87,7 +89,7 @@ typedef struct{
   float d_yaw;
 
   /*Mechanical parameters*/
-  param_t axis_init_pos[2];
+  param_t axis_init_pos[4];
   param_t axis_ff_ext[6];
   param_t axis_ff_int[2];
   param_t axis_limit[4];

@@ -18,7 +18,7 @@
 姿态前馈控制器，只调pitch；
     - 位置：pitch_w, 增加到重力与前馈项抵消时停止；注意方向。
     - 重力方向：pitchX, pitchY, pitchZ, 找到枪口朝前时的重力方向，测完之后看加速度计；pitchY应为0。
-    这一项主要是
+    额命名命错了，应该填在YawX，YawY，YawZ。
 7. velocity controller
 关闭GIMBAL_FF_TEST
     - 拿手握着，先确定Kp方向，有阻尼感为正确。

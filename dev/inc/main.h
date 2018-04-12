@@ -12,11 +12,9 @@
 #include "detect_error_task.h"
 
 #include "math_misc.h"
-//#include "canBusProcess.h"
 #include "can_bus.h"
 #include "dbus.h"
 #include "sdlog.h"
-#include "mavlink_comm.h"
 
 #include "attitude_estimator_task.h"
 #include "adis16470.h"
@@ -27,14 +25,12 @@
 
 #include "exti.h"
 #include "judge.h"
-#include "shoot_pwm.h"
+#include "shoot.h"
+#include "shooter_rm3508.h"
 
 #include "command_mixer_task.h"
 #include "gimbal_simple_controller.h"
-
-/**
- * DEBUGGING
- */
-//#include "lift_claw_logan.h"
+#include "feeder.h"
+#include "bullet_count_task.h"
 
 #endif

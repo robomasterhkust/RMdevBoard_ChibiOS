@@ -37,35 +37,32 @@ int main(void)
     params_init();
 //    detect_error_task_init();
 //    sdlog_init();
-//    extiinit();
+    extiinit();
 
     /* Init sequence 2: sensors, comm */
     attitude_estimator_init();
     // Initialize ADIS16265 single axial gyroscope
     // TODO: check if ADIS16265 exist
-    gyro_init();
+    single_axis_gyro_init_adis16265();
 //    imu_init_adis16470();
-//    can_processInit();
     can_bus_init();
     RC_init();
-//    mavlinkComm_init();
 
     /* Init sequence 3: actuators, display */
 //    command_mixer_init();
 //    gimbal_simpler_controller_init();
     gimbal_init();
-//    chassis_init();
+    chassis_init();
 //    shooter_init();
-//    feeder_init();
+    shooter_rm3508_init();
+    feeder_init();
+    bullet_count_task_init();
 
     LASER_ON();
 
     while (!chThdShouldTerminateX()) {
         chThdSleepMilliseconds(500);
         LEDR_TOGGLE();
-
-//        can_motorSetCurrent(&CAND1, CAN_CHASSIS_CAN_EID, 2000, 0, 0, 0);
-//        can_motorSetCurrent(&CAND1, CAN_GIMBAL_CAN_EID, 1000, 1000, 1000, 1000);
     }
     return 0;
 }

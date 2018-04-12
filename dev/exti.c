@@ -11,13 +11,14 @@
 #include "ch.h"
 #include "hal.h"
 #include "exti.h"
-//#include "canBusProcess.h"
 #include "can_motor_task.h"
 #include "can.h"
+#include "adis16470.h"
 
 //comment out the line below to disable motor testing
-#define MOTOR_TEST
+//#define MOTOR_TEST
 
+extern thread_reference_t imu_adis_thread_ref;
 /*
  * Turns on all chassis motor for 1 sec when MotorOn is TRUE
  * Thread normally suspended, resumes when shield button is pushed
@@ -63,6 +64,26 @@ static THD_FUNCTION(MotorToggleThread, arg)
     }
 }
 #endif
+
+int count = 0;
+/*
+ * EXTI 5 CALLBACK
+ * Configured for ADIS16470 IMU data ready pin
+ */
+static void extcb5(EXTDriver *extp, expchannel_t channel)
+{
+    (void) extp;
+    (void) channel;
+
+    count++;
+    if (count % 10 == 0)
+    {
+        chSysLockFromISR();
+        chThdResumeI(&imu_adis_thread_ref, MSG_OK);
+        chSysUnlockFromISR();
+    }
+}
+
 /*
  * EXTI 10 CALLBACK
  * Configured for motor testing
@@ -94,13 +115,15 @@ static const EXTConfig extcfg = {
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI2
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI3
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI4
-                {EXT_CH_MODE_DISABLED, NULL},   //EXTI5
+                {EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART |
+                        EXT_MODE_GPIOC, extcb5},   //EXTI5, ADIS shield
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI6
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI7
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI8
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI9
-                {EXT_CH_MODE_FALLING_EDGE | EXT_CH_MODE_AUTOSTART |
-                 EXT_MODE_GPIOF, extcb10},   //EXTI10, RMShield Pushbutton
+//                {EXT_CH_MODE_FALLING_EDGE | EXT_CH_MODE_AUTOSTART |
+//                 EXT_MODE_GPIOF, extcb10},   //EXTI10, RMShield Pushbutton
+                {EXT_CH_MODE_DISABLED, NULL},   //EXTI10
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI11
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI12
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI13
@@ -120,7 +143,8 @@ void extiinit(void)
 {
 
   extStart(&EXTD1, &extcfg);
-  extChannelEnable(&EXTD1, 10);
+//  extChannelEnable(&EXTD1, 10);
+  extChannelEnable(&EXTD1, 5);
 #ifdef MOTOR_TEST
   chThdCreateStatic(MotorToggleThread_wa, sizeof(MotorToggleThread_wa),
                     NORMALPRIO, MotorToggleThread, NULL);
