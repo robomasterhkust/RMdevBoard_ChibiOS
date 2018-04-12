@@ -1,0 +1,97 @@
+--RMTunerEnterprize--2018-01-30-15-53-30--
+Gimbal Yaw Vel
+ 0 False 2
+	0.0 KP 0 0
+	0.0 KI 0 1
+Gimbal Pitch Vel
+ 1 False 2
+	0.0 KP 0 0
+	0.0 KI 0 1
+Gimbal Axis FF
+ 2 True 6
+	0.0 Yaw_w1 0 0
+	0.0 Pitch_w 0 1
+	0.0 Yaw_a 0 2
+	0.0 Pitch_a 0 3
+	0.0 Yaw_w2 0 4
+	0.0 Yaw_th 0 5
+Gimbal Yaw Pos
+ 3 True 3
+	0.0 KP 0 0
+	0.0 KI 0 1
+	0.0 KD 0 2
+Gimbal Pitch Pos
+ 4 True 3
+	0.0 KP 0 0
+	0.0 KI 0 1
+	0.0 KD 0 2
+Gimbal Init Pos
+ 5 True 3
+	0.0 Yaw 0 0
+	0.0 Pitch 0 1
+	0.0 Yaw_SD 0 2
+Gimbal FF Accl
+ 6 True 6
+	0.0 YawX 0 0
+	0.0 YawY 0 1
+	0.0 YawZ 0 2
+	0.0 PitchX 0 3
+	0.0 PitchY 0 4
+	0.0 PitchZ 0 5
+Gimbal Yaw Atti
+ 7 False 3
+	0.0 KP 0 0
+	0.0 KI 0 1
+	0.0 KD 0 2
+Gimbal Pitch Atti
+ 8 False 3
+	0.0 KP 0 0
+	0.0 KI 0 1
+	0.0 KD 0 2
+FL_vel
+ 9 False 2
+	131.0 KP 2 0
+	0.239999994636 KI 0 1
+FR_vel
+ 10 False 2
+	137.0 KP 2 0
+	0.259999990463 KI 0 1
+BL_vel
+ 11 False 2
+	132.0 KP 2 0
+	0.239999994636 KI 0 1
+BR_vel
+ 12 False 2
+	132.0 KP 2 0
+	0.239999994636 KI 0 1
+Heading
+ 13 False 3
+	100.0 KP 2 0
+	0.0 KI 0 1
+	100.0 KD 2 2
+Gyro_cal
+ 27 True 1
+	-0.00723648071289 Gyro_Offset 0 0
+accelT2
+ 28 True 3
+	0.0 7 0 0
+	0.0 8 0 1
+	1.0 9 0 2
+accelT1
+ 29 True 6
+	1.0 1 0 0
+	0.0 2 0 1
+	0.0 3 0 2
+	0.0 4 0 3
+	1.0 5 0 4
+	0.0 6 0 5
+gyroBias
+ 30 True 3
+	0.0 X 0 0
+	0.0 Y 0 1
+	0.0 Z 0 2
+accelBias
+ 31 True 3
+	0.0 X 0 0
+	0.0 Y 0 1
+	0.0 Z 0 2

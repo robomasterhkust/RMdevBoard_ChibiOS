@@ -5,40 +5,43 @@
 #include "stdint.h"
 #include "ch.h"
 #include "hal.h"
-#include "shoot_pwm.h"
 
-const int rc_max = 1864;
-const int rc_min = 364;
+#include "shoot.h"
+#include "dbus.h"
 
-int watch_width = 0;
+#define MIN_SHOOT_SPEED 100U
+#define MAX_SHOOT_SPEED 900U
+
+RC_Ctl_t* rc;
+
+static uint16_t speed_sp = 0;
+static bool safe = false;
+
+static PWMDriver PWMD12;
+void pwm12_setWidth(uint16_t width)
+{
+    PWMD12.tim->CCR[0] = width;
+    PWMD12.tim->CCR[1] = width;
+}
 
 /**
  * 2017/12/17 PWM test
  * @return
  */
-int perc = 2600;
+void shooter_control(uint16_t setpoint)
+{
+    if(setpoint > MAX_SHOOT_SPEED)
+        setpoint = MAX_SHOOT_SPEED;
+    else if(setpoint < MIN_SHOOT_SPEED)
+        setpoint = MIN_SHOOT_SPEED;
 
-float map(float x, float in_min, float in_max, float out_min, float out_max){
-  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    if(safe || setpoint <= MIN_SHOOT_SPEED)
+        speed_sp = setpoint;
 }
 
-PWMConfig pwm8cfg = {
+static const PWMConfig pwm12cfg = {
         100000,   /* 1MHz PWM clock frequency.   */
-        1000,      /* Initial PWM period 1ms.       */
-        NULL,
-        {
-                {PWM_OUTPUT_ACTIVE_HIGH, NULL},
-                {PWM_OUTPUT_ACTIVE_HIGH, NULL},
-                {PWM_OUTPUT_ACTIVE_HIGH, NULL},
-                {PWM_OUTPUT_ACTIVE_HIGH, NULL}
-        },
-        0,
-        0
-};
-
-PWMConfig pwm12cfg = {
-        100000,   /* 1MHz PWM clock frequency.   */
-        1000,      /* Initial PWM period 1ms.       */
+        1000,      /* Initial PWM period 1ms.    width   */
         NULL,
         {
                 {PWM_OUTPUT_ACTIVE_HIGH, NULL},
@@ -50,74 +53,96 @@ PWMConfig pwm12cfg = {
         0
 };
 
-static THD_WORKING_AREA(pwm_accel_wa,512);
-static THD_FUNCTION(pwm_accel,p){
-  chRegSetThreadName("PWM acceleration");
+static THD_WORKING_AREA(pwm_thd_wa, 512);
+static THD_FUNCTION(pwm_thd, arg) {
+    (void)arg;
 
-  (int)p;
-  float alpha = 0.2f;
-  int y = 1050;
-  int x = p;
-  RC_Ctl_t* RC_Ctl = RC_get();
-  //pwmEnableChannel(&PWMD12,0,PWM_PERCENTAGE_TO_WIDTH(&PWMD12, x));
-  //pwmEnableChannel(&PWMD12,1,PWM_PERCENTAGE_TO_WIDTH(&PWMD12, x));
-  /*while(!chThdShouldTerminateX()){
-    int width = (int)map(RC_Ctl->rc.channel1,rc_min,rc_max,1000,2600);
-    watch_width = width;
-    pwmEnableChannel(&PWMD12,0,PWM_PERCENTAGE_TO_WIDTH(&PWMD12, width));
-    chThdSleepSeconds(1);
-  }*/
+    const float alpha = 0.004f;
+    float speed = 0;
 
+    while (!chThdShouldTerminateX())
+    {
+#ifdef SHOOTER_USE_RC
+        switch (rc->rc.s2) {
+            case RC_S_UP:
+                shooter_control(175);
+                break;
+            case RC_S_MIDDLE:
+                shooter_control(135);
+                break;
+            case RC_S_DOWN:
+                safe = true;
+                shooter_control(100);
+                break;
+        }
+#endif
 
-  while(y<x){
-    watch_width = y;
-    y = alpha*x+(1-alpha)*y;
-    pwmEnableChannel(&PWMD12,0,PWM_PERCENTAGE_TO_WIDTH(&PWMD12, y));
-    pwmEnableChannel(&PWMD12,1,PWM_PERCENTAGE_TO_WIDTH(&PWMD12, y));
-    chThdSleepSeconds(1);
-  }
+        speed = alpha * (float)speed_sp + (1-alpha) * speed;
+        pwm12_setWidth((uint16_t)speed);
+        chThdSleepMilliseconds(5);
+    }
 }
 
-void pwm_config(PWMDriver *pwmp, const PWMConfig *config,int p){
-  pwmStop(pwmp);
-  pwmStart(pwmp,config);
-  pwmEnableChannel(pwmp, 0, PWM_PERCENTAGE_TO_WIDTH(pwmp, p));
-  pwmEnableChannel(pwmp, 1, PWM_PERCENTAGE_TO_WIDTH(pwmp, p));
-  pwmEnableChannel(pwmp, 2, PWM_PERCENTAGE_TO_WIDTH(pwmp, p));
-  pwmEnableChannel(pwmp, 3, PWM_PERCENTAGE_TO_WIDTH(pwmp, p));
-}
-
-void pwm12_config(PWMDriver *pwmp, const PWMConfig *config,int p){
-  pwmStop(pwmp);
-  pwmStart(pwmp,config);
-  pwmEnableChannel(pwmp, 0, PWM_PERCENTAGE_TO_WIDTH(pwmp, p));
-  pwmEnableChannel(pwmp, 1, PWM_PERCENTAGE_TO_WIDTH(pwmp, p));
-}
-
-
-void pwm_shooter_init(void)
+static void pwm12_start(void)
 {
-    LEDR_ON();
-    LEDG_OFF();
+    PWMD12.tim = STM32_TIM12;
+    PWMD12.channels = 2;
 
-    pwmStart(&PWMD12,&pwm12cfg);
+    uint32_t psc;
+    uint32_t ccer;
+    rccEnableTIM12(FALSE);
+    rccResetTIM12();
 
-    //chThdSleepSeconds(3);
+    PWMD12.clock = STM32_TIMCLK1;
 
-    pwm12_config(&PWMD12,&pwm12cfg,9000);
-    //pwm12_config(&PWMD12,&pwm12cfg,9000,1);
-    chThdSleepSeconds(2);
+    PWMD12.tim->CCMR1 = STM32_TIM_CCMR1_OC1M(6) | STM32_TIM_CCMR1_OC1PE |
+                        STM32_TIM_CCMR1_OC2M(6) | STM32_TIM_CCMR1_OC2PE;
 
-    pwm12_config(&PWMD12,&pwm12cfg,1000);
-    //pwm12_config(&PWMD12,&pwm12cfg,1000,1);
-    chThdSleepSeconds(2);
-    pwm12_config(&PWMD12,&pwm12cfg,1200);
-    //pwm12_config(&PWMD12,&pwm12cfg,1200,1);
-    chThdSleepMilliseconds(1);
+    psc = (PWMD12.clock / pwm12cfg.frequency) - 1;
 
-    chThdCreateStatic(pwm_accel_wa, sizeof(pwm_accel_wa),
-      NORMALPRIO + 6, pwm_accel, 1500);
-    chThdSleepMilliseconds(1);
+    PWMD12.tim->PSC  = psc;
+    PWMD12.tim->ARR  = pwm12cfg.period - 1;
+    PWMD12.tim->CR2  = pwm12cfg.cr2;
+    PWMD12.period = pwm12cfg.period;
+
+    ccer = 0;
+    switch (pwm12cfg.channels[0].mode & PWM_OUTPUT_MASK) {
+        case PWM_OUTPUT_ACTIVE_LOW:
+            ccer |= STM32_TIM_CCER_CC1P;
+        case PWM_OUTPUT_ACTIVE_HIGH:
+            ccer |= STM32_TIM_CCER_CC1E;
+        default:
+            ;
+    }
+    switch (pwm12cfg.channels[1].mode & PWM_OUTPUT_MASK) {
+        case PWM_OUTPUT_ACTIVE_LOW:
+            ccer |= STM32_TIM_CCER_CC2P;
+        case PWM_OUTPUT_ACTIVE_HIGH:
+            ccer |= STM32_TIM_CCER_CC2E;
+        default:
+            ;
+    }
+
+    PWMD12.tim->CCER  = ccer;
+    PWMD12.tim->SR    = 0;
+
+    PWMD12.tim->CR1   = STM32_TIM_CR1_ARPE | STM32_TIM_CR1_CEN;
+
+    PWMD12.state = PWM_READY;
 }
 
+void shooter_init(void)
+{
+    rc = RC_get();
+    pwm12_start();
 
+#ifndef SHOOTER_SETUP
+    pwm12_setWidth(900);
+    chThdSleepSeconds(3);
+
+    pwm12_setWidth(100);
+    chThdSleepSeconds(3);
+
+    chThdCreateStatic(pwm_thd_wa, sizeof(pwm_thd_wa), NORMALPRIO + 1, pwm_thd, NULL);
+#endif
+}

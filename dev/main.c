@@ -15,112 +15,55 @@
 */
 #include "main.h"
 
-static BaseSequentialStream* chp = (BaseSequentialStream*)&SDU1;
-static const IMUConfigStruct imu1_conf =
-  {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_250, MPU6500_AXIS_REV_Z};
-
-static const magConfigStruct mag1_conf =
-  {IST8310_ADDR_FLOATING, 200, IST8310_AXIS_REV_NO};
-
-PIMUStruct pIMU;
-PGyroStruct pGyro;
-
-#define MPU6500_UPDATE_PERIOD_US 1000000U/MPU6500_UPDATE_FREQ
-static THD_WORKING_AREA(Attitude_thread_wa, 4096);
-static THD_FUNCTION(Attitude_thread, p)
-{
-  chRegSetThreadName("IMU Attitude Estimator");
-
-  (void)p;
-
-  imuInit(pIMU, &imu1_conf);
-  ist8310_init(&mag1_conf);
-
-  uint32_t tick = chVTGetSystemTimeX();
-
-  while(true)
-  {
-    tick += US2ST(MPU6500_UPDATE_PERIOD_US);
-    if(chVTGetSystemTimeX() < tick)
-      chThdSleepUntil(tick);
-    else
-    {
-      tick = chVTGetSystemTimeX();
-      pIMU->errorCode |= IMU_LOSE_FRAME;
-    }
-
-    imuGetData(pIMU);
-    ist8310_update();
-    if(pIMU->inited == 2)
-      attitude_update(pIMU);
-
-    if(pIMU->accelerometer_not_calibrated || pIMU->gyroscope_not_calibrated)
-    {
-      chSysLock();
-      chThdSuspendS(&(pIMU->imu_Thd));
-      chSysUnlock();
-    }
-  }
-}
-
-
+//static BaseSequentialStream* chp = (BaseSequentialStream*)&SDU1;
 
 /*
  * Application entry point.
  */
-int main(void) {
 
-  /*
-   * System initializations.
-   * - HAL initialization, this also initializes the configured device drivers
-   *   and performs the board-specific initializations.
-   * - Kernel initialization, the main() function becomes a thread and the
-   *   RTOS is active.
-   */
-  halInit();
-  chSysInit();
+int main(void)
+{
+    /*
+     * System initializations.
+     * - HAL initialization, this also initializes the configured device drivers
+     *   and performs the board-specific initializations.
+     * - Kernel initialization, the main() function becomes a thread and the
+     *   RTOS is active.
+     */
+    halInit();
+    chSysInit();
 
+    /* Init sequence 1: central controller, utility */
+    shellStart();
+    params_init();
+//    detect_error_task_init();
+//    sdlog_init();
+    extiinit();
 
-  palSetPad(GPIOE, GPIOE_LED_R);
-  palSetPad(GPIOF, GPIOF_LED_G);
-  palClearPad(GPIOA, GPIOA_LED_Y);
-  palClearPad(GPIOA, GPIOA_LED_B);
+    /* Init sequence 2: sensors, comm */
+    attitude_estimator_init();
+    // Initialize ADIS16265 single axial gyroscope
+    // TODO: check if ADIS16265 exist
+    single_axis_gyro_init_adis16265();
+//    imu_init_adis16470();
+    can_bus_init();
+    RC_init();
 
+    /* Init sequence 3: actuators, display */
+//    command_mixer_init();
+//    gimbal_simpler_controller_init();
+    gimbal_init();
+    chassis_init();
+//    shooter_init();
+    shooter_rm3508_init();
+    feeder_init();
+//    bullet_count_task_init();
 
-  shellStart();
-  params_init();
-  can_processInit();
-  RC_init();
-  gimbal_sys_iden_init(); //*
-  gimbal_init();
+    LASER_ON();
 
-  pwm_shooter_init();
-
-  extiinit(); //*
-  tempControllerInit(); //*
-  chassis_init();
-  pGyro = gyro_init();
-  error_init();
-  //pwm12init();
-  sdlog_init();
-  ultrasonic_init();
-
-  //tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK);
-
-  pIMU = imu_get(); //*
-
-  chThdCreateStatic(Attitude_thread_wa, sizeof(Attitude_thread_wa),
-  NORMALPRIO + 5,
-                    Attitude_thread, NULL); //*
-
-
-
-  while (true)
-  {
-
-    chThdSleepMilliseconds(500);
-
-  }
-
-  return 0;
+    while (!chThdShouldTerminateX()) {
+        chThdSleepMilliseconds(500);
+        LEDR_TOGGLE();
+    }
+    return 0;
 }

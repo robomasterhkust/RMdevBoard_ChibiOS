@@ -3,12 +3,22 @@
  * @file    shellcfg.c
  * @brief   definitions of shell command functions
  */
-#include "main.h"
-#include "shell.h"
-#include <string.h>
 
-#define SERIAL_CMD       &SDU1
-#define SERIAL_DATA      &SDU1
+#include "main.h"
+#include "shellcfg.h"
+
+#define SHELL_USE_USB
+
+#if !defined(SHELL_USE_USB)
+#define SHELL_SERIAL_UART &SD3
+
+  static const SerialConfig shell_serial_conf = {
+  115200,               //Baud Rate
+  0,         //CR1 Register
+  0,      //CR2 Register
+  0                     //CR3 Register
+};
+#endif
 
 static thread_t* matlab_thread_handler = NULL;
 /**
@@ -54,7 +64,7 @@ static THD_FUNCTION(matlab_thread, p)
 
   int32_t txbuf_d[16];
   float txbuf_f[16];
-  BaseSequentialStream* chp = (BaseSequentialStream*)SERIAL_DATA;
+  BaseSequentialStream* chp = (BaseSequentialStream*)&SDU1;
 
   PIMUStruct PIMU = imu_get();
   chassisStruct* chassis = chassis_get();
@@ -79,6 +89,13 @@ static THD_FUNCTION(matlab_thread, p)
   }
 }
 
+
+extern volatile int32_t x_gyro;
+extern volatile int32_t y_gyro;
+extern volatile int32_t z_gyro;
+extern volatile int32_t x_accl;
+extern volatile int32_t y_accl;
+extern volatile int32_t z_accl;
 /*===========================================================================*/
 /* Definitions of shell command functions                                    */
 /*===========================================================================*/
@@ -86,25 +103,30 @@ static THD_WORKING_AREA(Shell_thread_wa, 1024);
 void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
 {
   (void) argc,argv;
-//  PIMUStruct PIMU = imu_get();
-//  GimbalStruct* gimbal = gimbal_get();
-//  chassisStruct* chassis = chassis_get();
-  ChassisEncoder_canStruct* chassis = can_getChassisMotor();
-  ChassisEncoder_canStruct* extra = can_getExtraMotor();
+  PIMUStruct PIMU = imu_get();
+  GimbalStruct* gimbal = gimbal_get();
+//  GimbalStruct* gimbal = get_gimbal_simple_controller();
+    RC_Ctl_t* pRC = RC_get();
+    volatile ChassisEncoder_canStruct* encoder = can_getChassisMotor();
+    imuStructADIS16470* imu_adis = imu_adis_get();
 
-  chprintf(chp,"FL: %d\r\n",extra[0].raw_speed);
-  chprintf(chp,"FR: %d\r\n",extra[1].raw_speed);
-  chprintf(chp,"BL: %d\r\n",extra[2].raw_speed);
-  chprintf(chp,"BR: %d\r\n",extra[3].raw_speed);
-  chprintf(chp,"FL: %d\r\n",chassis[0].raw_speed);
-  chprintf(chp,"FR: %d\r\n",chassis[1].raw_speed);
-  chprintf(chp,"BL: %d\r\n",chassis[2].raw_speed);
-  chprintf(chp,"BR: %d\r\n",chassis[3].raw_speed);
+  chprintf(chp,"AccelX: %f\r\n",PIMU->accelData[X]);
+  chprintf(chp,"AccelY: %f\r\n",PIMU->accelData[Y]);
+  chprintf(chp,"AccelZ: %f\r\n",PIMU->accelData[Z]);
 
+  chprintf(chp,"Gimbal Pitch: %f\r\n",gimbal->motor[1]._angle);
+  chprintf(chp,"Gimbal Yaw: %f\r\n",gimbal->motor[0]._angle);
+  chprintf(chp,"IMU Pitch: %f\r\n",PIMU->euler_angle[Pitch]);
+    chprintf(chp, "rc command: %f\r\n", pRC->rc.channel0);
 
-  //chprintf(chp,"Gimbal Pitch: %f\r\n",gimbal->pitch_angle);
- // chprintf(chp,"Gimbal Yaw: %f\r\n",gimbal->yaw_angle);
-  //chprintf(chp,"IMU Pitch: %f\r\n",PIMU->euler_angle[Pitch]);
+    chprintf(chp, "encoder speed: %f\r\n", encoder[2].raw_speed);
+
+    chprintf(chp, "adis16470 reading gyro x: %d \r\n", imu_adis->gyro_raw_data[0]);
+    chprintf(chp, "adis16470 reading gyro y: %d \r\n", imu_adis->gyro_raw_data[1]);
+    chprintf(chp, "adis16470 reading gyro z: %d \r\n", imu_adis->gyro_raw_data[2]);
+    chprintf(chp, "adis16470 reading accl x: %d \r\n", imu_adis->accl_raw_data[0]);
+    chprintf(chp, "adis16470 reading accl y: %d \r\n", imu_adis->accl_raw_data[1]);
+    chprintf(chp, "adis16470 reading accl z: %d \r\n", imu_adis->accl_raw_data[2]);
 }
 
 /**
@@ -143,40 +165,64 @@ void cmd_data(BaseSequentialStream * chp, int argc, char *argv[])
 
 void cmd_calibrate(BaseSequentialStream * chp, int argc, char *argv[])
 {
-  PIMUStruct pIMU = imu_get();
-  PGyroStruct pGyro = gyro_get();
-  if(argc)
-  {
-    if(!strcmp(argv[0], "accl"))
+    PIMUStruct pIMU = imu_get();
+    PGyroStruct pGyro = gyro_get();
+
+    if(argc)
     {
-      pIMU->accelerometer_not_calibrated = true;
-      chThdSleepMilliseconds(10);
-      calibrate_accelerometer(pIMU);
-      chThdResume(&(pIMU->imu_Thd), MSG_OK);
+        if(!strcmp(argv[0], "accl"))
+        {
+            if(pIMU->state == IMU_STATE_READY)
+            {
+                pIMU->accelerometer_not_calibrated = true;
+
+                pIMU->state == IMU_STATE_CALIBRATING;
+
+                chThdSleepMilliseconds(10);
+                calibrate_accelerometer(pIMU);
+                chThdResume(&(pIMU->imu_Thd), MSG_OK);
+
+                pIMU->state == IMU_STATE_READY;
+            }
+            else
+                chprintf(chp, "IMU is not heated or the initialization not complete, connected to the battery first.\r\n");
+        }
+        else if(!strcmp(argv[0], "gyro"))
+        {
+            if(pIMU->state == IMU_STATE_READY)
+            {
+                pIMU->gyroscope_not_calibrated = true;
+
+                pIMU->state == IMU_STATE_CALIBRATING;
+
+                chThdSleepMilliseconds(10);
+                calibrate_gyroscope(pIMU);
+                chThdResume(&(pIMU->imu_Thd), MSG_OK);
+
+                pIMU->state == IMU_STATE_READY;
+            }
+            else
+                chprintf(chp, "IMU is not heated or the initialization not complete, connected to the battery first.\r\n");
+
+        }
+        else if(!strcmp(argv[0], "adi"))
+        {
+            pGyro->adis_gyroscope_not_calibrated = true;
+            chThdSleepMilliseconds(10);
+            calibrate_adi(pGyro,false); //fast calibration ~30s
+            chThdResume(&(pGyro->adis_Thd), MSG_OK);
+        }
+        else if(!strcmp(argv[0], "adi-full"))
+        {
+            pGyro->adis_gyroscope_not_calibrated = true;
+            chThdSleepMilliseconds(10);
+            calibrate_adi(pGyro,true); //full calibration ~5min
+            chThdResume(&(pGyro->adis_Thd), MSG_OK);
+        }
+        param_save_flash();
     }
-    else if(!strcmp(argv[0], "gyro"))
-    {
-      pIMU->gyroscope_not_calibrated = true;
-      chThdSleepMilliseconds(10);
-      calibrate_gyroscope(pIMU);
-      chThdResume(&(pIMU->imu_Thd), MSG_OK);
-    }
-    else if(!strcmp(argv[0], "adi"))
-    {
-      pGyro->adis_gyroscope_not_calibrated = true;
-      chThdSleepMilliseconds(10);
-      if(argc && !strcmp(argv[1],"fast"))
-        gyro_cal(pGyro,false); //fast calibration ~30s
-      else if(argc && strcmp(argv[1],"full"))
-        chprintf(chp,"Invalid parameter!\r\n");
-      else
-        gyro_cal(pGyro,true); //full calibration ~5min
-      chThdResume(&(pGyro->adis_Thd), MSG_OK);
-    }
-    param_save_flash();
-  }
-  else
-    chprintf(chp,"Calibration: gyro, accl, adi fast, adi full\r\n");
+    else
+        chprintf(chp,"Calibration: gyro, accl, adi, adi-full\r\n");
 }
 
 void cmd_temp(BaseSequentialStream * chp, int argc, char *argv[])
@@ -195,7 +241,6 @@ void cmd_temp(BaseSequentialStream * chp, int argc, char *argv[])
 //      chThdSleep(MS2ST(500));
 //  }
 }
-
 
 void cmd_dbus(BaseSequentialStream * chp, int argc, char *argv[])
 {
@@ -242,10 +287,9 @@ void cmd_ultrasonic(BaseSequentialStream * chp, int argc, char *argv[])
 {
       (void) argc,argv;
 
-      float* pDist = hcsr04_getDistance();
-      chprintf(chp,"Distance: %f\n", *pDist);
+//      float* pDist = hcsr04_getDistance();
+//      chprintf(chp,"Distance: %f\n", *pDist);
 }
-
 
 /**
  * @brief array of shell commands, put the corresponding command and functions below
@@ -254,19 +298,28 @@ void cmd_ultrasonic(BaseSequentialStream * chp, int argc, char *argv[])
 static const ShellCommand commands[] =
 {
   {"test", cmd_test},
-  {"data", cmd_data},
   {"cal", cmd_calibrate},
+  {"\xEE", cmd_data},
+//#ifdef MAVLINK_COMM_TEST
+//  {"mavlink", cmd_mavlink},
+//#endif
+#ifdef PARAMS_USE_USB
+  {"\xFD",cmd_param_scale},
+  {"\xFB",cmd_param_update},
+  {"\xFA",cmd_param_tx},
+  {"\xF9",cmd_param_rx},
+#endif
   {"temp", cmd_temp},
   {"dbus", cmd_dbus},
   {"gyro", cmd_gyro},
   {"ultra", cmd_ultrasonic},
-  {"error", cmd_error},
+//  {"error", cmd_error},
   {NULL, NULL}
 };
 
 static const ShellConfig shell_cfg1 =
 {
-  (BaseSequentialStream *)SERIAL_CMD,
+  (BaseSequentialStream *)&SDU1,
   commands
 };
 
@@ -283,6 +336,7 @@ void shellStart(void)
   /*
    * Initializes a serial-over-USB CDC driver.
    */
+#ifdef SHELL_USE_USB
   sduObjectInit(&SDU1);
   sduStart(&SDU1, &serusbcfg);
 
@@ -298,6 +352,9 @@ void shellStart(void)
 
   usbStart(serusbcfg.usbp, &usbcfg);
   usbConnectBus(serusbcfg.usbp);
+#else
+    sdStart(SHELL_SERIAL_UART, shell_serial_conf);
+#endif
 
   shellInit();
 

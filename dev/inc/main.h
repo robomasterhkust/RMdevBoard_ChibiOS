@@ -5,30 +5,32 @@
 #include "hal.h"
 
 #include "usbcfg.h"
+#include "shellcfg.h"
+#include "params.h"
 #include "flash.h"
 #include "chprintf.h"
-#include "tft_display.h"
+#include "detect_error_task.h"
 
 #include "math_misc.h"
-#include "canBusProcess.h"
+#include "can_bus.h"
 #include "dbus.h"
-#include "params.h"
-#include "error.h"
+#include "sdlog.h"
 
-#include "mpu6500.h"
-#include "ist8310.h"
-#include "adis16265.h"
-#include "attitude.h"
+#include "attitude_estimator_task.h"
+#include "adis16470.h"
 #include "calibrate_sensor.h"
-#include "hcsr04.h"
 
 #include "gimbal.h"
 #include "chassis.h"
 
 #include "exti.h"
-#include "imu_temp.h"
-#include "sdlog.h"
+#include "judge.h"
+#include "shoot.h"
+#include "shooter_rm3508.h"
 
-void shellStart(void);
+#include "command_mixer_task.h"
+#include "gimbal_simple_controller.h"
+#include "feeder.h"
+#include "bullet_count_task.h"
 
 #endif
