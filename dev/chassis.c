@@ -109,8 +109,6 @@ static void rm_chassis_process(void){
 
     rm.vx =  (pRC->channel0 - 1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
     rm.vy =   (pRC->channel1 - 1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
-
-
 /*
      rm.vx =  (Rc->rc.channel0 - 1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
      rm.vy =   (Rc->rc.channel1 - 1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
@@ -121,7 +119,6 @@ static void rm_chassis_process(void){
 static THD_WORKING_AREA(chassis_control_wa, 2048); 
 static THD_FUNCTION(chassis_control, p) 
 { 
- 
   (void)p; 
   chRegSetThreadName("chassis controller"); 
  
