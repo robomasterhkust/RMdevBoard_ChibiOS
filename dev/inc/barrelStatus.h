@@ -64,15 +64,9 @@ typedef enum{
   mm42
 };
 
-typedef enum{
-  CEASED_FIRE,
-  CAN_FIRE
-};
-
 typedef struct {
   uint16_t heatLimit;
   uint16_t currentHeatValue;
-  uint8_t firingStatus;
 } barrelStatus_t, *pBarrelStatus;
 
 pBarrelStatus barrelStatus_get(void);

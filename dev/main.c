@@ -92,7 +92,7 @@ int main(void) {
   RC_init();
   pwm_shooter_init();
   judgeinit();
-  //barrelHeatLimitControl_init();
+  barrelHeatLimitControl_init();
   extiinit(); //*
   tempControllerInit(); //*
   chassis_init();

@@ -87,7 +87,6 @@ typedef struct{
 typedef struct{
   uint16_t heatLimit;
   uint16_t currentHeatValue;
-  uint8_t firingStatus;
 } BarrelStatus_canStruct;
 
 volatile GimbalEncoder_canStruct* can_getGimbalMotor(void);
