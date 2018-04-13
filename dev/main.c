@@ -81,10 +81,9 @@ int main(void) {
   chSysInit();
 
 
-  palSetPad(GPIOE, GPIOE_LED_R);
-  palSetPad(GPIOF, GPIOF_LED_G);
-  palClearPad(GPIOA, GPIOA_LED_Y);
-  palClearPad(GPIOA, GPIOA_LED_B);
+  LEDG_ON();
+  //palClearPad(GPIOA, GPIOA_LED_Y);
+  //palClearPad(GPIOA, GPIOA_LED_B);
 
 
   shellStart();

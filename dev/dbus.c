@@ -126,9 +126,7 @@ static THD_FUNCTION(uart_dbus_thread, p)
     }
 
     //Control the flashing of green LED // Shift to Error.c
-    if((!(count % 25) && !rxflag) || !(count% 75))
-      LEDG_TOGGLE();
-    count++;
+
 
   }
 }

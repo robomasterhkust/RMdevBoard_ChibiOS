@@ -78,8 +78,6 @@ void pwm12_config(PWMDriver *pwmp, const PWMConfig *config,int p){
 
 void pwm_shooter_init(void)
 {
-    LEDR_ON();
-    LEDG_OFF();
 
     pwmStart(&PWMD12,&pwm12cfg);
 

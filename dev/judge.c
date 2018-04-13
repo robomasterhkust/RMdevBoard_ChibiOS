@@ -256,9 +256,9 @@ static void* datagroups[JUDGE_DATA_TYPES + 1];
 /*
  * returns all judgment system sata
  */
-judge_fb_t judgeDataGet(void) {
+judge_fb_t* judgeDataGet(void) {
 
-  return judgeInData;
+  return &judgeInData;
 
 }
 

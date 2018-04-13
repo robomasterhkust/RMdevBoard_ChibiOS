@@ -38,9 +38,9 @@ void barrelStatus_init(void){
 
 void updateBarrelStatus(void){
   #ifdef CHASSIS
-    judge_fb_t jStruct = judgeDataGet();
-    power_fb_t pInfo = (power_fb_t)(jStruct.powerInfo);
-    game_fb_t gInfo = (game_fb_t)(jStruct.gameInfo);
+    judge_fb_t* jStruct = judgeDataGet();
+    power_fb_t pInfo = (power_fb_t)(jStruct->powerInfo);
+    game_fb_t gInfo = (game_fb_t)(jStruct->gameInfo);
 
     switch(gInfo.robotLevel){
       case 1:
