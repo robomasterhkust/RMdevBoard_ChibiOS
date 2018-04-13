@@ -27,7 +27,7 @@ else if((val) >= (max))\
 }\
 } while(0)\
 
-
+#define powerlimit 80
 /************************ chassis parameter ****************************/
 /* the radius of wheel(mm) */
 #define RADIUS     76
@@ -145,17 +145,10 @@ typedef struct {
     PGyroStruct _pGyro;
 } chassisStruct;
 
-// MATH definition
-/*
- * define by official group
- *
- *
- *
- * */
+
+
 void mecanum_calc();
 
-
-/*define by UST*/
 chassis_error_t chassis_getError(void);
 
 chassisStruct *chassis_get(void);
@@ -165,16 +158,13 @@ void chassis_init(void);
 void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1);
 
 void drive_motor(void);
-
-float chassis_heading_control(pid_controller_t *, float, float);
-
+float chassis_heading_control(pid_controller_t*,float, float);
 void chassis_twist_handle(void);
-
 void chassis_stop_handle(void);
+void separate_gimbal_handle(void);
+void follow_gimbal_handle(void);
+void power_limit_handle(void);
 
-void separate_gimbal_handle();
-
-void follow_gimbal_handle();
 
 
 #endif /* INC_CHASSIS_H_ */

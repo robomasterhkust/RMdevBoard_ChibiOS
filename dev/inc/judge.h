@@ -146,6 +146,7 @@ typedef struct rfid_fb_t{
   uint8_t       cardIdx;
 }__attribute__((packed)) rfid_fb_t;
 
+
 typedef struct game_over_fb_t{
   uint8_t       winner;
 }__attribute__((packed)) game_over_fb_t;
@@ -182,7 +183,7 @@ typedef struct user_data_t{
 
 #endif 
 
-judge_fb_t judgeDataGet(void);
+judge_fb_t* judgeDataGet(void);
 
 void judgedecode(void);
 

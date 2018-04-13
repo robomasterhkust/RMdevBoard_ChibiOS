@@ -16,23 +16,23 @@
 #include "math_misc.h"
 #include "math.h"
 #include "keyboard.h"
+#include "judge.h"
  
 static volatile chassisStruct chassis; 
 GimbalEncoder_canStruct* gimbal_p; 
 Gimbal_Send_Dbus_canStruct* Dbus_p; 
 RC_Ctl_t* Rc;
+judge_fb_t* JudgeP;
 pi_controller_t motor_vel_controllers[CHASSIS_MOTOR_NUM]; 
-pid_controller_t heading_controller; 
 pid_controller_t chassis_heading_controller; 
 lpfilterStruct lp_speed[CHASSIS_MOTOR_NUM]; 
 rc_ctrl_t rm;
 //Gimbal_Send_Dbus_canStruct* pRC;
-int rotation_center_gimbal = 1; 
 float gimbal_initP = 0; 
 float record = 0; 
  
 #define TWIST_ANGLE 90
-#define TWIST_PERIOD 1500
+#define TWIST_PERIOD 1000
  
  
 chassis_error_t chassis_getError(void){ 
@@ -127,12 +127,13 @@ static THD_FUNCTION(chassis_control, p)
   chRegSetThreadName("chassis controller"); 
  
   //pRC = can_get_sent_dbus();
+  JudgeP = judgeDataGet();
   gimbal_p = can_getGimbalMotor(); 
   Dbus_p = can_get_sent_dbus(); 
   Rc = RC_get();
   bool done = false; 
   uint32_t tick = chVTGetSystemTimeX(); 
-  chassis.ctrl_mode = CHASSIS_STOP; 
+  chassis.ctrl_mode = MANUAL_SEPARATE_GIMBAL;
   while(!chThdShouldTerminateX()) 
   { 
 
@@ -207,7 +208,6 @@ static const HeadingName = "Heading";
 void chassis_init(void) 
 { 
   memset(&chassis,0,sizeof(chassisStruct)); 
-  rotation_center_gimbal = 1; 
   chassis.drive_sp = 0.0f; 
   chassis.strafe_sp = 0.0f; 
   chassis.rotate_sp = 0.0f; 
@@ -222,12 +222,7 @@ void chassis_init(void)
     motor_vel_controllers[j].error_int_max = 0.0f; 
     motor_vel_controllers[j].ki = 0.1f;
     motor_vel_controllers[j].kp = 50.0f;
-  }} 
-  heading_controller.error_int = 0.0f; 
-  heading_controller.error_int_max = 0.0f; 
-  heading_controller.ki = 0.0f; 
-  heading_controller.kp = 0.0f; 
- 
+  }}
   for(i=0;i<3;i++){
     chassis_heading_controller.error[i] = 0.0f; 
   } 
@@ -245,27 +240,20 @@ void chassis_init(void)
 //  params_set(&motor_vel_controllers[BACK_RIGHT], 12,2,BRvelName,subname_PI,PARAM_PUBLIC); 
 //  params_set(&heading_controller, 13, 3, HeadingName,subname_PID,PARAM_PUBLIC); 
 
-    for (i = 0; i < 4; i++) {
-        chassis.current[i] = 0;
-        chassis._motors[i].speed_sp = 0.0f;
-        lpfilter_init(lp_speed + i, CHASSIS_UPDATE_FREQ, 20);
-        motor_vel_controllers[i].error_int = 0.0f;
-        motor_vel_controllers[i].error_int_max = MOTOR_VEL_INT_MAX;
-    }
-    heading_controller.error_int = 0.0f;
-    heading_controller.error_int_max = 0.0f;
-    chassis._pGyro = gyro_get();
-    chassis._encoders = can_getExtraMotor();
-
-    chThdCreateStatic(chassis_control_wa, sizeof(chassis_control_wa),
-                      NORMALPRIO, chassis_control, NULL);
-}
-
-
-void update_heading(void) {
-    /*TODO THIS WILL MAKE YOU LOSE HEADING IN A COLLISION, add control*/
-    chassis.heading_sp = chassis._pGyro->angle;
-}
+  for (i = 0; i < 4; i++) 
+  { 
+    chassis.current[i] =0; 
+    chassis._motors[i].speed_sp = 0.0f; 
+    lpfilter_init(lp_speed + i, CHASSIS_UPDATE_FREQ, 20); 
+    motor_vel_controllers[i].error_int = 0.0f; 
+    motor_vel_controllers[i].error_int_max = MOTOR_VEL_INT_MAX; 
+  } 
+  chassis._pGyro = gyro_get(); 
+  chassis._encoders = can_getExtraMotor(); 
+  chThdCreateStatic(chassis_control_wa, sizeof(chassis_control_wa), 
+                          NORMALPRIO, chassis_control, NULL); 
+} 
+ 
 
 /* 
  * 
@@ -412,8 +400,9 @@ float chassis_heading_control(pid_controller_t* controller,float get, float set)
   return output; 
  
 } 
- 
- 
+void power_limit_handle(){
+
+}
  
  
  
