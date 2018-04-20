@@ -133,9 +133,6 @@ typedef struct{
   int16_t         rotate_y_offset;
   int16_t         current[4];
   float           position_ref;
-//  int16_t       position_ref;
-//  uint8_t       follow_gimbal;
-
 
   chassis_mode_e  ctrl_mode;
   chassis_mode_e  last_ctrl_mode;

@@ -162,7 +162,7 @@ static THD_FUNCTION(chassis_control, p)
       rm_chassis_process();
       keyboard_reset();
     }
-    switch(chassis.ctrl_mode){ 
+    switch(chassis.ctrl_mode){
       case DODGE_MODE:{ 
         chassis.strafe_sp =0; 
         chassis.drive_sp =0; 
@@ -334,7 +334,7 @@ void drive_motor(){
  
   uint8_t i; 
   for (i = 0; i < CHASSIS_MOTOR_NUM; i++){ 
-    chassis.current[i] = chassis_controlSpeed(&chassis._motors[i], &motor_vel_controllers[i]);
+    //chassis.current[i] = chassis_controlSpeed(&chassis._motors[i], &motor_vel_controllers[i]);
     //chassis.current[i] = 0;
   } 
   can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID, 
