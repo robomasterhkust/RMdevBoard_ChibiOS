@@ -1,7 +1,10 @@
 #ifndef _SDLOG_H
 #define _SDLOG_H
 
-#define SDLOG_UPDATE_PERIOD_MS  50U
+#include "mpu6500.h"
+#include "integer.h"
+
+#define SDLOG_UPDATE_PERIOD_MS  500U
 #define SDLOG_NUM_BUFFER  32U
 
 typedef enum{
@@ -20,5 +23,6 @@ typedef struct{
 void sdlog_init(void);
 uint8_t sdlog_createFile(char fileName[]);
 uint8_t sdlog_put(const uint8_t pos, const void* const buf, const uint8_t len);
+inline char* fitos(float f,char t);
 
 #endif

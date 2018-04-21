@@ -10,7 +10,6 @@ TASKSRC =   \
             $(TASK_PATH)/feeder.c \
             $(TASK_PATH)/command_mixer_task.c \
             $(TASK_PATH)/bullet_count_task.c
-            # $(TASK_PATH)/canBusProcess.c \
             # $(TASK_PATH)/error.c \
 
 # Required include directories

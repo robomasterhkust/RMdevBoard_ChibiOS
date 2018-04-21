@@ -111,7 +111,7 @@ typedef enum{
     BUFFERINFO,
     POSITIONINFO,
     USERDATA = 0x0100
-};
+} judge_info_enum;
 
 typedef struct game_info_t{
     uint16_t      remainTime;

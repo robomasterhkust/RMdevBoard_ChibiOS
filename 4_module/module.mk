@@ -7,9 +7,9 @@ MODULESRC =    $(MATHSRC)\
                $(MODULE_PATH)/attitude.c \
                $(MODULE_PATH)/attitude_estimator_mpu6500.c \
                $(MODULE_PATH)/math_misc.c \
-               $(MODULE_PATH)/gimbal.c
+               $(MODULE_PATH)/gimbal_hero.c
                # $(MODULE_PATH)/gimbal_simple_controller.c
-               # $(MODULE_PATH)/gimbal_hero.c
+               # $(MODULE_PATH)/gimbal.c
                # $(MODULE_PATH)/gimbal_sys_iden.c
 
 # Required include directories

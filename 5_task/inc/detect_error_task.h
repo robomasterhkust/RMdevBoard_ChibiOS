@@ -9,6 +9,8 @@
 extern "C" {
 #endif
 
+bool is_motor_power_on(void);
+bool power_failure(void);
 void detect_error_task_init(void);
 
 #ifdef __cplusplus

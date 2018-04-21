@@ -18,6 +18,7 @@
 /*
  * Application entry point.
  */
+
 int main(void)
 {
     /*
@@ -33,8 +34,8 @@ int main(void)
     /* Init sequence 1: central controller, utility */
     shellStart();
     params_init();
-//    detect_error_task_init();
-//    sdlog_init();
+    detect_error_task_init();
+    // sdlog_init();
     extiinit();
 
     /* Init sequence 2: Power management */
@@ -45,35 +46,38 @@ int main(void)
     POWER4_OFF();
     LEDG1_ON();
 
-
     /* Init sequence 3: sensors, comm */
     attitude_estimator_init();
     // Initialize ADIS16265 single axial gyroscope
-    // TODO: check if ADIS16265 exist
-    single_axis_gyro_init_adis16265();
-//    imu_init_adis16470();
+    // single_axis_gyro_init_adis16265();
+    // imu_init_adis16470();
     can_bus_init();
     RC_init();
-//    judgeinit();
+    judgeinit();
     test_init_all_pwm();
 
+    while (!is_motor_power_on()) {
+        LEDG8_TOGGLE();
+        chThdSleepMilliseconds(200);
+    }
+
     /* Init sequence 4: actuators, display */
-//    command_mixer_init();
-//    gimbal_simpler_controller_init();
+    // command_mixer_init();
     gimbal_init();
     chassis_init();
-//    shooter_init();
-//    shooter_rm3508_init();
-//    feeder_init();
-//    bullet_count_task_init();
+    // shooter_init();
+
+    feeder_init();
 
     while (!chThdShouldTerminateX()) {
-        chThdSleepMilliseconds(500);
         LEDR_TOGGLE();
-//        set_pwm_to(&PWMD1, 8000, 7000, 6000, 5000);
-//        set_pwm_to(&PWMD4, 8000, 7000, 6000, 5000);
-//        set_pwm_to(&PWMD8, 8000, 7000, 6000, 5000);
-//        set_pwm_to(&PWMD5, 8000, 7000, 6000, 5000);
+        if (!power_failure()) {
+            wdgReset(&WDGD1);
+        } else {
+            gimbal_kill();
+        }
+
+        chThdSleepMilliseconds(200);
     }
     return 0;
 }

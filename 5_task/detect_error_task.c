@@ -5,7 +5,38 @@
  */
 
 #include "ch.h"
+#include "main.h"
 #include "detect_error_task.h"
+/*
+ * Watchdog deadline set to more than one second (LSI=40000 / (64 * 1000)).
+ */
+static const WDGConfig wdgcfg =
+        {
+                STM32_IWDG_PR_64,
+                STM32_IWDG_RL(1000)
+        };
+
+
+/**
+  *   @brief Check whether the 24V power is on
+  */
+bool is_motor_power_on(void)
+{
+    volatile GimbalEncoder_canStruct* can = can_getGimbalMotor();
+
+    return can->updated;
+}
+
+/**
+  *   @brief  Monitor the case of a failure on 24V power, indicating the vehicle being killed
+  */
+bool power_failure(void)
+{
+    uint32_t error = gimbal_get_error();
+
+    return (error & (GIMBAL_PITCH_NOT_CONNECTED | GIMBAL_YAW_NOT_CONNECTED)) ==
+           (GIMBAL_PITCH_NOT_CONNECTED | GIMBAL_YAW_NOT_CONNECTED);
+}
 
 // create a thread to process this
 static THD_WORKING_AREA(detect_error_task_wa, 1024);
@@ -23,8 +54,9 @@ static THD_FUNCTION(detect_error_task, p)
 
 void detect_error_task_init(void)
 {
-    chThdCreateStatic(detect_error_task_wa, sizeof(detect_error_task_wa),
-                      NORMALPRIO, detect_error_task, NULL);
+    wdgStart(&WDGD1, &wdgcfg); //Start the watchdog
+//    chThdCreateStatic(detect_error_task_wa, sizeof(detect_error_task_wa),
+//                      NORMALPRIO, detect_error_task, NULL);
 }
 /**
  *

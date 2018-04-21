@@ -31,8 +31,8 @@ char name[10] = "test0.txt";
  * SDIO configuration.
  */
 static const SDCConfig sdccfg = {
-  sd_scratchpad,
-  SDC_MODE_4BIT
+        sd_scratchpad,
+        SDC_MODE_4BIT
 };
 
 /**
@@ -117,99 +117,99 @@ static inline uint8_t sdlog_write(const uint8_t pos)
 static THD_WORKING_AREA(sdlog_thread_wa,1024);
 static THD_FUNCTION(sdlog_thread,p)
 {
-    uint32_t tick = chVTGetSystemTimeX();
+  uint32_t tick = chVTGetSystemTimeX();
+  tim = ST2MS(tick);
+  s_i = snprintf(NULL,0,"%d",tim)+1;
+  // float temp = pIMU->accelData[0];
+  // s_f = snprintf(NULL,0,"%f",temp)+1;
+
+  /* testing writing in IMU acceleration data log*/
+  logger.position = 0x00AA; //use buf[1,3,5,7]
+  /* configuring file head*/
+  int k;
+  logger.len_buf[1] = s_i;
+  for(k=2;k<8;k++){
+    if(k%2)
+      logger.len_buf[k] = s_f;
+    else{
+      logger.len_buf[k] = 1;
+      logger.buf[k] = "\t";
+    }
+  }
+  logger.len_buf[8] = 1;
+  logger.buf[8] = "\n";
+  /*char buff1[20] = "type:";
+  char buff2[20] = "1systime";
+  char buff3[20] = "3float";
+  char buff4[20] = "\n";
+  logger.buf[1] = buff1;
+  logger.buf[2] = buff2;
+  logger.buf[3] = buff3;
+  logger.buf[4] = buff4;*/
+
+  f_open(&fil, name,  FA_WRITE);
+  f_lseek(&fil, 0);
+
+  while(true)
+  {
+    tick += MS2ST(SDLOG_UPDATE_PERIOD_MS);
     tim = ST2MS(tick);
-    s_i = snprintf(NULL,0,"%d",tim)+1;
-   // float temp = pIMU->accelData[0];
-   // s_f = snprintf(NULL,0,"%f",temp)+1;
+    char s0[5];
+    char b0[9];
+    char b1[9];
+    char b2[9];
+    /*int s_i = snprintf(NULL,0,"%d",s0);
+    int s_f = snprintf(NULL,0,"%d",b0);**/
+    snprintf(s0,s_i,"%d",tim);
+    //           snprintf(b0,s_f,"%f",pIMU->accelData[0]);
+    //           snprintf(b1,s_f,"%f",pIMU->accelData[1]);
+    //           snprintf(b2,s_f,"%f",pIMU->accelData[2]);
 
-    /* testing writing in IMU acceleration data log*/
-    logger.position = 0x00AA; //use buf[1,3,5,7]
-    /* configuring file head*/
-    int k;
-    logger.len_buf[1] = s_i;
-    for(k=2;k<8;k++){
-      if(k%2)
-        logger.len_buf[k] = s_f;
-      else{
-        logger.len_buf[k] = 1;
-        logger.buf[k] = "\t";
-      }
-    }
-    logger.len_buf[8] = 1;
-    logger.buf[8] = "\n";
-    /*char buff1[20] = "type:";
-    char buff2[20] = "1systime";
-    char buff3[20] = "3float";
-    char buff4[20] = "\n";
-    logger.buf[1] = buff1;
-    logger.buf[2] = buff2;
-    logger.buf[3] = buff3;
-    logger.buf[4] = buff4;*/
+    strcat(s0," ");
+    strcat(b0," ");
+    strcat(b1," ");
+    strcat(b2,"\n");
 
-    f_open(&fil, name,  FA_WRITE);
-    f_lseek(&fil, 0);
+    logger.buf[1] = s0;
+    logger.buf[3] = b0;
+    logger.buf[5] = b1;
+    logger.buf[7] = b2;
 
-    while(true)
+    /*logger.buf[1] = &tim;
+    logger.buf[3] = &pIMU->accelData[0];
+    logger.buf[5] = &pIMU->accelData[1];
+    logger.buf[7] = &pIMU->accelData[2];**/
+    /* data used for watching in OZone*/
+    strcpy(w0,logger.buf[1]);
+    strcpy(w1,logger.buf[3]);
+    strcpy(w2,logger.buf[5]);
+    strcpy(w3,logger.buf[7]);
+
+    if(chVTGetSystemTimeX() < tick)
+      chThdSleepUntil(tick);
+    else
     {
-      tick += MS2ST(SDLOG_UPDATE_PERIOD_MS);
-      tim = ST2MS(tick);
-            char s0[5];
-            char b0[9];
-            char b1[9];
-            char b2[9];
-            /*int s_i = snprintf(NULL,0,"%d",s0);
-            int s_f = snprintf(NULL,0,"%d",b0);**/
-            snprintf(s0,s_i,"%d",tim);
- //           snprintf(b0,s_f,"%f",pIMU->accelData[0]);
- //           snprintf(b1,s_f,"%f",pIMU->accelData[1]);
- //           snprintf(b2,s_f,"%f",pIMU->accelData[2]);
-
-            strcat(s0," ");
-            strcat(b0," ");
-            strcat(b1," ");
-            strcat(b2,"\n");
-
-            logger.buf[1] = s0;
-            logger.buf[3] = b0;
-            logger.buf[5] = b1;
-            logger.buf[7] = b2;
-
-            /*logger.buf[1] = &tim;
-            logger.buf[3] = &pIMU->accelData[0];
-            logger.buf[5] = &pIMU->accelData[1];
-            logger.buf[7] = &pIMU->accelData[2];**/
-            /* data used for watching in OZone*/
-            strcpy(w0,logger.buf[1]);
-            strcpy(w1,logger.buf[3]);
-            strcpy(w2,logger.buf[5]);
-            strcpy(w3,logger.buf[7]);
-
-      if(chVTGetSystemTimeX() < tick)
-        chThdSleepUntil(tick);
-      else
-      {
-        tick = chVTGetSystemTimeX();
-        logger.errorCode |= SD_LOSE_FRAME;
-      }
-      uint8_t i, error;
-      for(i = 0; i<SDLOG_NUM_BUFFER; i++)
-      {
-        if(!(logger.position & (1<<i)))
-          continue;
-        error = sdlog_write(i);
-        if(error)
-        {
-          logger.errorCode |= (error << 7);
-          break;
-        }
-      }
-
-      if(!error)
-        f_sync(&fil);
-
-
+      tick = chVTGetSystemTimeX();
+      logger.errorCode |= SD_LOSE_FRAME;
     }
+    uint8_t i, error;
+    for(i = 0; i<SDLOG_NUM_BUFFER; i++)
+    {
+      if(!(logger.position & (1<<i)))
+        continue;
+      error = sdlog_write(i);
+      if(error)
+      {
+        logger.errorCode |= (error << 7);
+        break;
+      }
+    }
+
+    if(!error)
+      f_sync(&fil);
+
+
+  }
 }
 
 /**

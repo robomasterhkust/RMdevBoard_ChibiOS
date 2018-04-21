@@ -84,6 +84,7 @@ static THD_FUNCTION(pwm_thd, arg)
 
         speed = alpha * (float) speed_sp + (1 - alpha) * speed;
         pwm12_setWidth((uint16_t) speed);
+
         chThdSleepMilliseconds(5);
     }
 }
@@ -105,9 +106,9 @@ static void pwm12_start(void)
 
     psc = (PWMD12.clock / pwm12cfg.frequency) - 1;
 
-    PWMD12.tim->PSC = psc;
-    PWMD12.tim->ARR = pwm12cfg.period - 1;
-    PWMD12.tim->CR2 = pwm12cfg.cr2;
+    PWMD12.tim->PSC  = psc;
+    PWMD12.tim->ARR  = pwm12cfg.period - 1;
+    PWMD12.tim->CR2  = pwm12cfg.cr2;
     PWMD12.period = pwm12cfg.period;
 
     ccer = 0;
@@ -116,20 +117,23 @@ static void pwm12_start(void)
             ccer |= STM32_TIM_CCER_CC1P;
         case PWM_OUTPUT_ACTIVE_HIGH:
             ccer |= STM32_TIM_CCER_CC1E;
-        default:;
+        default:
+            ;
     }
     switch (pwm12cfg.channels[1].mode & PWM_OUTPUT_MASK) {
         case PWM_OUTPUT_ACTIVE_LOW:
             ccer |= STM32_TIM_CCER_CC2P;
         case PWM_OUTPUT_ACTIVE_HIGH:
             ccer |= STM32_TIM_CCER_CC2E;
-        default:;
+
+        default:
+            ;
     }
 
-    PWMD12.tim->CCER = ccer;
-    PWMD12.tim->SR = 0;
+    PWMD12.tim->CCER  = ccer;
+    PWMD12.tim->SR    = 0;
 
-    PWMD12.tim->CR1 = STM32_TIM_CR1_ARPE | STM32_TIM_CR1_CEN;
+    PWMD12.tim->CR1   = STM32_TIM_CR1_ARPE | STM32_TIM_CR1_CEN;
 
     PWMD12.state = PWM_READY;
 }

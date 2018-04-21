@@ -43,14 +43,14 @@ typedef enum {
 
 #define GIMBAL_ERROR_COUNT    3U
 #define GIMBAL_WARNING_COUNT  1U
-static const char gimbal_error_messages[][GIMBAL_ERROR_COUNT] =
+static const char *gimbal_error_messages[GIMBAL_ERROR_COUNT] =
 {
   "E:Gimbal yaw not connected",
   "E:Gimbal pitch not connected",
   "E:Gimbal init timeout"
 };
 
-static const char gimbal_warning_messages[][GIMBAL_WARNING_COUNT] =
+static const char gimbal_warning_messages[] =
 {
   "W:Gimbal control lose frame"
 };
