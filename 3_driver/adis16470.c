@@ -8,8 +8,13 @@
 #include "adis16470.h"
 
 uint8_t rxbuf_receive[ADIS16470_IMU_BURST_LENGTH];
+thread_reference_t imu_adis_thread_ref = NULL;
 imuStructADIS16470 imu_adis;
-volatile uint16_t gyro_low;
+
+imuStructADIS16470Ptr imu_adis_get(void)
+{
+    return &imu_adis;
+}
 
 static const SPIConfig adis16470_spi_cfg =
         {
@@ -37,11 +42,18 @@ static const SPIConfig adis16470_spi_cfg =
  */
 static uint16_t spi_read_register(SPIDriver *spip, uint8_t reg)
 {
-    spiSelect(spip);
-    uint16_t txbuf = reg << (uint16_t)8 | (uint16_t)0x00;
+    uint16_t txbuf = (uint16_t)0 << (uint16_t) 15 | reg << (uint16_t)8 | (uint16_t)0x00;
     uint16_t rxbuf;
-    spiExchange(spip, 1, &txbuf, &rxbuf);
+    spiSelect(spip);
+//    spiExchange(spip, 1, &txbuf, &rxbuf);
+    spiSend(spip, 1, &txbuf);
     spiUnselect(spip);
+    chThdSleepMicroseconds(17);
+    spiSelect(spip);
+    spiReceive(spip, 1, &rxbuf);
+    spiUnselect(spip);
+    chThdSleepMicroseconds(17);
+
     return rxbuf;
 }
 
@@ -70,34 +82,37 @@ static int spi_write_register(SPIDriver *spip, uint8_t regAddr, int16_t regData)
     spiSelect(spip);
     spiSend(spip, 1, &lowerWord);
     spiUnselect(spip);
+    chThdSleepMicroseconds(16);
     spiSelect(spip);
     spiSend(spip, 1, &upperWord);
     spiUnselect(spip);
+    chThdSleepMicroseconds(16);
+
     return 0;
 }
 
-/**
- * @brief   Burst Reads for ADIS16470
- * @pre     The SPI interface must be initialized and the driver started.
- *
- * @param[in] spip          pointer to the SPI initerface
- * @param[in] reg           hardcoded burst register 0x6800
- * @param[out]rxbuf_output  The received buffer value.
- */
-static uint8_t spi_burst_read(SPIDriver *spip, uint8_t *rxbuf_output)
-{
-    spiSelect(spip);
-    uint16_t txbuf_16bit[2];
-    txbuf_16bit[0] = 0x6800;
-    spiSend(spip, 1, txbuf_16bit);
-    txbuf_16bit[0] = 0x0000; // NR/W bit to 1
-//    spiReceive(spip, ADIS16470_IMU_BURST_LENGTH, rxbuf_output);
-    for (int i = 0; i < ADIS16470_IMU_BURST_LENGTH; ++i) {
-        spiExchange(spip, 1, &txbuf_16bit[0], rxbuf_output+i);
-    }
-    spiUnselect(spip);
-    return rxbuf_output[1];
-}
+///**
+// * @brief   Burst Reads for ADIS16470
+// * @pre     The SPI interface must be initialized and the driver started.
+// *
+// * @param[in] spip          pointer to the SPI initerface
+// * @param[in] reg           hardcoded burst register 0x6800
+// * @param[out]rxbuf_output  The received buffer value.
+// */
+//static uint8_t spi_burst_read(SPIDriver *spip, uint8_t *rxbuf_output)
+//{
+//    spiSelect(spip);
+//    uint16_t txbuf_16bit[2];
+//    txbuf_16bit[0] = 0x6800;
+//    spiSend(spip, 1, txbuf_16bit);
+//    txbuf_16bit[0] = 0x0000; // NR/W bit to 1
+////    spiReceive(spip, ADIS16470_IMU_BURST_LENGTH, rxbuf_output);
+//    for (int i = 0; i < ADIS16470_IMU_BURST_LENGTH; ++i) {
+//        spiExchange(spip, 1, &txbuf_16bit[0], rxbuf_output+i);
+//    }
+//    spiUnselect(spip);
+//    return rxbuf_output[1];
+//}
 
 /**
  * @brief Decode and verify the received message from SPI
@@ -129,21 +144,51 @@ static void decode_burst_message(const uint8_t * rxbuf, imuStructADIS16470Ptr im
     }
 }
 
+static void imu_adis_read(void)
+{
+    imu_adis.diag_stat  = spi_read_register(EXTERNAL_SPI_Ptr, ADIS16470_IMU_DIAG_STAT);
+    uint16_t x_gyro_low = spi_read_register(EXTERNAL_SPI_Ptr, ADIS16470_IMU_X_GYRO_LOW);
+    uint16_t x_gyro_out = spi_read_register(EXTERNAL_SPI_Ptr, ADIS16470_IMU_X_GYRO_OUT);
+    uint16_t y_gyro_low = spi_read_register(EXTERNAL_SPI_Ptr, ADIS16470_IMU_Y_GYRO_LOW);
+    uint16_t y_gyro_out = spi_read_register(EXTERNAL_SPI_Ptr, ADIS16470_IMU_Y_GYRO_OUT);
+    uint16_t z_gyro_low = spi_read_register(EXTERNAL_SPI_Ptr, ADIS16470_IMU_Z_GYRO_LOW);
+    uint16_t z_gyro_out = spi_read_register(EXTERNAL_SPI_Ptr, ADIS16470_IMU_Z_GYRO_OUT);
+    uint16_t x_accl_low = spi_read_register(EXTERNAL_SPI_Ptr, ADIS16470_IMU_X_ACCL_LOW);
+    uint16_t x_accl_out = spi_read_register(EXTERNAL_SPI_Ptr, ADIS16470_IMU_X_ACCL_OUT);
+    uint16_t y_accl_low = spi_read_register(EXTERNAL_SPI_Ptr, ADIS16470_IMU_Y_ACCL_LOW);
+    uint16_t y_accl_out = spi_read_register(EXTERNAL_SPI_Ptr, ADIS16470_IMU_Y_ACCL_OUT);
+    uint16_t z_accl_low = spi_read_register(EXTERNAL_SPI_Ptr, ADIS16470_IMU_Z_ACCL_LOW);
+    uint16_t z_accl_out = spi_read_register(EXTERNAL_SPI_Ptr, ADIS16470_IMU_Z_ACCL_OUT);
+
+    imu_adis.gyro_raw_data[0] = x_gyro_low | x_gyro_out << 16;
+    imu_adis.gyro_raw_data[1] = y_gyro_low | y_gyro_out << 16;
+    imu_adis.gyro_raw_data[2] = z_gyro_low | z_gyro_out << 16;
+    imu_adis.accl_raw_data[0] = x_accl_low | x_accl_out << 16;
+    imu_adis.accl_raw_data[1] = y_accl_low | y_accl_out << 16;
+    imu_adis.accl_raw_data[2] = z_accl_low | z_accl_out << 16;
+    imu_adis.gyro[0] = imu_adis.gyro_raw_data[0] * ADIS16470_GYRO_RESOLU_32BIT;
+    imu_adis.gyro[1] = imu_adis.gyro_raw_data[1] * ADIS16470_GYRO_RESOLU_32BIT;
+    imu_adis.gyro[2] = imu_adis.gyro_raw_data[2] * ADIS16470_GYRO_RESOLU_32BIT;
+    imu_adis.accl[0] = imu_adis.accl_raw_data[0] * ADIS16470_GYRO_RESOLU_32BIT;
+    imu_adis.accl[1] = imu_adis.accl_raw_data[1] * ADIS16470_GYRO_RESOLU_32BIT;
+    imu_adis.accl[2] = imu_adis.accl_raw_data[2] * ADIS16470_GYRO_RESOLU_32BIT;
+}
+
 static THD_WORKING_AREA(imu_adis16470_driver_wa, 1024);
 
 static THD_FUNCTION(imu_adis16470_driver, p)
 {
     imuStructADIS16470Ptr imuPtr = (imuStructADIS16470Ptr)p;
-    chRegSetThreadName("External ADIS16470 IMU driver");
 
-    uint32_t tick = chVTGetSystemTimeX();
+//    uint32_t tick = chVTGetSystemTimeX();
+    chSysLock();
     while (!chThdShouldTerminateX()) {
-        tick += ADIS16470_IMU_UPDATE_PERIOD;
-        if (chVTGetSystemTimeX() < tick) {
-            chThdSleepUntil(tick);
-        } else {
-            tick = chVTGetSystemTimeX();
-        }
+//        tick += ADIS16470_IMU_UPDATE_PERIOD;
+//        if (chVTGetSystemTimeX() < tick) {
+//            chThdSleepUntil(tick);
+//        } else {
+//            tick = chVTGetSystemTimeX();
+//        }
         /*
          * Burst mode, continous read
          * spi_write_16bit(ADIS_IMU_BURST_DIN);
@@ -152,7 +197,13 @@ static THD_FUNCTION(imu_adis16470_driver, p)
 //        spi_burst_read(EXTERNAL_SPI_Ptr, rxbuf_receive);
 //        decode_burst_message(rxbuf_receive, imuPtr);
 //        rxbuf_receive[0] = spi_read_single_register(EXTERNAL_SPI_Ptr, 0x04);
-        gyro_low = spi_read_register(EXTERNAL_SPI_Ptr, ADIS16470_IMU_X_GYRO_LOW);
+
+        chSysUnlock();
+        imu_adis_read();
+        chSysLock();
+
+        chThdSuspendS(&imu_adis_thread_ref);
+
     }
 
 }
@@ -177,6 +228,7 @@ void imu_init_adis16470(void)
     *EXTERNAL_SPI_Ptr.txdmamode |= STM32_DMA_CR_PSIZE_HWORD | STM32_DMA_CR_MSIZE_HWORD;
     spiStart(EXTERNAL_SPI_Ptr, &adis16470_spi_cfg);
 
+    chThdSleepMilliseconds(100); // Wait for the SPI bus to active
 
     /*
      * Filter Control Register (FILT_CTRL)

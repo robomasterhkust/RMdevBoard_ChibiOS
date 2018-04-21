@@ -9,8 +9,8 @@ MODULESRC =    $(MATHSRC)\
                $(MODULE_PATH)/math_misc.c \
                $(MODULE_PATH)/gimbal.c
                # $(MODULE_PATH)/gimbal_simple_controller.c
-
-# $(MODULE_PATH)/gimbal_sys_iden.c
+               # $(MODULE_PATH)/gimbal_hero.c
+               # $(MODULE_PATH)/gimbal_sys_iden.c
 
 # Required include directories
 MODULEINC = $(MODULE_PATH)/inc

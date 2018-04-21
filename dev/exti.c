@@ -18,7 +18,7 @@
 //comment out the line below to disable motor testing
 //#define MOTOR_TEST
 
-extern thread_reference_t imu_adis_thread_ref;
+//extern thread_reference_t imu_adis_thread_ref;
 /*
  * Turns on all chassis motor for 1 sec when MotorOn is TRUE
  * Thread normally suspended, resumes when shield button is pushed
@@ -92,7 +92,7 @@ static void extcb5(EXTDriver *extp, expchannel_t channel)
     count++;
     if (count % 10 == 0) {
         chSysLockFromISR();
-        chThdResumeI(&imu_adis_thread_ref, MSG_OK);
+//        chThdResumeI(&imu_adis_thread_ref, MSG_OK);
         chSysUnlockFromISR();
     }
 }

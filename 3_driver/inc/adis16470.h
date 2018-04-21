@@ -18,8 +18,6 @@
 
 /****  ADIS16470 command  ****/
 #define ADIS16470_IMU_BURST_DIN_UPPER   0x68
-//#define ADIS16470_IMU_BURST_DIN_LOWER   0x00
-
 
 /****  ADIS16470 user register memory map   ****/
 #define ADIS16470_IMU_DIAG_STAT     0x02
@@ -46,15 +44,19 @@
 #define ADIS16470_IMU_NULL_CFG    	0x66  //Auto-null configuration control
 #define ADIS16470_IMU_GLOB_CMD    	0x68  //Global commands
 
+#define ADIS16470_GYRO_RESOLU_32BIT 0.00000152587 // 0.1 / 2^16 in degree
+
 typedef struct imuStructADIS16470 {
     uint16_t diag_stat;
-    uint16_t gyro_raw_data[3];
-    uint16_t accl_raw_data[3];
-    uint16_t temperature;
+    int32_t gyro_raw_data[3];
+    int32_t accl_raw_data[3];
+    int16_t temperature;
     uint16_t data_count;
     uint8_t checksum;
     bool verified;
 
+    double gyro[3];
+    double accl[3];
     float deltang[3];
     float deltvel[3];
     float g_bias[3];
@@ -77,6 +79,8 @@ typedef enum {
 extern "C" {
 #endif
 
+imuStructADIS16470Ptr imu_adis_get(void);
+//void imu_adis_read(void);
 void imu_init_adis16470(void);
 
 #ifdef __cplusplus

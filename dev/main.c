@@ -43,6 +43,8 @@ int main(void)
     POWER2_OFF();
     POWER3_OFF();
     POWER4_OFF();
+    LEDG1_ON();
+
 
     /* Init sequence 3: sensors, comm */
     attitude_estimator_init();
