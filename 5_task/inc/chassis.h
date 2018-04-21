@@ -11,7 +11,7 @@
 #ifndef INC_CHASSIS_H_
 #define INC_CHASSIS_H_
 
-#define CHASSIS_CAN  &CAND1        // Later should be CAND2
+#define CHASSIS_CAN  &CAND2        // Later should be CAND2
 #define CHASSIS_CAN_EID  0x200
 
 #define CHASSIS_UPDATE_FREQ 500
@@ -30,6 +30,7 @@ else if((val) >= (max))\
 } while(0)\
 
 
+#define powerlimit 80
 /************************ chassis parameter ****************************/
 /* the radius of wheel(mm) */
 #define RADIUS     76
@@ -66,7 +67,7 @@ else if((val) >= (max))\
 
 
 // DBUS MACRO
-#define CHASSIS_GEAR_RATIO    27U
+#define CHASSIS_GEAR_RATIO    19U
 //#define RPM_MAX    ((int16_t) 350)              //
 //#define RPM_MIN    ((int16_t) -350)              //
 #define HEADING_MIN     ((float) -3.14159) // - pi
@@ -157,15 +158,8 @@ typedef struct
     PGyroStruct _pGyro;
 } chassisStruct;
 
-// MATH definition
-/*
- * define by official group
- *
- *
- *
- * */
+/* define by official group */
 void mecanum_cal(void);
-
 
 /*define by UST*/
 chassis_error_t chassis_getError(void);
@@ -187,6 +181,8 @@ void chassis_stop_handle(void);
 void separate_gimbal_handle(void);
 
 void follow_gimbal_handle(void);
+
+void power_limit_handle(void);
 
 
 #endif /* INC_CHASSIS_H_ */

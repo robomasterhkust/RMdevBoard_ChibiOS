@@ -41,7 +41,7 @@
 
 #include "arm_math.h"
 
- /**    
+ /**
  * @addtogroup PID    
  * @{    
  */

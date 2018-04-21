@@ -10,7 +10,6 @@
 #include "mpu6500.h"
 #include "imu_temp.h"
 
-extern PWMDriver PWMD12;
 
 #define TEMP_THRESHOLD 62
 #define TEMPERATURE_UPDATE_PERIOD_S 1U

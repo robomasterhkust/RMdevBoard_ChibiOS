@@ -229,7 +229,7 @@ static THD_FUNCTION(gyro_thread,p)
     }
 }
 
-PGyroStruct gyro_init(void)
+PGyroStruct single_axis_gyro_init_adis16265(void)
 {
     PGyroStruct pGyro = &gyro;
     memset((void *)pGyro, 0, sizeof(GyroStruct));

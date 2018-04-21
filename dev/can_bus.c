@@ -37,7 +37,7 @@ static void can_process_encoder_message(CANDriver *const canp, const CANRxFrame 
             case CAN_C620_STD_ID_FEEDBACK_MSG_ID_2:
             case CAN_C620_STD_ID_FEEDBACK_MSG_ID_3:
             case CAN_C620_STD_ID_FEEDBACK_MSG_ID_4:
-                can_process_chassis_encoder(rxmsg);
+//                can_process_chassis_encoder(rxmsg);
                 break;
             case CAN_GIMBAL_YAW_FEEDBACK_MSG_ID:
             case CAN_GIMBAL_PITCH_FEEDBACK_MSG_ID:
@@ -45,7 +45,7 @@ static void can_process_encoder_message(CANDriver *const canp, const CANRxFrame 
                 break;
             case CAN_C620_EXTRA_ID_FEEDBACK_MSG_ID_7:
             case CAN_C620_EXTRA_ID_FEEDBACK_MSG_ID_8:
-                can_process_extra_encoder(rxmsg);
+//                can_process_extra_encoder(rxmsg);
                 break;
             case CAN_UWB_MSG_ID:
                 can_process_uwb(rxmsg);
@@ -58,7 +58,7 @@ static void can_process_encoder_message(CANDriver *const canp, const CANRxFrame 
             case CAN_C620_STD_ID_FEEDBACK_MSG_ID_2:
             case CAN_C620_STD_ID_FEEDBACK_MSG_ID_3:
             case CAN_C620_STD_ID_FEEDBACK_MSG_ID_4:
-//                can_process_chassis_encoder(rxmsg);
+                can_process_chassis_encoder(rxmsg);
                 break;
             case CAN_C620_EXTRA_ID_FEEDBACK_MSG_ID_5:
             case CAN_C620_EXTRA_ID_FEEDBACK_MSG_ID_6:

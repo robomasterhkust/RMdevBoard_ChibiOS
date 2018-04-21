@@ -1,6 +1,7 @@
-//
-// Created by beck on 16/12/2017.
-//
+/*
+ * Written by Yitong Zhang and Tianze Li
+ * hardcoded the timer 12 initialization
+ */
 
 #include "stdint.h"
 #include "ch.h"
@@ -12,12 +13,13 @@
 #define MIN_SHOOT_SPEED 100U
 #define MAX_SHOOT_SPEED 900U
 
-RC_Ctl_t* rc;
+RC_Ctl_t *rc;
 
 static uint16_t speed_sp = 0;
 static bool safe = false;
 
 static PWMDriver PWMD12;
+
 void pwm12_setWidth(uint16_t width)
 {
     PWMD12.tim->CCR[0] = width;
@@ -30,12 +32,12 @@ void pwm12_setWidth(uint16_t width)
  */
 void shooter_control(uint16_t setpoint)
 {
-    if(setpoint > MAX_SHOOT_SPEED)
+    if (setpoint > MAX_SHOOT_SPEED)
         setpoint = MAX_SHOOT_SPEED;
-    else if(setpoint < MIN_SHOOT_SPEED)
+    else if (setpoint < MIN_SHOOT_SPEED)
         setpoint = MIN_SHOOT_SPEED;
 
-    if(safe || setpoint <= MIN_SHOOT_SPEED)
+    if (safe || setpoint <= MIN_SHOOT_SPEED)
         speed_sp = setpoint;
 }
 
@@ -54,14 +56,15 @@ static const PWMConfig pwm12cfg = {
 };
 
 static THD_WORKING_AREA(pwm_thd_wa, 512);
-static THD_FUNCTION(pwm_thd, arg) {
-    (void)arg;
+
+static THD_FUNCTION(pwm_thd, arg)
+{
+    (void) arg;
 
     const float alpha = 0.004f;
     float speed = 0;
 
-    while (!chThdShouldTerminateX())
-    {
+    while (!chThdShouldTerminateX()) {
 #ifdef SHOOTER_USE_RC
         switch (rc->rc.s2) {
             case RC_S_UP:
@@ -74,11 +77,14 @@ static THD_FUNCTION(pwm_thd, arg) {
                 safe = true;
                 shooter_control(100);
                 break;
+            default:
+                break;
         }
 #endif
 
-        speed = alpha * (float)speed_sp + (1-alpha) * speed;
-        pwm12_setWidth((uint16_t)speed);
+        speed = alpha * (float) speed_sp + (1 - alpha) * speed;
+        pwm12_setWidth((uint16_t) speed);
+
         chThdSleepMilliseconds(5);
     }
 }
@@ -119,6 +125,7 @@ static void pwm12_start(void)
             ccer |= STM32_TIM_CCER_CC2P;
         case PWM_OUTPUT_ACTIVE_HIGH:
             ccer |= STM32_TIM_CCER_CC2E;
+
         default:
             ;
     }

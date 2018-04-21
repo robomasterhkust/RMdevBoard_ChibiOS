@@ -131,7 +131,7 @@ static void gimbal_attiCmd(const float dt, const float yaw_theta1)
   input_z *= dt;
   input_y *= dt;
 */
-    float yaw_atti_cmd;
+    float yaw_atti_cmd = 0;
 
     float euler_cmd[3] =
             {pIMU->euler_angle[Roll], gimbal.pitch_atti_cmd, gimbal.yaw_atti_cmd};
@@ -162,7 +162,7 @@ static void gimbal_attiCmd(const float dt, const float yaw_theta1)
     else if (yaw_atti_cmd > 2.0f && gimbal.prev_yaw_cmd < -2.0f)
         gimbal.rev--;
 
-    gimbal.yaw_atti_cmd = yaw_atti_cmd + gimbal.rev * 2 * M_PI;
+    gimbal.yaw_atti_cmd = yaw_atti_cmd + gimbal.rev * 2 * (float)M_PI;
     gimbal.prev_yaw_cmd = yaw_atti_cmd;
 
     //Avoid gimbal-lock point at pitch = M_PI_2
@@ -225,7 +225,7 @@ typedef enum
  *  @param[in,out]  motor   pointer to corresponding motor
  *  @param[in]         id   GIMBAL_YAW or GIMBAL_PITCH
  */
-static void gimbal_encoderUpdate(GimbalMotorStruct *motor, uint8_t id)
+static void gimbal_encoderUpdate(volatile GimbalMotorStruct *motor, uint8_t id)
 {
     if (gimbal._encoder[id].updated) {
 
@@ -468,7 +468,7 @@ static THD_FUNCTION(gimbal_thread, p)
 #ifdef GIMBAL_FF_TEST
         gimbal.pitch_iq_cmd = gimbal.axis_ff_ext[GIMBAL_PITCH];
 #else
-        float ff_pitch_ext = norm_vector3_projection(gimbal._pIMU->accelData, gimbal.axis_ff_accel);
+        float ff_pitch_ext = norm_vector3_projection((const float *)gimbal._pIMU->accelData, gimbal.axis_ff_accel);
         gimbal.pitch_iq_cmd += gimbal.axis_ff_ext[GIMBAL_PITCH] *
                                ff_pitch_ext;
 #endif

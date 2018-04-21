@@ -14,7 +14,7 @@
 #include "math_misc.h"
 #include "can_bus.h"
 #include "dbus.h"
-#include "sdlog.h"
+//#include "sdlog.h"
 
 #include "attitude_estimator_task.h"
 #include "adis16470.h"
@@ -32,5 +32,7 @@
 #include "gimbal_simple_controller.h"
 #include "feeder.h"
 #include "bullet_count_task.h"
+
+#include "pwm_test.h"
 
 #endif

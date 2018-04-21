@@ -108,7 +108,7 @@ void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
 //  GimbalStruct* gimbal = get_gimbal_simple_controller();
     RC_Ctl_t* pRC = RC_get();
     volatile ChassisEncoder_canStruct* encoder = can_getChassisMotor();
-    imuStructADIS16470* imu_adis = imu_adis_get();
+//    imuStructADIS16470* imu_adis = imu_adis_get();
 
   chprintf(chp,"AccelX: %f\r\n",PIMU->accelData[X]);
   chprintf(chp,"AccelY: %f\r\n",PIMU->accelData[Y]);
@@ -121,12 +121,14 @@ void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
 
     chprintf(chp, "encoder speed: %f\r\n", encoder[2].raw_speed);
 
-    chprintf(chp, "adis16470 reading gyro x: %d \r\n", imu_adis->gyro_raw_data[0]);
+/*
+ *  chprintf(chp, "adis16470 reading gyro x: %d \r\n", imu_adis->gyro_raw_data[0]);
     chprintf(chp, "adis16470 reading gyro y: %d \r\n", imu_adis->gyro_raw_data[1]);
     chprintf(chp, "adis16470 reading gyro z: %d \r\n", imu_adis->gyro_raw_data[2]);
     chprintf(chp, "adis16470 reading accl x: %d \r\n", imu_adis->accl_raw_data[0]);
     chprintf(chp, "adis16470 reading accl y: %d \r\n", imu_adis->accl_raw_data[1]);
     chprintf(chp, "adis16470 reading accl z: %d \r\n", imu_adis->accl_raw_data[2]);
+    */
 }
 
 /**
