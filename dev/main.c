@@ -15,8 +15,6 @@
 */
 #include "main.h"
 
-//static BaseSequentialStream* chp = (BaseSequentialStream*)&SDU1;
-
 /*
  * Application entry point.
  */
@@ -39,7 +37,14 @@ int main(void)
 //    sdlog_init();
     extiinit();
 
-    /* Init sequence 2: sensors, comm */
+    /* Init sequence 2: Power management */
+    LASER_OFF();
+    POWER1_OFF();
+    POWER2_OFF();
+    POWER3_OFF();
+    POWER4_OFF();
+
+    /* Init sequence 3: sensors, comm */
     attitude_estimator_init();
     // Initialize ADIS16265 single axial gyroscope
     // TODO: check if ADIS16265 exist
@@ -47,22 +52,26 @@ int main(void)
 //    imu_init_adis16470();
     can_bus_init();
     RC_init();
+//    judgeinit();
+    test_init_all_pwm();
 
-    /* Init sequence 3: actuators, display */
+    /* Init sequence 4: actuators, display */
 //    command_mixer_init();
 //    gimbal_simpler_controller_init();
     gimbal_init();
     chassis_init();
 //    shooter_init();
-    shooter_rm3508_init();
-    feeder_init();
-    bullet_count_task_init();
-
-    LASER_ON();
+//    shooter_rm3508_init();
+//    feeder_init();
+//    bullet_count_task_init();
 
     while (!chThdShouldTerminateX()) {
         chThdSleepMilliseconds(500);
         LEDR_TOGGLE();
+//        set_pwm_to(&PWMD1, 8000, 7000, 6000, 5000);
+//        set_pwm_to(&PWMD4, 8000, 7000, 6000, 5000);
+//        set_pwm_to(&PWMD8, 8000, 7000, 6000, 5000);
+//        set_pwm_to(&PWMD5, 8000, 7000, 6000, 5000);
     }
     return 0;
 }

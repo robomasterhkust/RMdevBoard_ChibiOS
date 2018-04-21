@@ -67,6 +67,20 @@ static THD_FUNCTION(MotorToggleThread, arg)
 
 int count = 0;
 /*
+ * EXTI 2 CALLBACK
+ * Configured for the button on the RM2018 board
+ */
+static void ext_key_cb2(EXTDriver *extp, expchannel_t channel)
+{
+    (void) extp;
+    (void) channel;
+
+    chSysLockFromISR();
+    LEDG_TOGGLE(); // Changed to other functions
+    chSysUnlockFromISR();
+}
+
+/*
  * EXTI 5 CALLBACK
  * Configured for ADIS16470 IMU data ready pin
  */
@@ -76,8 +90,7 @@ static void extcb5(EXTDriver *extp, expchannel_t channel)
     (void) channel;
 
     count++;
-    if (count % 10 == 0)
-    {
+    if (count % 10 == 0) {
         chSysLockFromISR();
         chThdResumeI(&imu_adis_thread_ref, MSG_OK);
         chSysUnlockFromISR();
@@ -112,11 +125,12 @@ static const EXTConfig extcfg = {
         {
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI0
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI1
-                {EXT_CH_MODE_DISABLED, NULL},   //EXTI2
+                {EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART |
+                 EXT_MODE_GPIOB, ext_key_cb2},   //EXTI2
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI3
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI4
                 {EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART |
-                        EXT_MODE_GPIOC, extcb5},   //EXTI5, ADIS shield
+                 EXT_MODE_GPIOC, extcb5},   //EXTI5, ADIS shield
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI6
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI7
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI8
@@ -142,12 +156,13 @@ static const EXTConfig extcfg = {
 void extiinit(void)
 {
 
-  extStart(&EXTD1, &extcfg);
-//  extChannelEnable(&EXTD1, 10);
-  extChannelEnable(&EXTD1, 5);
+    extStart(&EXTD1, &extcfg);
+    extChannelEnable(&EXTD1, 2);
+//    extChannelEnable(&EXTD1, 5);
+//    extChannelEnable(&EXTD1, 10);
 #ifdef MOTOR_TEST
-  chThdCreateStatic(MotorToggleThread_wa, sizeof(MotorToggleThread_wa),
-                    NORMALPRIO, MotorToggleThread, NULL);
+    chThdCreateStatic(MotorToggleThread_wa, sizeof(MotorToggleThread_wa),
+                      NORMALPRIO, MotorToggleThread, NULL);
 #endif
 
 }

@@ -100,7 +100,7 @@ extern int32_t gyro_temp;
 
 PGyroStruct gyro_get(void);
 
-PGyroStruct gyro_init(void);
+PGyroStruct single_axis_gyro_init_adis16265(void);
 //init ADIS gyro
 
 int16_t gyro_get_raw_vel(PGyroStruct pGyro);

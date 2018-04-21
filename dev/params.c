@@ -426,8 +426,8 @@ uint8_t params_set(param_t* const     p_param,
 
 void param_save_flash(void)
 {
-  LEDR_ON();
-  LEDG_OFF();
+//  LEDR_ON();
+//  LEDG_OFF();
 
   flashSectorErase(PARAM_FLASH_SECTOR);
   uint8_t i;

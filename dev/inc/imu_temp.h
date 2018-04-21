@@ -18,9 +18,9 @@ typedef struct tagTPIDStruct{
 }__attribute__((packed)) TPIDStruct, *pTPIDStruct;
 
 typedef struct {
-    int Kp;
-    int Ki;
-    int Kd;
+    float Kp;
+    float Ki;
+    float Kd;
 } TPIDConfigStruct;
 
 #ifdef __cplusplus

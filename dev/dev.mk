@@ -8,9 +8,9 @@ DEVSRC =    \
             $(DEV_PATH)/flash.c \
             $(DEV_PATH)/imu_temp.c \
             $(DEV_PATH)/params.c \
-            $(DEV_PATH)/pwm_struct.c \
             $(DEV_PATH)/shoot_pwm.c \
             $(DEV_PATH)/shooter_rm3508.c \
+            $(DEV_PATH)/pwm_test.c \
             $(DEV_PATH)/can_bus.c \
             $(DEV_PATH)/usbcfg.c
 

@@ -7,7 +7,6 @@
 #include "ch.h"
 #include "hal.h"
 
-//#include "canBusProcess.h"
 #include "can_motor_task.h"
 #include "gimbal_simple_controller.h"
 #include "dbus.h"
@@ -18,22 +17,26 @@
 #include "string.h"
 #include "gimbal.h"
 //#include "keyboard.h"
+#include "judge.h"
 
 static chassisStruct chassis;
 GimbalStruct *gimbal_p;
+//Gimbal_Send_Dbus_canStruct* Dbus_p;
+RC_Ctl_t* pRC;
+RC_Ctl_t* Rc;
+judge_fb_t* JudgeP;
+
 pi_controller_t motor_vel_controllers[CHASSIS_MOTOR_NUM];
-//pid_controller_t heading_controller;
 pid_controller_t chassis_heading_controller;
 lpfilterStruct lp_speed[CHASSIS_MOTOR_NUM];
 rc_ctrl_t rm;
-RC_Ctl_t *pRC;
-//volatile Gimbal_Send_Dbus_canStruct *pGimbalRC;
-int rotation_center_gimbal = 1;
+
+//int rotation_center_gimbal = 1;
 float gimbal_initP = 0;
 float record = 0;
 
-#define TWIST_ANGLE 50
-#define TWIST_PERIOD 3000
+#define TWIST_ANGLE 90
+#define TWIST_PERIOD 1000
 
 static uint32_t twist_count;
 
@@ -97,6 +100,7 @@ static void rm_chassis_process(void)
 {
     rm.vx = (pRC->rc.channel0 - RC_CH_VALUE_OFFSET) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
     rm.vy = (pRC->rc.channel1 - RC_CH_VALUE_OFFSET) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
+    rm.vw = (pRC->rc.channel2 - RC_CH_VALUE_OFFSET) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_R;
 }
 
 void mecanum_cal()
@@ -228,7 +232,7 @@ void separate_gimbal_handle(void)
 {
     chassis.drive_sp = rm.vy;
     chassis.strafe_sp = rm.vx;
-    chassis.rotate_sp = 0;
+    chassis.rotate_sp = rm.vw;
 }
 
 
@@ -265,8 +269,11 @@ static THD_FUNCTION(chassis_control, p)
 //    gimbal_p = get_gimbal_simple_controller();
     bool done = false;
     uint32_t tick = chVTGetSystemTimeX();
-    chassis.ctrl_mode = CHASSIS_STOP;
+    chassis.ctrl_mode = MANUAL_SEPARATE_GIMBAL;
     while (!chThdShouldTerminateX()) {
+        /*
+         * Disable the gimbal following for UWB testing
+         *
         if ( (gimbal_p->state == GIMBAL_STATE_INITING) )
         {
             chassis.position_ref = gimbal_p->axis_init_pos[0]; // Set the yaw as initial
@@ -278,6 +285,7 @@ static THD_FUNCTION(chassis_control, p)
 //            gimbal_initP = gimbal_p->motor[0]._angle;
             chassis.ctrl_mode = MANUAL_FOLLOW_GIMBAL;
         }
+         */
 
         tick += US2ST(CHASSIS_UPDATE_PERIOD_US);
         if (tick > chVTGetSystemTimeX())
@@ -348,7 +356,7 @@ static const char HeadingName[] = "Heading";
 void chassis_init(void)
 {
     memset((void *) &chassis, 0, sizeof(chassisStruct));
-    rotation_center_gimbal = 1;
+//    rotation_center_gimbal = 1;
 
     chassis._pGyro = gyro_get();
     chassis._encoders = can_getChassisMotor();

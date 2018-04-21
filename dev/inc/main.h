@@ -33,4 +33,6 @@
 #include "feeder.h"
 #include "bullet_count_task.h"
 
+#include "pwm_test.h"
+
 #endif
