@@ -34,5 +34,6 @@
 #include "bullet_count_task.h"
 
 #include "pwm_test.h"
+#include "auto_fetch_task.h"
 
 #endif

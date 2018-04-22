@@ -9,7 +9,7 @@ TASKSRC =   \
             $(TASK_PATH)/can_communication_task.c \
             $(TASK_PATH)/feeder.c \
             $(TASK_PATH)/command_mixer_task.c \
-            $(TASK_PATH)/bullet_count_task.c
+            $(TASK_PATH)/bullet_count_task.c auto_fetch_task.c
             # $(TASK_PATH)/error.c \
 
 # Required include directories

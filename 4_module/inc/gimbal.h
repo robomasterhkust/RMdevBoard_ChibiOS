@@ -50,7 +50,7 @@ static const char *gimbal_error_messages[GIMBAL_ERROR_COUNT] =
   "E:Gimbal init timeout"
 };
 
-static const char gimbal_warning_messages[] =
+static const char *gimbal_warning_messages[GIMBAL_WARNING_COUNT] =
 {
   "W:Gimbal control lose frame"
 };

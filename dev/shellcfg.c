@@ -104,7 +104,7 @@ void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
 {
   (void) argc,argv;
   PIMUStruct PIMU = imu_get();
-  GimbalStruct* gimbal = gimbal_get();
+//  GimbalStruct* gimbal = gimbal_get();
 //  GimbalStruct* gimbal = get_gimbal_simple_controller();
     RC_Ctl_t* pRC = RC_get();
     volatile ChassisEncoder_canStruct* encoder = can_getChassisMotor();
@@ -114,8 +114,8 @@ void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
   chprintf(chp,"AccelY: %f\r\n",PIMU->accelData[Y]);
   chprintf(chp,"AccelZ: %f\r\n",PIMU->accelData[Z]);
 
-  chprintf(chp,"Gimbal Pitch: %f\r\n",gimbal->motor[1]._angle);
-  chprintf(chp,"Gimbal Yaw: %f\r\n",gimbal->motor[0]._angle);
+//  chprintf(chp,"Gimbal Pitch: %f\r\n",gimbal->motor[1]._angle);
+//  chprintf(chp,"Gimbal Yaw: %f\r\n",gimbal->motor[0]._angle);
   chprintf(chp,"IMU Pitch: %f\r\n",PIMU->euler_angle[Pitch]);
     chprintf(chp, "rc command: %f\r\n", pRC->rc.channel0);
 

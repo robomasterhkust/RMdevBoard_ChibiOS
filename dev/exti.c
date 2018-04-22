@@ -18,7 +18,14 @@
 //comment out the line below to disable motor testing
 //#define MOTOR_TEST
 
+#define DEBOUNCE_TIME 100
+
 //extern thread_reference_t imu_adis_thread_ref;
+extern thread_reference_t auto_fetch_thread_ref;
+
+static int count = 0;
+static systime_t last_exti_0_time;
+
 /*
  * Turns on all chassis motor for 1 sec when MotorOn is TRUE
  * Thread normally suspended, resumes when shield button is pushed
@@ -65,7 +72,43 @@ static THD_FUNCTION(MotorToggleThread, arg)
 }
 #endif
 
-int count = 0;
+
+/**
+ * @brief EXTI 0 CALLBACK with debouncing
+ *          Configured for the hero switch to trigger the auto fetching function
+ *          Since the switch is noisy, debounce for 10 ms
+ */
+static void ext_switch_cb0(EXTDriver *extp, expchannel_t channel)
+{
+    (void) extp;
+    (void) channel;
+
+    // Debouncing for the mechanical swtich
+    if (chVTGetSystemTimeX() > last_exti_0_time + MS2ST(DEBOUNCE_TIME))
+    {
+        last_exti_0_time = chVTGetSystemTimeX();
+
+        LEDG3_TOGGLE();
+        chSysLockFromISR();
+        chThdResumeI(&auto_fetch_thread_ref, MSG_OK);
+        chSysUnlockFromISR();
+    }
+}
+
+/*
+ * EXTI 1 CALLBACK
+ * Configured for the future
+ */
+static void ext_switch_cb1(EXTDriver *extp, expchannel_t channel)
+{
+    (void) extp;
+    (void) channel;
+
+//    chSysLockFromISR();
+//    chThdResumeI(&auto_fetch_thread_ref, MSG_OK);
+//    chSysUnlockFromISR();
+}
+
 /*
  * EXTI 2 CALLBACK
  * Configured for the button on the RM2018 board
@@ -78,6 +121,20 @@ static void ext_key_cb2(EXTDriver *extp, expchannel_t channel)
     chSysLockFromISR();
     LEDG_TOGGLE(); // Changed to other functions
     chSysUnlockFromISR();
+}
+
+/*
+ * EXTI 3 CALLBACK
+ * Configured for the future
+ */
+static void ext_switch_cb3(EXTDriver *extp, expchannel_t channel)
+{
+    (void) extp;
+    (void) channel;
+
+//    chSysLockFromISR();
+//    chThdResumeI(&auto_fetch_thread_ref, MSG_OK);
+//    chSysUnlockFromISR();
 }
 
 /*
@@ -123,11 +180,16 @@ static void extcb10(EXTDriver *extp, expchannel_t channel)
 
 static const EXTConfig extcfg = {
         {
-                {EXT_CH_MODE_DISABLED, NULL},   //EXTI0
-                {EXT_CH_MODE_DISABLED, NULL},   //EXTI1
+                {EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART |
+                 EXT_MODE_GPIOA, ext_switch_cb0},   //EXTI0
+                {EXT_CH_MODE_DISABLED, NULL},
+//                {EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART |
+//                 EXT_MODE_GPIOA, ext_switch_cb1},   //EXTI1
                 {EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART |
                  EXT_MODE_GPIOB, ext_key_cb2},   //EXTI2
-                {EXT_CH_MODE_DISABLED, NULL},   //EXTI3
+                {EXT_CH_MODE_DISABLED, NULL},
+//                {EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART |
+//                 EXT_MODE_GPIOA, ext_switch_cb3},   //EXTI3
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI4
                 {EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART |
                  EXT_MODE_GPIOC, extcb5},   //EXTI5, ADIS shield
@@ -157,6 +219,9 @@ void extiinit(void)
 {
 
     extStart(&EXTD1, &extcfg);
+    extChannelEnable(&EXTD1, 0);
+    last_exti_0_time = chVTGetSystemTimeX();
+
     extChannelEnable(&EXTD1, 2);
 //    extChannelEnable(&EXTD1, 5);
 //    extChannelEnable(&EXTD1, 10);

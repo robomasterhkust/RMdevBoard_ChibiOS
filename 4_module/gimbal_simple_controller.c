@@ -5,16 +5,14 @@
  *          Used for initial installation and system identification
  * @input: RM6623 encoder, onboard IMU
  */
-#include "gimbal.h"
+#include "gimbal_simple_controller.h"
 #include "ch.h"
 #include "hal.h"
-//#include "canBusProcess.h"
-#include "can_motor_task.h"
 #include "arm_math.h"
 #include "command_mixer_task.h"
 #include "math_misc.h"
 
-GimbalStruct gimbal;
+Gimbal_Simple_Struct gimbal;
 static arm_pid_instance_f32 pid_yaw_pos;
 static arm_pid_instance_f32 pid_yaw_vel;
 static arm_pid_instance_f32 pid_pitch_pos;
@@ -45,7 +43,7 @@ static const char pitch_pos_name[] = "Gimbal Pitch Pos";
     (can_motorSetCurrent(GIMBAL_CAN, GIMBAL_CAN_EID,\
         gimbal.yaw_iq_output, gimbal.pitch_iq_output, 0, 0))
 
-GimbalStruct *get_gimbal_simple_controller(void)
+Gimbal_Simple_Struct *get_gimbal_simple_controller(void)
 {
     return &gimbal;
 }
@@ -62,7 +60,7 @@ static void gimbal_encoderUpdate(void)
     } else {
         gimbal.yaw_wait_count++;
         if (gimbal.yaw_wait_count > GIMBAL_CONNECTION_ERROR_COUNT) {
-            gimbal.errorFlag |= GIMBAL_YAW_NOT_CONNECTED;
+            gimbal.errorFlag |= GIMBAL_SIMPLE_YAW_NOT_CONNECTED;
             gimbal.yaw_wait_count = 1;
         }
     }
@@ -77,7 +75,7 @@ static void gimbal_encoderUpdate(void)
     } else {
         gimbal.pitch_wait_count++;
         if (gimbal.pitch_wait_count > GIMBAL_CONNECTION_ERROR_COUNT) {
-            gimbal.errorFlag |= GIMBAL_PITCH_NOT_CONNECTED;
+            gimbal.errorFlag |= GIMBAL_SIMPLE_PITCH_NOT_CONNECTED;
             gimbal.pitch_wait_count = 1;
         }
     }
@@ -136,7 +134,7 @@ static THD_FUNCTION(gimbal_simple_controller, p)
             chThdSleepUntil(tick);
         } else {
             tick = gimbal.timestamp;
-            gimbal.errorFlag |= GIMBAL_CONTROL_LOSE_FRAME;
+            gimbal.errorFlag |= GIMBAL_SIMPLE_CONTROL_LOSE_FRAME;
         }
         gimbal_canUpdate();
     }
@@ -147,7 +145,7 @@ static THD_FUNCTION(gimbal_simple_controller, p)
  */
 void gimbal_simpler_controller_init(void)
 {
-    memset(&gimbal, 0, sizeof(GimbalStruct));
+    memset(&gimbal, 0, sizeof(Gimbal_Simple_Struct));
     gimbal._encoder_can = can_getGimbalMotor();
     gimbal._pIMU = imu_get();
     chThdSleepMilliseconds(3);

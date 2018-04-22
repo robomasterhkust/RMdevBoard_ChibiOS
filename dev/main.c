@@ -34,7 +34,7 @@ int main(void)
     /* Init sequence 1: central controller, utility */
     shellStart();
     params_init();
-    detect_error_task_init();
+//    detect_error_task_init();
     // sdlog_init();
     extiinit();
 
@@ -55,27 +55,35 @@ int main(void)
     RC_init();
     judgeinit();
     test_init_all_pwm();
-
+/*
     while (!is_motor_power_on()) {
         LEDG8_TOGGLE();
         chThdSleepMilliseconds(200);
     }
+*/
 
     /* Init sequence 4: actuators, display */
     // command_mixer_init();
     gimbal_init();
+//    gimbal_simpler_controller_init();
     chassis_init();
     // shooter_init();
 
     feeder_init();
 
+    /* Init sequence 5: customized functions */
+    auto_fetch_task_init();
+
     while (!chThdShouldTerminateX()) {
         LEDR_TOGGLE();
+/*
+
         if (!power_failure()) {
             wdgReset(&WDGD1);
         } else {
             gimbal_kill();
         }
+*/
 
         chThdSleepMilliseconds(200);
     }

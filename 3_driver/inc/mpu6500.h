@@ -6,6 +6,7 @@
 //#define IMU_ACCL_USE_LPF
 
 #include "params.h"
+#include "hal.h"
 
 typedef enum {
     X = 0U,

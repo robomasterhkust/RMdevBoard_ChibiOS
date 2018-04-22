@@ -183,4 +183,3 @@ void can_motorSetCurrent(CANDriver *const CANx,
 
     canTransmit(CANx, CAN_ANY_MAILBOX, &txmsg, MS2ST(100));
 }
-
