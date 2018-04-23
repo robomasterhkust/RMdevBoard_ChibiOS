@@ -34,8 +34,12 @@ static inline void  can_processSendDbusEncoder
 static inline void can_process_ros_command(volatile ROS_Msg_Struct * msg, const CANRxFrame* const rxmsg)
 {
     chSysLock();
-    msg->pitch_vel_cmd = (int16_t)rxmsg->data16[0];
-    msg->yaw_vel_cmd = (int16_t)rxmsg->data16[1];
+    msg->chassis_vx = (int16_t)rxmsg->data16[0];
+    msg->chassis_vy = (int16_t)rxmsg->data16[1];
+    msg->chassis_vw = (int16_t)rxmsg->data16[2];
+    msg->pitch_vel_cmd = (int16_t)rxmsg->data16[3];
+    msg->yaw_vel_cmd = (int16_t)rxmsg->data16[4];
+    chSysUnlock();
 }
 
 /**

@@ -18,6 +18,9 @@ typedef struct{
 } Gimbal_Send_Dbus_canStruct;
 
 typedef struct {
+    int16_t chassis_vx;
+    int16_t chassis_vy;
+    int16_t chassis_vw;
     int16_t pitch_vel_cmd;
     int16_t yaw_vel_cmd;
 } ROS_Msg_Struct;
