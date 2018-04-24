@@ -1167,10 +1167,10 @@
                                      PIN_OSPEED_HIGH(GPIOH_PIN15))
 #define VAL_GPIOH_PUPDR             (PIN_PUPDR_FLOATING(GPIOH_OSC_IN) |     \
                                      PIN_PUPDR_FLOATING(GPIOH_OSC_OUT) |    \
-                                     PIN_PUPDR_PULLUP(GPIOH_PIN2_POWER1) |       \
-                                     PIN_PUPDR_PULLUP(GPIOH_PIN3_POWER2) |       \
-                                     PIN_PUPDR_PULLUP(GPIOH_PIN4_POWER3) |       \
-                                     PIN_PUPDR_PULLUP(GPIOH_PIN5_POWER4) |       \
+                                     PIN_PUPDR_PULLDOWN(GPIOH_PIN2_POWER1) |       \
+                                     PIN_PUPDR_PULLDOWN(GPIOH_PIN3_POWER2) |       \
+                                     PIN_PUPDR_PULLDOWN(GPIOH_PIN4_POWER3) |       \
+                                     PIN_PUPDR_PULLDOWN(GPIOH_PIN5_POWER4) |       \
                                      PIN_PUPDR_PULLDOWN(GPIOH_TIM12_CH1_BUZZER) |       \
                                      PIN_PUPDR_FLOATING(GPIOH_PIN7) |       \
                                      PIN_PUPDR_FLOATING(GPIOH_PIN8) |       \
