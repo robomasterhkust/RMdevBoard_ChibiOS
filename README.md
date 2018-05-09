@@ -36,4 +36,7 @@ brew install px4-dev
 ```
 
 Ubuntu 
-https://raw.githubusercontent.com/PX4/Devguide/master/build_scripts/ubuntu_sim_common_deps.sh
+```
+sudo apt-get install gcc-arm-none-eabi openocd -y
+```
+
