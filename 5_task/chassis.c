@@ -4,7 +4,6 @@
  *  Created on: 07 April, 2018
  *      Author: Kuang Zeng, modified by Beck Pang
  */
-#include <can_communication_task.h>
 #include "ch.h"
 #include "hal.h"
 
@@ -20,6 +19,7 @@
 #include "gimbal.h"
 //#include "keyboard.h"
 #include "judge.h"
+#include "chassis_velocity_generator.h"
 
 static chassisStruct chassis;
 GimbalStruct *gimbal_p;
@@ -237,9 +237,12 @@ static void chassis_operation_func(int16_t left_right, int16_t front_back, int16
 */
 void separate_gimbal_handle(void)
 {
-    chassis.drive_sp = rm.vy;
-    chassis.strafe_sp = rm.vx;
-    chassis.rotate_sp = rm.vw;
+    chassis.drive_sp  = chassis_velocity_generator(rm.vy);
+    chassis.strafe_sp = chassis_velocity_generator(rm.vx);
+    chassis.rotate_sp = chassis_velocity_generator(rm.vw);
+//    chassis.drive_sp = rm.vy;
+//    chassis.strafe_sp = rm.vx;
+//    chassis.rotate_sp = rm.vw;
 }
 
 
