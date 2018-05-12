@@ -9,7 +9,11 @@
 #include "can_communication_task.h"
 
 static volatile Gimbal_Send_Dbus_canStruct gimbal_send_dbus;
-static volatile ROS_Msg_Struct ros_msg;
+static volatile ROS_Msg_Struct ros_msg={
+        .chassis_vx = 0,
+        .chassis_vy = 0,
+        .chassis_vw = 0
+};
 
 volatile Gimbal_Send_Dbus_canStruct* can_get_sent_dbus(void){
     return &gimbal_send_dbus;
@@ -37,8 +41,8 @@ static inline void can_process_ros_command(volatile ROS_Msg_Struct * msg, const 
     msg->chassis_vx = (int16_t)rxmsg->data16[0];
     msg->chassis_vy = (int16_t)rxmsg->data16[1];
     msg->chassis_vw = (int16_t)rxmsg->data16[2];
-    msg->pitch_vel_cmd = (int16_t)rxmsg->data16[3];
-    msg->yaw_vel_cmd = (int16_t)rxmsg->data16[4];
+//    msg->pitch_vel_cmd = (int16_t)rxmsg->data16[3];
+//    msg->yaw_vel_cmd = (int16_t)rxmsg->data16[4];
     chSysUnlock();
 }
 

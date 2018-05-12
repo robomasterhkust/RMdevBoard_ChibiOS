@@ -11,7 +11,7 @@
 #ifndef INC_CHASSIS_H_
 #define INC_CHASSIS_H_
 
-#define CHASSIS_CAN  &CAND2        // Later should be CAND2
+#define CHASSIS_CAN  &CAND1
 #define CHASSIS_CAN_EID  0x200
 
 #define CHASSIS_UPDATE_FREQ 500

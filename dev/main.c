@@ -41,9 +41,9 @@ int main(void)
     /* Init sequence 2: Power management */
     LASER_OFF();
     POWER1_OFF();
-    POWER2_OFF();
-    POWER3_OFF();
-    POWER4_OFF();
+    POWER1_OFF();
+    POWER1_OFF();
+    POWER1_OFF();
     LEDG1_ON();
 
     /* Init sequence 3: sensors, comm */
@@ -54,7 +54,7 @@ int main(void)
     can_bus_init();
     RC_init();
     judgeinit();
-    test_init_all_pwm();
+//    test_init_all_pwm();
 /*
     while (!is_motor_power_on()) {
         LEDG8_TOGGLE();
@@ -64,15 +64,14 @@ int main(void)
 
     /* Init sequence 4: actuators, display */
     // command_mixer_init();
-    gimbal_init();
-//    gimbal_simpler_controller_init();
+//    gimbal_init();
+    // gimbal_simpler_controller_init();
     chassis_init();
     // shooter_init();
 
-    feeder_init();
+//    feeder_init();
 
     /* Init sequence 5: customized functions */
-    auto_fetch_task_init();
 
     while (!chThdShouldTerminateX()) {
         LEDR_TOGGLE();

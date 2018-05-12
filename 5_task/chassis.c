@@ -4,10 +4,12 @@
  *  Created on: 07 April, 2018
  *      Author: Kuang Zeng, modified by Beck Pang
  */
+#include <can_communication_task.h>
 #include "ch.h"
 #include "hal.h"
 
 #include "can_motor_task.h"
+#include "can_communication_task.h"
 #include "gimbal_simple_controller.h"
 #include "dbus.h"
 #include "chassis.h"
@@ -23,6 +25,7 @@ static chassisStruct chassis;
 GimbalStruct *gimbal_p;
 //Gimbal_Send_Dbus_canStruct* Dbus_p;
 RC_Ctl_t* pRC;
+volatile ROS_Msg_Struct* pROSMsg;
 RC_Ctl_t* Rc;
 judge_fb_t* JudgeP;
 
@@ -101,6 +104,10 @@ static void rm_chassis_process(void)
     rm.vx = (pRC->rc.channel0 - RC_CH_VALUE_OFFSET) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
     rm.vy = (pRC->rc.channel1 - RC_CH_VALUE_OFFSET) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
     rm.vw = (pRC->rc.channel2 - RC_CH_VALUE_OFFSET) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_R;
+
+    rm.vx += (float)pROSMsg->chassis_vx;
+    rm.vy += (float)pROSMsg->chassis_vy;
+    rm.vw += (float)pROSMsg->chassis_vw;
 }
 
 void mecanum_cal()
@@ -264,6 +271,7 @@ static THD_FUNCTION(chassis_control, p)
     chRegSetThreadName("chassis controller");
 
     pRC = RC_get();
+    pROSMsg = can_get_ros_msg();
 //    pGimbalRC = can_get_sent_dbus();
     gimbal_p = gimbal_get();
 //    gimbal_p = get_gimbal_simple_controller();
