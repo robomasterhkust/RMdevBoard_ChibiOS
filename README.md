@@ -17,7 +17,7 @@ HKUST RoboMaster ENTERPRIZE team embedded development environment
 - tools
 - docs
 
-Architecture explained:
+Architecture explained:Ma
 - os:   chibiOS / RT, real time operating system;
 - hw:  hardware, board related documentation;
 - dev: devices, drivers, and external libraries;
@@ -27,3 +27,16 @@ Architecture explained:
 
 ## Initial calibration and turning
 See 6_tool/README.md for detailed procedure
+
+## Dependency
+MacOS use homebrew to install the embedded toolchain
+```
+brew tap PX4/px4
+brew install px4-dev
+```
+
+Ubuntu 
+```
+sudo apt-get install gcc-arm-none-eabi openocd -y
+```
+
