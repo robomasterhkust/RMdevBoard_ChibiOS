@@ -2,7 +2,7 @@
 #include "hal.h"
 
 #include "params.h"
-//#include "canBusProcess.h"
+#include "can.h"
 #include "can_motor_task.h"
 #include "dbus.h"
 
@@ -11,13 +11,13 @@
 #include "feeder.h"
 
 #define FEEDER_CAN &CAND1
-#define FEEDER_CAN_EID 0x200
+#define FEEDER_CAN_EID CAN_C620_EXTRA_EID
 
 #define GEAR_BOX (36.0f)
 
 #define feeder_canUpdate() \
     (can_motorSetCurrent(FEEDER_CAN, FEEDER_CAN_EID,\
-        set_speed, 0, 0, 0))
+        0, 0, set_speed, 0))
 
 #define feeder_canStop() \
     (can_motorSetCurrent(FEEDER_CAN, FEEDER_CAN_EID,\
@@ -238,7 +238,7 @@ static const char subname_feeder_PID[] = "KP KI KD";
 void feeder_init(void){
 
 
-    feeder_encode = can_getChassisMotor();
+    feeder_encode = can_getExtraMotor();
     p_dbus = RC_get();
 
     params_set((param_t*)&vel_pid, 14,4,(param_name_t)FEEDER_VEL,subname_feeder_PID,PARAM_PUBLIC);

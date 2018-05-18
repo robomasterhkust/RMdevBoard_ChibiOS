@@ -34,55 +34,52 @@ int main(void)
     /* Init sequence 1: central controller, utility */
     shellStart();
     params_init();
-//    detect_error_task_init();
+    // detect_error_task_init();
     // sdlog_init();
-    extiinit();
+    // extiinit();
 
     /* Init sequence 2: Power management */
     LASER_OFF();
-    POWER1_OFF();
-    POWER1_OFF();
-    POWER1_OFF();
-    POWER1_OFF();
-    LEDG1_ON();
+//    POWER1_OFF();
+//    POWER1_OFF();
+//    POWER1_OFF();
+//    POWER1_OFF();
+//    LEDG1_ON();
+    LEDR_ON();
 
     /* Init sequence 3: sensors, comm */
     attitude_estimator_init();
     // Initialize ADIS16265 single axial gyroscope
-    // single_axis_gyro_init_adis16265();
+    single_axis_gyro_init_adis16265();
     // imu_init_adis16470();
     can_bus_init();
     RC_init();
-    judgeinit();
-//    test_init_all_pwm();
-/*
-    while (!is_motor_power_on()) {
-        LEDG8_TOGGLE();
-        chThdSleepMilliseconds(200);
-    }
-*/
+    // judgeinit();
+    // test_init_all_pwm();
+
+//    while (!is_motor_power_on()) {
+//        LEDG8_TOGGLE();
+//        chThdSleepMilliseconds(200);
+//    }
 
     /* Init sequence 4: actuators, display */
     // command_mixer_init();
-//    gimbal_init();
-    // gimbal_simpler_controller_init();
-    chassis_init();
-    // shooter_init();
+    gimbal_init();
+    shooter_init();
+    feeder_init();
 
-//    feeder_init();
+    // chassis_init();
 
     /* Init sequence 5: customized functions */
 
     while (!chThdShouldTerminateX()) {
         LEDR_TOGGLE();
-/*
 
-        if (!power_failure()) {
-            wdgReset(&WDGD1);
-        } else {
-            gimbal_kill();
-        }
-*/
+//        if (!power_failure()) {
+//            wdgReset(&WDGD1);
+//        } else {
+//            gimbal_kill();
+//        }
 
         chThdSleepMilliseconds(200);
     }

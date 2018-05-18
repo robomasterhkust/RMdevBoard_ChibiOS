@@ -79,7 +79,7 @@ void can_process_extra_encoder(const CANRxFrame * rxmsg);
 void can_process_gimbal_encoder(const CANRxFrame * rxmsg);
 
 void can_motorSetCurrent(CANDriver * CANx,
-                         uint16_t EID,
+                         uint16_t SID,
                          int16_t cm1_iq,
                          int16_t cm2_iq,
                          int16_t cm3_iq,

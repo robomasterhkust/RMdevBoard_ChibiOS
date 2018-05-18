@@ -1,22 +1,23 @@
-//
+//yaw_vel_cmd
 // Created by beck on 5/4/2018.
 //
 
-#include <can_communication_task.h>
-#include <can_lld.h>
 #include "ch.h"
 #include "hal.h"
+#include "dbus.h"
 #include "can_communication_task.h"
 
-static volatile Gimbal_Send_Dbus_canStruct gimbal_send_dbus;
+static volatile Gimbal_Send_Dbus_canStruct dbus_from_gimbal_board;
 static volatile ROS_Msg_Struct ros_msg={
-        .chassis_vx = 0,
-        .chassis_vy = 0,
-        .chassis_vw = 0
+        .chassis_vx = RC_CH_VALUE_OFFSET,
+        .chassis_vy = RC_CH_VALUE_OFFSET,
+        .chassis_vw = RC_CH_VALUE_OFFSET,
+        .pitch_vel_cmd = 0,
+        .yaw_vel_cmd = 0
 };
 
 volatile Gimbal_Send_Dbus_canStruct* can_get_sent_dbus(void){
-    return &gimbal_send_dbus;
+    return &dbus_from_gimbal_board;
 }
 
 volatile ROS_Msg_Struct* can_get_ros_msg(void) {
@@ -55,7 +56,7 @@ void can_process_communication(const CANRxFrame * const rxmsg)
     switch (rxmsg->SID)
     {
         case CAN_GIMBAL_BOARD_ID:
-            can_processSendDbusEncoder(&gimbal_send_dbus,rxmsg);
+            can_processSendDbusEncoder(&dbus_from_gimbal_board,rxmsg);
             break;
         case CAN_CHASSIS_BOARD_ID:
             break;

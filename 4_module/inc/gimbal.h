@@ -1,6 +1,7 @@
 #ifndef _GIMBAL_H_
 #define _GIMBAL_H_
 
+//#include "canBusProcess.h"
 #include "can_bus.h"
 #include "can_motor_task.h"
 #include "mpu6500.h"
@@ -14,97 +15,100 @@
 //#define GIMBAL_INIT_TEST          //Set Initialization position and PID value
 //#define GIMBAL_FF_TEST              //Set Initialization position and PID value
 //#define GIMBAL_USE_MAVLINK_CMD
-#define GIMBAL_USE_CAN_CMD
 #define GIMBAL_ENCODER_USE_SPEED
+
+//gimbal maximum movement speed in radian
+#define GIMBAL_MAX_SPEED_PITCH      2.0f
+#define GIMBAL_MAX_SPEED_YAW        4.0f
 
 #define GIMBAL_CAN  &CAND1
 #define GIMBAL_CAN_EID  0x1FF
 
-#define GIMBAL_YAW_GEAR 1.0f
+#define GIMBAL_YAW_GEAR 0.533f
 
 typedef enum {
-  GIMBAL_STATE_UNINIT = 0,
-  GIMBAL_STATE_INITING,
-  GIMBAL_STATE_READY,
-  GIMBAL_STATE_FALLOFF,               //The vehicle is turned over
-  GIMBAL_STATE_180DEG_TRANSITION,     //Reserved for sentry gimbal
-  GIMBAL_YAW_AT_UP_LIMIT = 1 << 7,
-  GIMBAL_YAW_AT_LOW_LIMIT = 1 << 6,
-  GIMBAL_PITCH_AT_UP_LIMIT = 1 << 5,
-  GIMBAL_PITCH_AT_LOW_LIMIT = 1 << 4,
+    GIMBAL_STATE_UNINIT = 0,
+    GIMBAL_STATE_INITING,
+    GIMBAL_STATE_READY,
+    GIMBAL_STATE_FALLOFF,               //The vehicle is turned over
+    GIMBAL_STATE_180DEG_TRANSITION,     //Reserved for sentry gimbal
+    GIMBAL_YAW_AT_UP_LIMIT = 1 << 7,
+    GIMBAL_YAW_AT_LOW_LIMIT = 1 << 6,
+    GIMBAL_PITCH_AT_UP_LIMIT = 1 << 5,
+    GIMBAL_PITCH_AT_LOW_LIMIT = 1 << 4,
 } gimbal_state_t;
 
 typedef enum {
-  GIMBAL_YAW_NOT_CONNECTED = 1<<0,
-  GIMBAL_PITCH_NOT_CONNECTED = 1<<1,
-  GIMBAL_INITALIZATION_TIMEOUT = 1<<2,
-  GIMBAL_CONTROL_LOSE_FRAME = 1<<31
+    GIMBAL_YAW_NOT_CONNECTED = 1<<0,
+    GIMBAL_PITCH_NOT_CONNECTED = 1<<1,
+    GIMBAL_INITALIZATION_TIMEOUT = 1<<2,
+    GIMBAL_CONTROL_LOSE_FRAME = 1<<31
 } gimbal_error_t;
 
 #define GIMBAL_ERROR_COUNT    3U
 #define GIMBAL_WARNING_COUNT  1U
 static const char *gimbal_error_messages[GIMBAL_ERROR_COUNT] =
-{
-  "E:Gimbal yaw not connected",
-  "E:Gimbal pitch not connected",
-  "E:Gimbal init timeout"
-};
+        {
+                "E:Gimbal yaw not connected",
+                "E:Gimbal pitch not connected",
+                "E:Gimbal init timeout"
+        };
 
 static const char *gimbal_warning_messages[GIMBAL_WARNING_COUNT] =
-{
-  "W:Gimbal control lose frame"
-};
+        {
+                "W:Gimbal control lose frame"
+        };
 
 typedef struct{
-  uint8_t _wait_count;
-  float _angle;
-  float _current;
+    uint8_t _wait_count;
+    float _angle;
+    float _current;
 
-  #ifdef GIMBAL_ENCODER_USE_SPEED
+#ifdef GIMBAL_ENCODER_USE_SPEED
     float _speed_enc;
     int8_t _dir;
-  #endif
+#endif
 
-  float _speed_cmd;
-  float _speed;
+    float _speed_cmd;
+    float _speed;
 } GimbalMotorStruct;
 
 typedef struct{
-  uint8_t state;
+    uint8_t state;
 
-  int32_t rev;
-  float prev_yaw_cmd;
-  uint32_t errorFlag;
+    int32_t rev;
+    float prev_yaw_cmd;
+    uint32_t errorFlag;
 
-  volatile IMUStruct* _pIMU;
-  volatile GimbalEncoder_canStruct* _encoder;
+    volatile IMUStruct* _pIMU;
+    volatile GimbalEncoder_canStruct* _encoder;
 
-  /* motor status */
-  volatile GimbalMotorStruct motor[2];
+    /* motor status */
+    volatile GimbalMotorStruct motor[2];
 
-  float yaw_atti_cmd;
-  float pitch_atti_cmd;
+    float yaw_atti_cmd;
+    float pitch_atti_cmd;
 
-  float chassis_yaw;
-  float d_yaw;
+    float chassis_yaw;
+    float d_yaw;
 
-  /*Mechanical parameters*/
-  param_t axis_init_pos[4];
-  param_t axis_ff_ext[6];
-  param_t axis_ff_int[2];
-  param_t axis_limit[4];
+    /*Mechanical parameters*/
+    param_t axis_init_pos[2];
+    param_t axis_ff_ext[6];
+    param_t axis_ff_int[2];
+    param_t axis_limit[4];
 
-  /*first three subparams: pitch axis accelerometer maximum in XYZ
-  last three subparams: yaw axis accelerometer maximum in XYZ when pitch at maximum*/
-  param_t axis_ff_accel[6];
+    /*first three subparams: pitch axis accelerometer maximum in XYZ
+    last three subparams: yaw axis accelerometer maximum in XYZ when pitch at maximum*/
+    param_t axis_ff_accel[6];
 
-  /* TODO: control intermidiate current output (phase prediction)*/
-  float yaw_iq_cmd;
-  float pitch_iq_cmd;
+    /* TODO: control intermidiate current output (phase prediction)*/
+    float yaw_iq_cmd;
+    float pitch_iq_cmd;
 
-  /* control output*/
-  float yaw_iq_output;
-  float pitch_iq_output;
+    /* control output*/
+    float yaw_iq_output;
+    float pitch_iq_output;
 
 }  GimbalStruct;
 

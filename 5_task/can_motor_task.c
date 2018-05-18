@@ -153,17 +153,18 @@ void can_process_gimbal_encoder(const CANRxFrame * rxmsg)
  *
  * @notapi
  */
+CANTxFrame txmsg;
 void can_motorSetCurrent(CANDriver *const CANx,
-                         const uint16_t EID,
+                         const uint16_t SID,
                          const int16_t cm1_iq,
                          const int16_t cm2_iq,
                          const int16_t cm3_iq,
                          const int16_t cm4_iq)
 {
-    CANTxFrame txmsg;
+
 
     txmsg.IDE = CAN_IDE_STD;
-    txmsg.EID = EID;
+    txmsg.SID = SID;
     txmsg.RTR = CAN_RTR_DATA;
     txmsg.DLC = 0x08;
 

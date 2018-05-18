@@ -88,7 +88,7 @@ static void ext_switch_cb0(EXTDriver *extp, expchannel_t channel)
     {
         last_exti_0_time = chVTGetSystemTimeX();
 
-        LEDG3_TOGGLE();
+        // LEDG3_TOGGLE();
         chSysLockFromISR();
         chThdResumeI(&auto_fetch_thread_ref, MSG_OK);
         chSysUnlockFromISR();

@@ -227,6 +227,19 @@ void cmd_calibrate(BaseSequentialStream * chp, int argc, char *argv[])
         chprintf(chp,"Calibration: gyro, accl, adi, adi-full\r\n");
 }
 
+void cmd_gimbal_encoder(BaseSequentialStream * chp, int argc, char *argv[])
+{
+    (void) argc,argv;
+    GimbalStruct* gimbal = gimbal_get();
+    chprintf(chp,"gimbalPitch: %f\r\n",gimbal->motor[GIMBAL_PITCH]._angle);
+    chprintf(chp,"gimbalYaw:   %f\r\n",gimbal->motor[GIMBAL_YAW]._angle);
+
+    chprintf(chp,"VelPitch: %f\r\n",gimbal->motor[GIMBAL_PITCH]._speed);
+    chprintf(chp,"VelYaw:   %f\r\n",gimbal->motor[GIMBAL_YAW]._speed);
+    chprintf(chp,"VelEncPitch: %f\r\n",gimbal->motor[GIMBAL_PITCH]._speed_enc);
+    chprintf(chp,"VelEncYaw:   %f\r\n",gimbal->motor[GIMBAL_YAW]._speed_enc);
+}
+
 void cmd_temp(BaseSequentialStream * chp, int argc, char *argv[])
 {
   (void) argc,argv;
@@ -301,6 +314,7 @@ static const ShellCommand commands[] =
 {
   {"test", cmd_test},
   {"cal", cmd_calibrate},
+  {"g", cmd_gimbal_encoder},
   {"\xEE", cmd_data},
 //#ifdef MAVLINK_COMM_TEST
 //  {"mavlink", cmd_mavlink},

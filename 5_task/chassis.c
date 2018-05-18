@@ -21,11 +21,13 @@
 #include "judge.h"
 #include "chassis_velocity_generator.h"
 
+//#define CHASSIS_CONNECT_DBUS
 static chassisStruct chassis;
 GimbalStruct *gimbal_p;
-//Gimbal_Send_Dbus_canStruct* Dbus_p;
+
 RC_Ctl_t* pRC;
 volatile ROS_Msg_Struct* pROSMsg;
+volatile Gimbal_Send_Dbus_canStruct* pGimbal;
 RC_Ctl_t* Rc;
 judge_fb_t* JudgeP;
 
@@ -101,9 +103,14 @@ float RC_RESOLUTION = 660.0f;
 /* handle dbus mixer */
 static void rm_chassis_process(void)
 {
+#ifdef CHASSIS_CONNECT_DBUS
     rm.vx = (pRC->rc.channel0 - RC_CH_VALUE_OFFSET) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
     rm.vy = (pRC->rc.channel1 - RC_CH_VALUE_OFFSET) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
     rm.vw = (pRC->rc.channel2 - RC_CH_VALUE_OFFSET) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_R;
+#else
+    rm.vx = (pGimbal->channel0 - RC_CH_VALUE_OFFSET) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
+    rm.vy = (pGimbal->channel1 - RC_CH_VALUE_OFFSET) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
+#endif
 
     rm.vx += (float)pROSMsg->chassis_vx;
     rm.vy += (float)pROSMsg->chassis_vy;
@@ -237,12 +244,12 @@ static void chassis_operation_func(int16_t left_right, int16_t front_back, int16
 */
 void separate_gimbal_handle(void)
 {
-    chassis.drive_sp  = chassis_velocity_generator(rm.vy);
-    chassis.strafe_sp = chassis_velocity_generator(rm.vx);
-    chassis.rotate_sp = chassis_velocity_generator(rm.vw);
-//    chassis.drive_sp = rm.vy;
-//    chassis.strafe_sp = rm.vx;
-//    chassis.rotate_sp = rm.vw;
+//    chassis.drive_sp  = chassis_velocity_generator(rm.vy);
+//    chassis.strafe_sp = chassis_velocity_generator(rm.vx);
+//    chassis.rotate_sp = chassis_velocity_generator(rm.vw);
+    chassis.drive_sp = rm.vy;
+    chassis.strafe_sp = rm.vx;
+    chassis.rotate_sp = rm.vw;
 }
 
 
@@ -274,13 +281,18 @@ static THD_FUNCTION(chassis_control, p)
     chRegSetThreadName("chassis controller");
 
     pRC = RC_get();
+    pGimbal = can_get_sent_dbus();
     pROSMsg = can_get_ros_msg();
 //    pGimbalRC = can_get_sent_dbus();
     gimbal_p = gimbal_get();
 //    gimbal_p = get_gimbal_simple_controller();
     bool done = false;
     uint32_t tick = chVTGetSystemTimeX();
+#ifdef CHASSIS_CONNECT_DBUS
     chassis.ctrl_mode = MANUAL_SEPARATE_GIMBAL;
+#else
+    chassis.ctrl_mode = MANUAL_FOLLOW_GIMBAL;
+#endif
     while (!chThdShouldTerminateX()) {
         /*
          * Disable the gimbal following for UWB testing
