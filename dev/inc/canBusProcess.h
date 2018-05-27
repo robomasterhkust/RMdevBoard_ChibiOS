@@ -7,7 +7,7 @@
 #include "string.h"
 #include "adis16265.h"
 
-#define BARREL_CAN        &CAND1
+#define BARREL_CAN        &CAND2
 
 #define GIMBAL_MOTOR_NUM  2U
 #define CHASSIS_MOTOR_NUM 4U
@@ -93,7 +93,6 @@ volatile GimbalEncoder_canStruct* can_getGimbalMotor(void);
 volatile ChassisEncoder_canStruct* can_getChassisMotor(void);
 volatile ChassisEncoder_canStruct* can_getExtraMotor(void);
 volatile Gimbal_Send_Dbus_canStruct* can_get_sent_dbus(void);
-extern Gimbal_Send_Dbus_canStruct* pRC;
 volatile BarrelStatus_canStruct* can_get_sent_barrelStatus(void);
 
 void can_processInit(void);

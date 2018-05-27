@@ -9,7 +9,7 @@
 #ifndef INC_CHASSIS_H_
 #define INC_CHASSIS_H_
 
-#define CHASSIS_CAN  &CAND2        // Later should be CAND2
+#define CHASSIS_CAN  &CAND1        //CAND1
 #define CHASSIS_CAN_EID  0x200
 
 #define CHASSIS_UPDATE_FREQ 500
@@ -138,6 +138,7 @@ typedef struct{
   chassis_mode_e  last_ctrl_mode;
 
   float pid_last_error;
+  bool scale_down;
   uint8_t errorFlag;
 
   ChassisEncoder_canStruct* _encoders;

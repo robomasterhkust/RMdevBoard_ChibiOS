@@ -20,14 +20,13 @@
  
 static volatile chassisStruct chassis; 
 GimbalEncoder_canStruct* gimbal_p; 
-Gimbal_Send_Dbus_canStruct* Dbus_p; 
 RC_Ctl_t* Rc;
 judge_fb_t* JudgeP;
 pi_controller_t motor_vel_controllers[CHASSIS_MOTOR_NUM]; 
 pid_controller_t chassis_heading_controller; 
 lpfilterStruct lp_speed[CHASSIS_MOTOR_NUM]; 
 rc_ctrl_t rm;
-//Gimbal_Send_Dbus_canStruct* pRC;
+Gimbal_Send_Dbus_canStruct* pRC;
 float gimbal_initP = 0; 
 float record = 0; 
  
@@ -50,7 +49,7 @@ chassisStruct* chassis_get(void)
 static void chassis_encoderUpdate(void) 
 { 
   uint8_t i; 
-  for (i = 0; i < CHASSIS_MOTOR_NUM; i++) 
+  for (i = 0; i < CHASSIS_MOTOR_NUM; i++)
   { 
     if(chassis._encoders[i].updated) 
     { 
@@ -109,6 +108,7 @@ static void rm_chassis_process(void){
 
     rm.vx =  (pRC->channel0 - 1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
     rm.vy =   (pRC->channel1 - 1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
+
 /*
      rm.vx =  (Rc->rc.channel0 - 1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
      rm.vy =   (Rc->rc.channel1 - 1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
@@ -122,10 +122,9 @@ static THD_FUNCTION(chassis_control, p)
   (void)p; 
   chRegSetThreadName("chassis controller"); 
  
-  //pRC = can_get_sent_dbus();
+  pRC = can_get_sent_dbus();
   JudgeP = judgeDataGet();
   gimbal_p = can_getGimbalMotor(); 
-  Dbus_p = can_get_sent_dbus(); 
   Rc = RC_get();
   bool done = false; 
   uint32_t tick = chVTGetSystemTimeX(); 
@@ -133,17 +132,19 @@ static THD_FUNCTION(chassis_control, p)
   while(!chThdShouldTerminateX()) 
   { 
 
-    if(Dbus_p->updated && !done){
+    if(pRC->updated && !done){
       done = true; 
       chassis.position_ref = gimbal_p[0].radian_angle;
       gimbal_initP = gimbal_p[0].radian_angle; 
       chassis.ctrl_mode = MANUAL_FOLLOW_GIMBAL; 
-    } 
+    }
+    /*
     if(done){ 
       if(fabsf(gimbal_p[0].radian_angle - gimbal_initP) > 3* M_PI/4){
         chassis.ctrl_mode = CHASSIS_STOP; 
       } 
     } 
+*/
 
     tick += US2ST(CHASSIS_UPDATE_PERIOD_US); 
     if(tick > chVTGetSystemTimeX()) 
@@ -153,8 +154,8 @@ static THD_FUNCTION(chassis_control, p)
       tick = chVTGetSystemTimeX(); 
     } 
     chassis_encoderUpdate(); 
-    if(keyboard_enable()){
-      keyboard_chassis_process(&chassis);
+    if(keyboard_enable(pRC)){
+      keyboard_chassis_process(&chassis,pRC);
       rm.vx = 0;
       rm.vy = 0;
     }
@@ -190,6 +191,7 @@ static THD_FUNCTION(chassis_control, p)
       }break; 
     } 
     mecanum_cal();
+    //power_limit_handle();
     drive_motor(); 
   } 
 } 
@@ -303,7 +305,7 @@ void mecanum_cal(){
 //  VAL_LIMIT(chassis.drive_sp, -MAX_CHASSIS_VX_SPEED, MAX_CHASSIS_VX_SPEED);  //mm/s 
 //  VAL_LIMIT(chassis.strafe_sp, -MAX_CHASSIS_VY_SPEED, MAX_CHASSIS_VY_SPEED);  //mm/s 
 //  VAL_LIMIT(chassis.rotate_sp, -MAX_CHASSIS_VR_SPEED, MAX_CHASSIS_VR_SPEED);  //deg/s 
- 
+
   chassis._motors[FRONT_RIGHT].speed_sp = 
     (chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp*rotate_ratio_fr)*wheel_rpm_ratio;   // CAN ID: 0x201 
   chassis._motors[BACK_RIGHT].speed_sp = 
@@ -312,31 +314,32 @@ void mecanum_cal(){
     (chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp*rotate_ratio_fl)*wheel_rpm_ratio;       // CAN ID: 0x203 
   chassis._motors[BACK_LEFT].speed_sp = 
     (-1*chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp*rotate_ratio_bl)*wheel_rpm_ratio;     // CAN ID: 0x204 
+
+
   float max = 0.0f; 
   //find max item 
-    {int i; 
-  for (i = 0; i < 4; i++) 
+  for (int i = 0; i < 4; i++)
   { 
-    if (fabsf(chassis._motors[i].speed_sp) > max) 
-      max = fabsf(chassis._motors[i].speed_sp); 
-  }} 
+    if (fabsf(chassis._motors[i].speed_sp) > max){
+      max = fabsf(chassis._motors[i].speed_sp);
+    }
+  }
   //equal proportion 
   if (max > MAX_WHEEL_RPM) 
   { 
     float rate = MAX_WHEEL_RPM / max; 
-      {int i; 
-    for (i = 0; i < 4; i++) 
+    int i;
+    for (i = 0; i < 4; i++){
       chassis._motors[i].speed_sp *= rate; 
-  }} 
+    }
+  }
+  for (int i = 0; i < CHASSIS_MOTOR_NUM; i++){
+    chassis.current[i] = chassis_controlSpeed(&chassis._motors[i], &motor_vel_controllers[i]);
+    //chassis.current[i] = 0;
+  }
 } 
  
-void drive_motor(){ 
- 
-  uint8_t i; 
-  for (i = 0; i < CHASSIS_MOTOR_NUM; i++){ 
-    //chassis.current[i] = chassis_controlSpeed(&chassis._motors[i], &motor_vel_controllers[i]);
-    //chassis.current[i] = 0;
-  } 
+void drive_motor(){
   can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID, 
     chassis.current[FRONT_RIGHT], chassis.current[FRONT_LEFT],chassis.current[BACK_LEFT], chassis.current[BACK_RIGHT]); //BR,FR,--,-- 
 } 
@@ -392,7 +395,7 @@ void follow_gimbal_handle(){
 } 
 float chassis_heading_control(pid_controller_t* controller,float get, float set){ 
   controller->error[0] = set - get; 
-  float output = controller->error[0]*controller->kp+controller->kd*(controller->error[0]-2*controller->error[2]+controller->error[3]); 
+  float output = controller->error[0]*controller->kp+controller->kd*(controller->error[0]-2*controller->error[1]+controller->error[2]);
   controller->error[1] = controller->error[0]; 
   controller->error[2] = controller->error[1]; 
  
@@ -400,7 +403,29 @@ float chassis_heading_control(pid_controller_t* controller,float get, float set)
  
 } 
 void power_limit_handle(){
+  //int power_limit = 80 + JudgeP->powerInfo.powerBuffer;
+  int power_limit = 80;
+  float a0 = fabsf(chassis.current[FRONT_RIGHT] * 20/16384.0);
+  float a1 = fabsf(chassis.current[FRONT_LEFT] * 20/16384.0);
+  float a2 = fabsf(chassis.current[BACK_LEFT] * 20/16384.0);
+  float a3 = fabsf(chassis.current[BACK_RIGHT] * 20/16384.0);
+  int MAX = (power_limit - 3.5 - 0.14*(a0*a0+a1*a1+a2*a2+a3*a3))/0.005;
 
+  int SUM =  fabsf(chassis._encoders[0].raw_speed)*a0/
+             +fabsf(chassis._encoders[1].raw_speed)*a1/
+             +fabsf(chassis._encoders[2].raw_speed)*a2/
+             +fabsf(chassis._encoders[3].raw_speed)*a3;
+
+  if(SUM > MAX){
+    chassis.current[FRONT_RIGHT] = chassis.current[FRONT_RIGHT] * MAX / SUM;
+    chassis.current[FRONT_LEFT] = chassis.current[FRONT_LEFT] * MAX / SUM;
+    chassis.current[BACK_LEFT] = chassis.current[BACK_LEFT] * MAX / SUM;
+    chassis.current[BACK_RIGHT] = chassis.current[BACK_RIGHT] * MAX / SUM;
+    chassis.scale_down = true;
+  }
+  else{
+    chassis.scale_down = false;
+  }
 }
  
  
