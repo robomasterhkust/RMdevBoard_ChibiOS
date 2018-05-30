@@ -1,7 +1,7 @@
 #ifndef ROBOCONF_H_
 #define ROBOCONF_H_
 
-//#define RM_INFANTRY
+#define RM_INFANTRY
 //#define RM_HERO
 
 #ifdef RM_INFANTRY

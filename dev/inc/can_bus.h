@@ -17,7 +17,7 @@
 #define CAN_FILTER_NUM      28U
 
 /* CAN Bus standard ID for board to board communication */
-#define CAN_GIMBAL_BOARD_ID                         0x101
+#define CAN_GIMBAL_BOARD_ID                         0x001
 #define CAN_CHASSIS_BOARD_ID                        0x002
 #define CAN_NVIDIA_TX2_BOARD_ID                     0x103
 

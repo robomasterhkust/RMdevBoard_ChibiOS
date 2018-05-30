@@ -364,8 +364,8 @@
                                      PIN_PUPDR_FLOATING(GPIOA_PIN15))
 #define VAL_GPIOA_ODR               (PIN_ODR_HIGH(GPIOA_TIM2_CH1) |           \
                                      PIN_ODR_HIGH(GPIOA_TIM2_CH2) |             \
-                                     PIN_ODR_HIGH(GPIOA_LED_Y) |             \
-                                     PIN_ODR_HIGH(GPIOA_LED_B) |             \
+                                     PIN_ODR_LOW(GPIOA_LED_Y) |             \
+                                     PIN_ODR_LOW(GPIOA_LED_B) |             \
                                      PIN_ODR_HIGH(GPIOA_PIN4) |             \
                                      PIN_ODR_HIGH(GPIOA_PIN5) |              \
                                      PIN_ODR_HIGH(GPIOA_PIN6) |              \
@@ -381,6 +381,8 @@
 
 #define VAL_GPIOA_AFRL              (PIN_AFIO_AF(GPIOA_TIM2_CH1, 1U) |        \
                                      PIN_AFIO_AF(GPIOA_TIM2_CH2, 1U) |          \
+                                     PIN_AFIO_AF(GPIOA_LED_Y, 0U) |             \
+                                     PIN_AFIO_AF(GPIOA_LED_B, 0U) |             \
                                      PIN_AFIO_AF(GPIOA_PIN4, 0U) |          \
                                      PIN_AFIO_AF(GPIOA_PIN5, 0U) |           \
                                      PIN_AFIO_AF(GPIOA_PIN6, 0U) |           \
@@ -448,8 +450,8 @@
                                      PIN_OTYPE_PUSHPULL(GPIOB_PIN15))
 #define VAL_GPIOB_OSPEEDR           (PIN_OSPEED_HIGH(GPIOB_ADC1_IN8) |          \
                                      PIN_OSPEED_HIGH(GPIOB_ADC1_IN9) |          \
-                                     PIN_OSPEED_HIGH(GPIOB_PIN2) |          \
-                                     PIN_OSPEED_HIGH(GPIOB_PIN3) |           \
+                                     PIN_OSPEED_LOW(GPIOB_PIN2) |          \
+                                     PIN_OSPEED_LOW(GPIOB_PIN3) |           \
                                      PIN_OSPEED_HIGH(GPIOB_TIM3_BUZZER) |          \
                                      PIN_OSPEED_HIGH(GPIOB_TIM3_HEAT_PWM) |          \
                                      PIN_OSPEED_HIGH(GPIOB_UART1_TX) |           \
@@ -1242,7 +1244,7 @@
                                      PIN_MODE_ALTERNATE(GPIOI_TIM8_CH2) |           \
                                      PIN_MODE_ALTERNATE(GPIOI_TIM8_CH3) |           \
                                      PIN_MODE_INPUT(GPIOI_PIN8) |           \
-                                     PIN_MODE_INPUT(GPIOI_PIN9) |           \
+                                     PIN_MODE_OUTPUT(GPIOI_PIN9) |           \
                                      PIN_MODE_INPUT(GPIOI_PIN10) |          \
                                      PIN_MODE_INPUT(GPIOI_PIN11) |          \
                                      PIN_MODE_INPUT(GPIOI_PIN12) |          \
@@ -1274,7 +1276,7 @@
                                      PIN_OSPEED_HIGH(GPIOI_TIM8_CH2) |          \
                                      PIN_OSPEED_HIGH(GPIOI_TIM8_CH3) |          \
                                      PIN_OSPEED_HIGH(GPIOI_PIN8) |          \
-                                     PIN_OSPEED_HIGH(GPIOI_PIN9) |          \
+                                     PIN_OSPEED_LOW(GPIOI_PIN9) |          \
                                      PIN_OSPEED_HIGH(GPIOI_PIN10) |         \
                                      PIN_OSPEED_HIGH(GPIOI_PIN11) |         \
                                      PIN_OSPEED_HIGH(GPIOI_PIN12) |         \
@@ -1336,7 +1338,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-  void boardInit(void);
+void boardInit(void);
 #ifdef __cplusplus
 }
 #endif

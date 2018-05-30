@@ -102,24 +102,28 @@ extern volatile int32_t z_accl;
 static THD_WORKING_AREA(Shell_thread_wa, 1024);
 void cmd_test(BaseSequentialStream * chp, int argc, char *argv[])
 {
-  (void) argc,argv;
-  PIMUStruct PIMU = imu_get();
-//  GimbalStruct* gimbal = gimbal_get();
-//  GimbalStruct* gimbal = get_gimbal_simple_controller();
-    RC_Ctl_t* pRC = RC_get();
-    volatile ChassisEncoder_canStruct* encoder = can_getChassisMotor();
-//    imuStructADIS16470* imu_adis = imu_adis_get();
+    (void) argc,argv;
+    PIMUStruct PIMU = imu_get();
+    PGyroStruct PGyro = gyro_get();
+    GimbalStruct* gimbal = gimbal_get();
 
-  chprintf(chp,"AccelX: %f\r\n",PIMU->accelData[X]);
-  chprintf(chp,"AccelY: %f\r\n",PIMU->accelData[Y]);
-  chprintf(chp,"AccelZ: %f\r\n",PIMU->accelData[Z]);
+    chprintf(chp,"accelFiltered[X]: %f\r\n",PIMU->accelFiltered[X]);
+    chprintf(chp,"accelFiltered[Y]: %f\r\n",PIMU->accelFiltered[Y]);
+    chprintf(chp,"accelFiltered[Z]: %f\r\n",PIMU->accelFiltered[Z]);
 
-//  chprintf(chp,"Gimbal Pitch: %f\r\n",gimbal->motor[1]._angle);
-//  chprintf(chp,"Gimbal Yaw: %f\r\n",gimbal->motor[0]._angle);
-  chprintf(chp,"IMU Pitch: %f\r\n",PIMU->euler_angle[Pitch]);
-    chprintf(chp, "rc command: %f\r\n", pRC->rc.channel0);
+    chprintf(chp,"Roll:  %f\r\n",PIMU->euler_angle[Roll]);
+    chprintf(chp,"Pitch: %f\r\n",PIMU->euler_angle[Pitch]);
+    chprintf(chp,"Yaw:   %f\r\n",PIMU->euler_angle[Yaw]);
 
-    chprintf(chp, "encoder speed: %f\r\n", encoder[2].raw_speed);
+    chprintf(chp,"ADIS16270 Yaw: %f\r\n",PGyro->angle_vel);
+
+    chprintf(chp,"gimbalPitch: %f\r\n",gimbal->motor[GIMBAL_PITCH]._angle);
+    chprintf(chp,"gimbalYaw:   %f\r\n",gimbal->motor[GIMBAL_YAW]._angle);
+
+    chprintf(chp,"VelPitch: %f\r\n",gimbal->motor[GIMBAL_PITCH]._speed);
+    chprintf(chp,"VelYaw:   %f\r\n",gimbal->motor[GIMBAL_YAW]._speed);
+    chprintf(chp,"VelEncPitch: %f\r\n",gimbal->motor[GIMBAL_PITCH]._speed_enc);
+    chprintf(chp,"VelEncYaw:   %f\r\n",gimbal->motor[GIMBAL_YAW]._speed_enc);
 
 /*
  *  chprintf(chp, "adis16470 reading gyro x: %d \r\n", imu_adis->gyro_raw_data[0]);
@@ -240,6 +244,15 @@ void cmd_gimbal_encoder(BaseSequentialStream * chp, int argc, char *argv[])
     chprintf(chp,"VelEncYaw:   %f\r\n",gimbal->motor[GIMBAL_YAW]._speed_enc);
 }
 
+void cmd_feeder(BaseSequentialStream * chp, int argc, char *argv[])
+{
+    (void) argc,argv;
+    ChassisEncoder_canStruct*  feeder_encoder_arr = (ChassisEncoder_canStruct*)can_getExtraMotor();
+    ChassisEncoder_canStruct*  feeder_encoder = &feeder_encoder_arr[2];
+    chprintf(chp,"feeder encoder ecd: %f\r\n", (float)feeder_encoder->total_ecd);
+    chprintf(chp,"feeder_encoder raw speed: %f\r\n", (float)feeder_encoder->raw_speed);
+}
+
 void cmd_temp(BaseSequentialStream * chp, int argc, char *argv[])
 {
   (void) argc,argv;
@@ -315,6 +328,7 @@ static const ShellCommand commands[] =
   {"test", cmd_test},
   {"cal", cmd_calibrate},
   {"g", cmd_gimbal_encoder},
+  {"f", cmd_feeder},
   {"\xEE", cmd_data},
 //#ifdef MAVLINK_COMM_TEST
 //  {"mavlink", cmd_mavlink},

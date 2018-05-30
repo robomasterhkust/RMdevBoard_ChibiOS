@@ -55,16 +55,6 @@ static void can_process_encoder_message(CANDriver *const canp, const CANRxFrame 
             case CAN_NVIDIA_TX2_BOARD_ID:
                 can_process_communication(rxmsg);
                 break;
-            case CAN_C620_STD_ID_FEEDBACK_MSG_ID_1:
-            case CAN_C620_STD_ID_FEEDBACK_MSG_ID_2:
-            case CAN_C620_STD_ID_FEEDBACK_MSG_ID_3:
-            case CAN_C620_STD_ID_FEEDBACK_MSG_ID_4:
-                // can_process_chassis_encoder(rxmsg);
-                break;
-            case CAN_GIMBAL_YAW_FEEDBACK_MSG_ID:
-            case CAN_GIMBAL_PITCH_FEEDBACK_MSG_ID:
-                // can_process_gimbal_encoder(rxmsg);
-                break;
             case CAN_UWB_MSG_ID:
                 // can_process_uwb(rxmsg);
                 break;
@@ -80,7 +70,6 @@ static void can_process_encoder_message(CANDriver *const canp, const CANRxFrame 
  */
 static THD_WORKING_AREA(can_rx1_wa, 256);
 static THD_WORKING_AREA(can_rx2_wa, 256);
-CANRxFrame rxmsg;
 
 static THD_FUNCTION(can_rx, p)
 {
@@ -88,12 +77,11 @@ static THD_FUNCTION(can_rx, p)
     chRegSetThreadName("can receiver");
 
     event_listener_t el;
-//    CANRxFrame rxmsg;
+    CANRxFrame rxmsg;
     chEvtRegister(&canp->rxfull_event, &el, 0);
     while (!chThdShouldTerminateX()) {
-//        if (chEvtWaitAnyTimeout(ALL_EVENTS, MS2ST(100)) == 0)
-//            continue;
-        chEvtWaitAnyTimeout(ALL_EVENTS, TIME_INFINITE);
+        if (chEvtWaitAnyTimeout(ALL_EVENTS, MS2ST(100)) == 0)
+            continue;
         while (canReceive(canp, CAN_ANY_MAILBOX,
                           &rxmsg, TIME_IMMEDIATE) == MSG_OK) {
             can_process_encoder_message(canp, &rxmsg);
@@ -111,7 +99,7 @@ void can_bus_init(void)
     for (i = 0; i < CAN_FILTER_NUM; ++i) {
         canfilter[i].filter = i;
         canfilter[i].mode   = 0; // CAN_FilterMode_IdMask
-        canfilter[i].scale  = 0; // CAN_FilterScale_16bit
+        canfilter[i].scale  = 1; // CAN_FilterScale_32bit
         canfilter[i].assignment = 0;
         canfilter[i].register1  = 0;
         canfilter[i].register2  = 0;

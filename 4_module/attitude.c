@@ -28,7 +28,16 @@ uint8_t attitude_update_fused(PIMUStruct pIMU, PGyroStruct pGyro)
 
     angle_vel[X] = pIMU->gyroData[X];
     angle_vel[Y] = pIMU->gyroData[Y];
-    angle_vel[Z] = pGyro->angle_vel;
+
+    // ADIS16265 measurement range is 320 degree/sec according to datasheet.
+    // But it can be accurate to 500 degree/sec according to real test
+    // Avoid exceeding the measurement range of ADIS16265
+    if(pGyro->angle_vel >= 8.0f || pGyro->angle_vel <= -8.0f){
+        angle_vel[Z] =pIMU->gyroData[Z];
+    }
+    else{
+        angle_vel[Z] = pGyro->angle_vel;
+    }
 
     float spinRate = vector_norm(angle_vel, 3);
     float accel = vector_norm(pIMU->accelFiltered, 3);
@@ -107,10 +116,10 @@ uint8_t attitude_imu_init(PIMUStruct pIMU)
 {
     float rot_matrix[3][3];
 
-    float norm = vector_norm(pIMU->accelData, 3);
+    float norm = vector_norm(pIMU->accelFiltered, 3);
     uint8_t i;
     for (i = 0; i < 3; i++)
-        rot_matrix[2][i] = pIMU->accelData[i] / norm;
+        rot_matrix[2][i] = pIMU->accelFiltered[i] / norm;
 
     norm = sqrtf(rot_matrix[2][2] * rot_matrix[2][2] +
                  rot_matrix[2][0] * rot_matrix[2][0]);

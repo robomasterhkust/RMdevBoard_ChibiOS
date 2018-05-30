@@ -8,6 +8,9 @@
 #include "hal.h"
 #include "stdint.h"
 #include "can_bus.h"
+#include "dbus.h"
+
+#define COMM_CAN_BUS &CAND1
 
 typedef struct{
     uint16_t channel0;
@@ -32,6 +35,7 @@ extern "C" {
 volatile Gimbal_Send_Dbus_canStruct* can_get_sent_dbus(void);
 volatile ROS_Msg_Struct* can_get_ros_msg(void);
 void can_process_communication(const CANRxFrame * rxmsg);
+void RC_txCan(RC_Ctl_t* RC_Ctl, CANDriver *const CANx, const uint16_t SID);
 
 #ifdef __cplusplus
 }

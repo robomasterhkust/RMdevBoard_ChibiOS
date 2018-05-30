@@ -1,5 +1,5 @@
 /**
- * Edward ZHANG, 20180411
+ * Edward ZHANG, 20171101
  * @file    gimbal.c
  * @brief   Gimbal controller, driver and interface
  */
@@ -12,10 +12,12 @@
 
 #include "dbus.h"
 #include "adis16265.h"
+#include "feeder.h"
 #include "string.h"
+#include "can_communication_task.h"
 
 #ifdef GIMBAL_USE_MAVLINK_CMD
-#include "mavlink_comm.h"
+  #include "mavlink_comm.h"
   mavlink_attitude_t* mavlink_attitude;
 #endif
 
@@ -41,6 +43,7 @@ static bool rune_state = false;
 static lpfilterStruct lp_angle[2];
 static GimbalStruct gimbal;
 static RC_Ctl_t* rc;
+static volatile ROS_Msg_Struct* ros_msg;
 
 static thread_reference_t gimbal_thread_handler = NULL;
 static thread_reference_t gimbal_init_thread_handler = NULL;
@@ -75,8 +78,8 @@ static void gimbal_attiCmd(const float dt, const float yaw_theta1)
   float           rc_input_z = 0.0f, rc_input_y = 0.0f;     //RC input
   static float    cv_input_z = 0.0f, cv_input_y = 0.0f;     //CV input
 
-#if defined (GIMBAL_USE_MAVLINK_CMD)
-  if(mavlinkComm_attitude_check())
+  #if defined (GIMBAL_USE_MAVLINK_CMD)
+    if(mavlinkComm_attitude_check())
     {
       cv_wait_count = 0;
       chSysLock();
@@ -93,15 +96,18 @@ static void gimbal_attiCmd(const float dt, const float yaw_theta1)
       cv_input_y = 0.0f;
       cv_wait_count = 0;
     }
-#elif defined (GIMBAL_USE_CAN_CMD)
-#endif
+  #elif defined (GIMBAL_USE_CAN_CMD)
+    /*TODO Use CAN to control gimbal*/
+  #endif
 
   rc_input_z = -  mapInput((float)rc->rc.channel2, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX,
-                           -GIMBAL_MAX_SPEED_YAW, GIMBAL_MAX_SPEED_YAW)
-               -  mapInput((float)rc->mouse.x, -30, 30, -GIMBAL_MAX_SPEED_YAW, GIMBAL_MAX_SPEED_YAW);
+                              -GIMBAL_MAX_SPEED_YAW, GIMBAL_MAX_SPEED_YAW)
+               -  mapInput((float)rc->mouse.x, -25, 25, -GIMBAL_MAX_SPEED_YAW, GIMBAL_MAX_SPEED_YAW);
+               //+  (float)ros_msg->chassis_vy * 0.00001f;
   rc_input_y = -  mapInput((float)rc->rc.channel3, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX,
-                           -GIMBAL_MAX_SPEED_PITCH, GIMBAL_MAX_SPEED_PITCH)
-               +  mapInput((float)rc->mouse.y, -30, 30, -GIMBAL_MAX_SPEED_PITCH, GIMBAL_MAX_SPEED_PITCH);
+                              -GIMBAL_MAX_SPEED_PITCH, GIMBAL_MAX_SPEED_PITCH)
+               +  mapInput((float)rc->mouse.y, -25, 25, -GIMBAL_MAX_SPEED_PITCH, GIMBAL_MAX_SPEED_PITCH);
+               //+  (float)ros_msg->chassis_vw * 0.00001f;
 
   float input_z, input_y;
   if(cosf(yaw_theta1) > 0.1f)
@@ -115,15 +121,15 @@ static void gimbal_attiCmd(const float dt, const float yaw_theta1)
 
   /* software limit position*/
   float yaw_speed_limit = gimbal.motor[GIMBAL_YAW]._speed - gimbal.motor[GIMBAL_YAW]._speed_enc,
-          pitch_speed_limit = gimbal.motor[GIMBAL_PITCH]._speed - gimbal.motor[GIMBAL_PITCH]._speed_enc;
+        pitch_speed_limit = gimbal.motor[GIMBAL_PITCH]._speed - gimbal.motor[GIMBAL_PITCH]._speed_enc;
 
   //Need to check signs here
   if((gimbal.state & GIMBAL_YAW_AT_UP_LIMIT && input_z > yaw_speed_limit) ||
-     (gimbal.state & GIMBAL_YAW_AT_LOW_LIMIT && input_z < yaw_speed_limit))
+      (gimbal.state & GIMBAL_YAW_AT_LOW_LIMIT && input_z < yaw_speed_limit))
     input_z = yaw_speed_limit;
 
   if((gimbal.state & GIMBAL_PITCH_AT_UP_LIMIT && input_y > pitch_speed_limit) ||
-     (gimbal.state & GIMBAL_PITCH_AT_LOW_LIMIT && input_y < pitch_speed_limit))
+      (gimbal.state & GIMBAL_PITCH_AT_LOW_LIMIT && input_y < pitch_speed_limit))
     input_y = pitch_speed_limit;
 
 /*
@@ -133,7 +139,7 @@ static void gimbal_attiCmd(const float dt, const float yaw_theta1)
   float yaw_atti_cmd;
 
   float euler_cmd[3] =
-          {pIMU->euler_angle[Roll], gimbal.pitch_atti_cmd, gimbal.yaw_atti_cmd};
+    {pIMU->euler_angle[Roll], gimbal.pitch_atti_cmd, gimbal.yaw_atti_cmd};
   float angle_vel[3]; //input command converted to angular velocity
   angle_vel[X] = 0.0f;
   angle_vel[Y] = input_y;
@@ -150,20 +156,20 @@ static void gimbal_attiCmd(const float dt, const float yaw_theta1)
     q[i] += dq[i] * dt;
   vector_normalize(q,4);
   if(!rune_state &&
-     (isfinite(q[0]) && isfinite(q[1]) && isfinite(q[2]) && isfinite(q[3])))
+    (isfinite(q[0]) && isfinite(q[1]) && isfinite(q[2]) && isfinite(q[3])))
   {
     yaw_atti_cmd = atan2f(2.0f * (q[0] * q[3] + q[1] * q[2]),
                           1.0f - 2.0f * (q[2] * q[2] + q[3] * q[3]));
     gimbal.pitch_atti_cmd = asinf(2.0f * (q[0] * q[2] - q[3] * q[1]));
+
+    if(yaw_atti_cmd < -2.0f && gimbal.prev_yaw_cmd > 2.0f)
+      gimbal.rev++;
+    else if(yaw_atti_cmd > 2.0f && gimbal.prev_yaw_cmd < -2.0f)
+      gimbal.rev--;
+
+    gimbal.yaw_atti_cmd = yaw_atti_cmd + gimbal.rev * 2* M_PI;
+    gimbal.prev_yaw_cmd = yaw_atti_cmd;
   }
-
-  if(yaw_atti_cmd < -2.0f && gimbal.prev_yaw_cmd > 2.0f)
-    gimbal.rev++;
-  else if(yaw_atti_cmd > 2.0f && gimbal.prev_yaw_cmd < -2.0f)
-    gimbal.rev--;
-
-  gimbal.yaw_atti_cmd = yaw_atti_cmd + gimbal.rev * 2* M_PI;
-  gimbal.prev_yaw_cmd = yaw_atti_cmd;
 
   //Avoid gimbal-lock point at pitch = M_PI_2
   bound(&gimbal.pitch_atti_cmd, 1.20f);
@@ -173,7 +179,7 @@ static void gimbal_attiCmd(const float dt, const float yaw_theta1)
 static void gimbal_checkLimit(void)
 {
   float yaw_diff = gimbal.motor[GIMBAL_YAW]._angle - yaw_init_pos,
-          pitch_diff = gimbal.motor[GIMBAL_PITCH]._angle - pitch_init_pos;
+        pitch_diff = gimbal.motor[GIMBAL_PITCH]._angle - pitch_init_pos;
 
   if(yaw_diff < -gimbal.axis_limit[GIMBAL_YAW] - AXIS_LIMIT_TH2)
     gimbal.state |= GIMBAL_YAW_AT_LOW_LIMIT;
@@ -194,13 +200,13 @@ static void gimbal_checkLimit(void)
 }
 
 #ifdef GIMBAL_ENCODER_USE_SPEED
-#define GIMBAL_SPEED_BUFFER_LEN      50U
-static float _speed_buffer[2][GIMBAL_SPEED_BUFFER_LEN];
-static uint8_t _speed_count_buffer[2][GIMBAL_SPEED_BUFFER_LEN];
-static uint8_t _count_sum[2];
-static uint32_t _speed_count[2];
+  #define GIMBAL_SPEED_BUFFER_LEN      50U
+  static float _speed_buffer[2][GIMBAL_SPEED_BUFFER_LEN];
+  static uint8_t _speed_count_buffer[2][GIMBAL_SPEED_BUFFER_LEN];
+  static uint8_t _count_sum[2];
+  static uint32_t _speed_count[2];
 
-static lpfilterStruct lp_axis_ff[2];
+  static lpfilterStruct lp_axis_ff[2];
 #endif
 
 #define GIMBAL_MAX_ANGLE 5.02655f
@@ -213,9 +219,9 @@ static lpfilterStruct lp_axis_ff[2];
 #define MOTOR_SPEED_ENC_TH_2  0.15f
 
 typedef enum{
-    GIMBAL_MOTOR_STOP = 0,
-    GIMBAL_MOTOR_CW = 1,
-    GIMBAL_MOTOR_CCW = -1
+  GIMBAL_MOTOR_STOP = 0,
+  GIMBAL_MOTOR_CW = 1,
+  GIMBAL_MOTOR_CCW = -1
 }gimbal_motor_dir_t;
 
 /**
@@ -238,42 +244,42 @@ static void gimbal_encoderUpdate(GimbalMotorStruct* motor, uint8_t id)
     motor->_current = gimbal._encoder[id].raw_current;
 
     //add FIR filter to encoder speed
-#ifdef GIMBAL_ENCODER_USE_SPEED
-    _count_sum[id] += motor->_wait_count;
-    _count_sum[id] -= _speed_count_buffer[id][_speed_count[id] % GIMBAL_SPEED_BUFFER_LEN];
+    #ifdef GIMBAL_ENCODER_USE_SPEED
+      _count_sum[id] += motor->_wait_count;
+      _count_sum[id] -= _speed_count_buffer[id][_speed_count[id] % GIMBAL_SPEED_BUFFER_LEN];
 
-    float diff = gimbal._encoder[id].radian_angle -
-                 _speed_buffer[id][_speed_count[id] % GIMBAL_SPEED_BUFFER_LEN];
+      float diff = gimbal._encoder[id].radian_angle -
+        _speed_buffer[id][_speed_count[id] % GIMBAL_SPEED_BUFFER_LEN];
 
-    //Detect zero-crossing scenerio
-    if(diff > 6000)
-      diff -= 8192;
-    else if(diff < -6000)
-      diff += 8192;
+      //Detect zero-crossing scenerio
+      if(diff > 6000)
+        diff -= 8192;
+      else if(diff < -6000)
+        diff += 8192;
 
-    motor->_speed_enc = diff * GIMBAL_CONTROL_FREQ /_count_sum[id];
-    _speed_buffer[id][_speed_count[id] % GIMBAL_SPEED_BUFFER_LEN] = gimbal._encoder[id].radian_angle;
-    _speed_count_buffer[id][_speed_count[id] % GIMBAL_SPEED_BUFFER_LEN] = motor->_wait_count;
-    _speed_count[id]++;
+      motor->_speed_enc = diff * GIMBAL_CONTROL_FREQ /_count_sum[id];
+      _speed_buffer[id][_speed_count[id] % GIMBAL_SPEED_BUFFER_LEN] = gimbal._encoder[id].radian_angle;
+      _speed_count_buffer[id][_speed_count[id] % GIMBAL_SPEED_BUFFER_LEN] = motor->_wait_count;
+      _speed_count[id]++;
 
-    /*Dual stabability detector for motor rotating direction estimation
-     *-------ccw------------     -------------cw---------
-     *              --------stop---------
-     */
-    if(motor->_dir == GIMBAL_MOTOR_STOP)
-    {
-      if(motor->_speed_enc > MOTOR_SPEED_ENC_TH_2)
-        motor->_dir = GIMBAL_MOTOR_CCW;
-      else if(motor->_speed_enc < -MOTOR_SPEED_ENC_TH_2)
-        motor->_dir = GIMBAL_MOTOR_CW;
-    }
-    else if((motor->_dir == GIMBAL_MOTOR_CW && motor->_speed_enc > MOTOR_SPEED_ENC_TH_1) ||
-            (motor->_dir == GIMBAL_MOTOR_CCW && motor->_speed_enc < -MOTOR_SPEED_ENC_TH_1))
-      motor->_dir = GIMBAL_MOTOR_STOP;
+      /*Dual stabability detector for motor rotating direction estimation
+       *-------ccw------------     -------------cw---------
+       *              --------stop---------
+       */
+      if(motor->_dir == GIMBAL_MOTOR_STOP)
+      {
+        if(motor->_speed_enc > MOTOR_SPEED_ENC_TH_2)
+          motor->_dir = GIMBAL_MOTOR_CCW;
+        else if(motor->_speed_enc < -MOTOR_SPEED_ENC_TH_2)
+          motor->_dir = GIMBAL_MOTOR_CW;
+      }
+      else if((motor->_dir == GIMBAL_MOTOR_CW && motor->_speed_enc > MOTOR_SPEED_ENC_TH_1) ||
+          (motor->_dir == GIMBAL_MOTOR_CCW && motor->_speed_enc < -MOTOR_SPEED_ENC_TH_1))
+        motor->_dir = GIMBAL_MOTOR_STOP;
 
-    if(id == GIMBAL_YAW)
-      motor->_speed_enc *= GIMBAL_YAW_GEAR;
-#endif
+      if(id == GIMBAL_YAW)
+        motor->_speed_enc *= GIMBAL_YAW_GEAR;
+    #endif
 
     motor->_wait_count = 1;
   }
@@ -289,14 +295,14 @@ static void gimbal_encoderUpdate(GimbalMotorStruct* motor, uint8_t id)
   }
 }
 
-static inline void gimbal_Follow(void)
+static void gimbal_Follow(void)
 {
   gimbal.yaw_atti_cmd = gimbal._pIMU->euler_angle[Yaw];
   gimbal.pitch_atti_cmd = gimbal._pIMU->euler_angle[Pitch];
 }
 
 static inline float gimbal_controlSpeed (pi_controller_t *const vel,
-                                         volatile GimbalMotorStruct* const motor)
+  volatile GimbalMotorStruct* const motor)
 {
   float error = motor->_speed_cmd - motor->_speed;
   vel->error_int += error * vel->ki;
@@ -358,9 +364,9 @@ static THD_FUNCTION(gimbal_thread, p)
   chThdSuspendS(&gimbal_thread_handler);
   chSysUnlock();
 
-#if defined (RM_INFANTRY) || defined(RM_HERO)
-  RC_canTxCmd(ENABLE);
-#endif
+  #if defined (RM_INFANTRY) || defined(RM_HERO)
+    RC_canTxCmd(ENABLE);
+  #endif
 
   _yaw_vel.error_int_max = 2000.0f;
   _pitch_vel.error_int_max = 2500.0f;
@@ -369,6 +375,7 @@ static THD_FUNCTION(gimbal_thread, p)
 
   float pitch_atti_out,yaw_atti_out;
   float sinroll, cosroll, cospitch;
+  int16_t feeder_output = 0;
 
   systime_t tick = chVTGetSystemTimeX();
 
@@ -396,22 +403,22 @@ static THD_FUNCTION(gimbal_thread, p)
 
     gimbal.motor[GIMBAL_PITCH]._speed = gimbal._pIMU->gyroData[Y];
     gimbal.motor[GIMBAL_YAW]._speed = pGyro->angle_vel * cosf(yaw_theta1) -
-                                      gimbal._pIMU->gyroData[X] * sinf(yaw_theta1);                 //             ^
-    //             |
+      gimbal._pIMU->gyroData[X] * sinf(yaw_theta1);                 //             ^
+                                                                    //             |
     /* TODO Check the sign here----------------------------------------------------- */
 
     gimbal_checkLimit();
     gimbal_attiCmd(1.0f/GIMBAL_CONTROL_FREQ, yaw_theta1);
 
     yaw_atti_out = gimbal_controlAttitude(&_yaw_atti,
-                                          gimbal.yaw_atti_cmd,
-                                          gimbal._pIMU->euler_angle[Yaw],
-                                          gimbal._pIMU->d_euler_angle[Yaw]);
+                                      gimbal.yaw_atti_cmd,
+                                      gimbal._pIMU->euler_angle[Yaw],
+                                      gimbal._pIMU->d_euler_angle[Yaw]);
 
     pitch_atti_out = gimbal_controlAttitude(&_pitch_atti,
-                                            gimbal.pitch_atti_cmd,
-                                            gimbal._pIMU->euler_angle[Pitch],
-                                            gimbal._pIMU->d_euler_angle[Pitch]);
+                                      gimbal.pitch_atti_cmd,
+                                      gimbal._pIMU->euler_angle[Pitch],
+                                      gimbal._pIMU->d_euler_angle[Pitch]);
     /*
      *  Jacobian output mixer
      *  wy = cos(roll)*pitch' + cos(pitch)*sin(roll)*yaw'
@@ -441,12 +448,12 @@ static THD_FUNCTION(gimbal_thread, p)
      *  @NOTE       Requires accelerometer raw data
      */
 
-#ifdef GIMBAL_FF_TEST
-    gimbal.pitch_iq_cmd = gimbal.axis_ff_ext[GIMBAL_PITCH];
-#else
-    float ff_pitch_ext = norm_vector3_projection(gimbal._pIMU->accelData, gimbal.axis_ff_accel);
-    gimbal.pitch_iq_cmd += gimbal.axis_ff_ext[GIMBAL_PITCH] * ff_pitch_ext;
-#endif
+    #ifdef GIMBAL_FF_TEST
+      gimbal.pitch_iq_cmd = gimbal.axis_ff_ext[GIMBAL_PITCH];
+    #else
+      float ff_pitch_ext = norm_vector3_projection(gimbal._pIMU->accelData, gimbal.axis_ff_accel);
+      gimbal.pitch_iq_cmd += gimbal.axis_ff_ext[GIMBAL_PITCH] * ff_pitch_ext;
+    #endif
 
     /*
      * the reference acceleration vector is calculated in this way
@@ -478,18 +485,25 @@ static THD_FUNCTION(gimbal_thread, p)
     //Scale down gimbal yaw power according to pitch angle
     //Moment of inertia decreases as theta1 moves away from 0
     gimbal.yaw_iq_cmd -=
-            (sinf(yaw_theta2) * sinf(yaw_theta2) * gimbal.axis_ff_ext[2]) * gimbal.yaw_iq_cmd;
+      (sinf(yaw_theta2) * sinf(yaw_theta2) * gimbal.axis_ff_ext[2]) * gimbal.yaw_iq_cmd;
 
     /*output limit*/
     gimbal.yaw_iq_output = boundOutput(gimbal.yaw_iq_cmd, GIMBAL_IQ_MAX);
     gimbal.pitch_iq_output = boundOutput(gimbal.pitch_iq_cmd, GIMBAL_IQ_MAX);
 
-#ifdef GIMBAL_ZERO
-    gimbal.yaw_iq_output = 0.0f;
-    gimbal.pitch_iq_output = 0.0f;
-#endif
+    #ifdef GIMBAL_ZERO
+      gimbal.yaw_iq_output = 0.0f;
+      gimbal.pitch_iq_output = 0.0f;
+    #endif
 
-    gimbal_canUpdate();
+    #if (FEEDER_CAN_EID == 0x1FF)
+      chSysLock();
+      feeder_output = feeder_canUpdate();
+      chSysUnlock();
+    #endif
+
+    can_motorSetCurrent(GIMBAL_CAN, GIMBAL_CAN_EID, \
+      gimbal.yaw_iq_output, gimbal.pitch_iq_output, feeder_output, 0);
 
     //Stop the thread while calibrating IMU
     if(gimbal._pIMU->accelerometer_not_calibrated || gimbal._pIMU->gyroscope_not_calibrated)
@@ -501,7 +515,7 @@ static THD_FUNCTION(gimbal_thread, p)
 }
 
 static inline float gimbal_controlPos(pid_controller_t* const controller,
-                                      const float _error, const float _d_error)
+  const float _error, const float _d_error)
 {
   controller->error_int += _error * controller->ki;
   bound(&(controller->error_int), controller->error_int_max);
@@ -513,11 +527,11 @@ static inline float gimbal_controlPos(pid_controller_t* const controller,
 }
 
 typedef enum{
-    INIT_STATE_PITCH_0 = 0,
-    INIT_STATE_LEFT_SWING,
-    INIT_STATE_RIGHT_SWING,
-    INIT_STATE_PITCH_YAW,
-    INIT_STATE_LOCK_YAW //Lock yaw axis if pitch axis is disturbed
+  INIT_STATE_PITCH_0 = 0,
+  INIT_STATE_LEFT_SWING,
+  INIT_STATE_RIGHT_SWING,
+  INIT_STATE_PITCH_YAW,
+  INIT_STATE_LOCK_YAW //Lock yaw axis if pitch axis is disturbed
 } gimbal_init_state_t;
 
 #define GIMBAL_INIT_MAX_ERROR         5e-2
@@ -549,137 +563,134 @@ static THD_FUNCTION(gimbal_init_thread, p)
     {
       case INIT_STATE_PITCH_0:
         _error[GIMBAL_PITCH] = gimbal.axis_init_pos[0] - gimbal.motor[GIMBAL_PITCH]._angle;
-            while(_error[GIMBAL_PITCH] > M_PI)
-              _error[GIMBAL_PITCH] -= 2 * M_PI;
-            while(_error[GIMBAL_PITCH] < -M_PI)
-              _error[GIMBAL_PITCH] += 2 * M_PI;
+        while(_error[GIMBAL_PITCH] > M_PI)
+          _error[GIMBAL_PITCH] -= 2 * M_PI;
+        while(_error[GIMBAL_PITCH] < -M_PI)
+          _error[GIMBAL_PITCH] += 2 * M_PI;
 
-#ifndef GIMBAL_INIT_TEST_PITCH
-            if(
-                    state_count((_error[GIMBAL_PITCH] < GIMBAL_INIT_MAX_ERROR &&
-                                 _error[GIMBAL_PITCH] > -GIMBAL_INIT_MAX_ERROR),
-                                GIMBAL_INIT_SCORE_FULL, &(_init_count[GIMBAL_PITCH]))
-                    )
-              init_state = INIT_STATE_LEFT_SWING;
-#endif //GIMBAL_INIT_TEST_PITCH
-            break;
+        #ifndef GIMBAL_INIT_TEST_PITCH
+        if(
+            state_count((_error[GIMBAL_PITCH] < GIMBAL_INIT_MAX_ERROR &&
+                         _error[GIMBAL_PITCH] > -GIMBAL_INIT_MAX_ERROR),
+                         GIMBAL_INIT_SCORE_FULL, &(_init_count[GIMBAL_PITCH]))
+          )
+            init_state = INIT_STATE_LEFT_SWING;
+        #endif //GIMBAL_INIT_TEST_PITCH
+        break;
       case INIT_STATE_LEFT_SWING:
       case INIT_STATE_RIGHT_SWING:
       case INIT_STATE_LOCK_YAW:
         _error[GIMBAL_PITCH] = gimbal.axis_init_pos[0] - gimbal.motor[GIMBAL_PITCH]._angle;
-            while(_error[GIMBAL_PITCH] > M_PI)
-              _error[GIMBAL_PITCH] -= 2 * M_PI;
-            while(_error[GIMBAL_PITCH] < -M_PI)
-              _error[GIMBAL_PITCH] += 2 * M_PI;
-            break;
+        while(_error[GIMBAL_PITCH] > M_PI)
+          _error[GIMBAL_PITCH] -= 2 * M_PI;
+        while(_error[GIMBAL_PITCH] < -M_PI)
+          _error[GIMBAL_PITCH] += 2 * M_PI;
+        break;
       case INIT_STATE_PITCH_YAW:
         _error[GIMBAL_PITCH] = gimbal.axis_init_pos[1] - gimbal.motor[GIMBAL_PITCH]._angle;
-            while(_error[GIMBAL_PITCH] > M_PI)
-              _error[GIMBAL_PITCH] -= 2 * M_PI;
-            while(_error[GIMBAL_PITCH] < -M_PI)
-              _error[GIMBAL_PITCH] += 2 * M_PI;
-            break;
+        while(_error[GIMBAL_PITCH] > M_PI)
+          _error[GIMBAL_PITCH] -= 2 * M_PI;
+        while(_error[GIMBAL_PITCH] < -M_PI)
+          _error[GIMBAL_PITCH] += 2 * M_PI;
+        break;
     }
 
     switch(init_state)
     {
       case INIT_STATE_PITCH_0:
         gimbal.yaw_iq_cmd = 0.0f;
-            break;
+        break;
       case INIT_STATE_LEFT_SWING:
-        gimbal.yaw_iq_cmd = 1500.0f;
-            if(_error[GIMBAL_PITCH] > 0.15f || _error[GIMBAL_PITCH] < -0.15f)
-            {
-              lock_yaw = gimbal.motor[GIMBAL_YAW]._angle;
-              init_state = INIT_STATE_LOCK_YAW;
-            }
+        gimbal.yaw_iq_cmd = 1800.0f;
+        if(_error[GIMBAL_PITCH] > 0.15f || _error[GIMBAL_PITCH] < -0.15f)
+        {
+          lock_yaw = gimbal.motor[GIMBAL_YAW]._angle;
+          init_state = INIT_STATE_LOCK_YAW;
+        }
 
-            if(
-                    state_count((gimbal.motor[GIMBAL_YAW]._speed_enc < 0.1f &&
-                                 gimbal.motor[GIMBAL_YAW]._speed_enc > -0.1f),
-                                GIMBAL_INIT_SCORE_FULL, &(_init_count[GIMBAL_YAW]))
-                    )
-            {
-              yaw_left_limit = gimbal.motor[GIMBAL_YAW]._angle;
-              init_state = INIT_STATE_RIGHT_SWING;
-            }
-            break;
+        if(
+            state_count((gimbal.motor[GIMBAL_YAW]._speed_enc < 0.1f &&
+                         gimbal.motor[GIMBAL_YAW]._speed_enc > -0.1f),
+                         GIMBAL_INIT_SCORE_FULL, &(_init_count[GIMBAL_YAW]))
+          )
+        {
+          yaw_left_limit = gimbal.motor[GIMBAL_YAW]._angle;
+          init_state = INIT_STATE_RIGHT_SWING;
+        }
+        break;
       case INIT_STATE_RIGHT_SWING:
-        gimbal.yaw_iq_cmd = -1500.0f;
-            if(_error[GIMBAL_PITCH] > 0.2f || _error[GIMBAL_PITCH] < -0.2f)
-            {
-              lock_yaw = gimbal.motor[GIMBAL_YAW]._angle;
-              init_state = INIT_STATE_LOCK_YAW;
-            }
+        gimbal.yaw_iq_cmd = -1800.0f;
+        if(_error[GIMBAL_PITCH] > 0.2f || _error[GIMBAL_PITCH] < -0.2f)
+        {
+          lock_yaw = gimbal.motor[GIMBAL_YAW]._angle;
+          init_state = INIT_STATE_LOCK_YAW;
+        }
 
-            if(
-                    state_count((gimbal.motor[GIMBAL_YAW]._speed_enc < 0.1f &&
-                                 gimbal.motor[GIMBAL_YAW]._speed_enc > -0.1f),
-                                GIMBAL_INIT_SCORE_FULL, &(_init_count[GIMBAL_YAW]))
-                    )
-            {
-              yaw_right_limit = gimbal.motor[GIMBAL_YAW]._angle;
-              if(fabsf(yaw_right_limit - yaw_left_limit) < M_PI)
-                init_state = INIT_STATE_LEFT_SWING; //Angle range too small means invalid
-              else
-                init_state = INIT_STATE_PITCH_YAW;
-            }
-            break;
+        if(
+            state_count((gimbal.motor[GIMBAL_YAW]._speed_enc < 0.1f &&
+                         gimbal.motor[GIMBAL_YAW]._speed_enc > -0.1f),
+                         GIMBAL_INIT_SCORE_FULL, &(_init_count[GIMBAL_YAW]))
+          )
+        {
+          yaw_right_limit = gimbal.motor[GIMBAL_YAW]._angle;
+          if(fabsf(yaw_right_limit - yaw_left_limit) < M_PI)
+            init_state = INIT_STATE_LEFT_SWING; //Angle range too small means invalid
+          else
+            init_state = INIT_STATE_PITCH_YAW;
+        }
+        break;
       case INIT_STATE_LOCK_YAW:
         _error[GIMBAL_YAW] = lock_yaw - gimbal.motor[GIMBAL_YAW]._angle;
-            if(_error[GIMBAL_PITCH] < GIMBAL_INIT_MAX_ERROR &&
-               _error[GIMBAL_PITCH] > -GIMBAL_INIT_MAX_ERROR)
-              init_state = INIT_STATE_LEFT_SWING;
-            break;
+        if(_error[GIMBAL_PITCH] < GIMBAL_INIT_MAX_ERROR &&
+           _error[GIMBAL_PITCH] > -GIMBAL_INIT_MAX_ERROR)
+           init_state = INIT_STATE_LEFT_SWING;
+        break;
       case INIT_STATE_PITCH_YAW:
         _error[GIMBAL_YAW] = (yaw_left_limit + yaw_right_limit) / 2.0f
-                             - gimbal.motor[GIMBAL_YAW]._angle;
-            break;
+                              - gimbal.motor[GIMBAL_YAW]._angle;
+        break;
     }
 
     if(init_state >= INIT_STATE_PITCH_YAW)
       gimbal.yaw_iq_cmd = gimbal_controlPos(&_yaw_pos, _error[GIMBAL_YAW],
-                                            gimbal.motor[GIMBAL_YAW]._speed_enc);
+        gimbal.motor[GIMBAL_YAW]._speed_enc);
 
     gimbal.pitch_iq_cmd = gimbal_controlPos(&_pitch_pos, _error[GIMBAL_PITCH],
-                                            gimbal.motor[GIMBAL_PITCH]._speed_enc);
+      gimbal.motor[GIMBAL_PITCH]._speed_enc);
 
     gimbal.yaw_iq_output = gimbal.yaw_iq_cmd;
     gimbal.pitch_iq_output = gimbal.pitch_iq_cmd;
 
-#ifdef GIMBAL_ZERO
-    gimbal.yaw_iq_output = 0.0f;
-    gimbal.pitch_iq_output = 0.0f;
-#endif
+    #ifdef GIMBAL_ZERO
+      gimbal.yaw_iq_output = 0.0f;
+      gimbal.pitch_iq_output = 0.0f;
+    #endif
 
     gimbal_canUpdate();
 
-#if !defined (GIMBAL_INIT_TEST_PITCH) && !defined (GIMBAL_INIT_TEST)
-    //evaluation of init status
-    if(
-            init_state == INIT_STATE_PITCH_YAW &&
-            state_count((_error[GIMBAL_PITCH] < GIMBAL_INIT_MAX_ERROR &&
-                         _error[GIMBAL_PITCH] > -GIMBAL_INIT_MAX_ERROR &&
-                         _error[GIMBAL_YAW] < GIMBAL_INIT_MAX_ERROR &&
-                         _error[GIMBAL_YAW] > -GIMBAL_INIT_MAX_ERROR),
-                        GIMBAL_INIT_SCORE_FULL, &(_init_count[2]))
-            )
-    {
-      /*exit this thread and start attitude control*/
-      chSysLock();
+    #if !defined (GIMBAL_INIT_TEST_PITCH) && !defined (GIMBAL_INIT_TEST)
+      //evaluation of init status
+      if(
+          init_state == INIT_STATE_PITCH_YAW &&
+          state_count((_error[GIMBAL_PITCH] < GIMBAL_INIT_MAX_ERROR &&
+                       _error[GIMBAL_PITCH] > -GIMBAL_INIT_MAX_ERROR &&
+                       _error[GIMBAL_YAW] < GIMBAL_INIT_MAX_ERROR &&
+                       _error[GIMBAL_YAW] > -GIMBAL_INIT_MAX_ERROR),
+                       GIMBAL_INIT_SCORE_FULL, &(_init_count[2]))
+        )
+      {
+        /*exit this thread and start attitude control*/
+        chSysLock();
 
-      yaw_init_pos = gimbal.motor[GIMBAL_YAW]._angle;
-      pitch_init_pos = gimbal.motor[GIMBAL_PITCH]._angle;
+        gimbal_Follow();
+        yaw_init_pos = gimbal.motor[GIMBAL_YAW]._angle;
+        pitch_init_pos = gimbal.motor[GIMBAL_PITCH]._angle;
+        chThdResumeS(&gimbal_thread_handler, MSG_OK);
+        chThdExitS(MSG_OK);
 
-      chThdSleepSeconds(2);
-
-      gimbal_Follow();
-
-      chThdResumeS(&gimbal_thread_handler, MSG_OK);
-      chThdExitS(MSG_OK);
-      chSysUnlock();
-    }
-#endif
+        chSysUnlock();
+      }
+    #endif
 
     chThdSleepMilliseconds(1);
   }
@@ -731,15 +742,16 @@ void gimbal_init(void)
   pGyro = gyro_get();
   rc = RC_get();
   gimbal._encoder = can_getGimbalMotor();
-  chThdSleepMilliseconds(3);
+    ros_msg = can_get_ros_msg();
+  chThdSleepMilliseconds(100);
 
   lpfilter_init(&lp_angle[GIMBAL_YAW], GIMBAL_CONTROL_FREQ, GIMBAL_CUTOFF_FREQ);
   lpfilter_init(&lp_angle[GIMBAL_PITCH], GIMBAL_CONTROL_FREQ, GIMBAL_CUTOFF_FREQ);
 
-#ifdef GIMBAL_ENCODER_USE_SPEED
-  lpfilter_init(&lp_axis_ff[GIMBAL_YAW], GIMBAL_CONTROL_FREQ, 10);
-  lpfilter_init(&lp_axis_ff[GIMBAL_PITCH], GIMBAL_CONTROL_FREQ, 10);
-#endif
+  #ifdef GIMBAL_ENCODER_USE_SPEED
+    lpfilter_init(&lp_axis_ff[GIMBAL_YAW], GIMBAL_CONTROL_FREQ, 10);
+    lpfilter_init(&lp_axis_ff[GIMBAL_PITCH], GIMBAL_CONTROL_FREQ, 10);
+  #endif
 
   gimbal_encoderUpdate(&gimbal.motor[GIMBAL_YAW], GIMBAL_YAW);
   gimbal_encoderUpdate(&gimbal.motor[GIMBAL_PITCH], GIMBAL_PITCH);
@@ -759,17 +771,17 @@ void gimbal_init(void)
   params_set(&_yaw_atti,     7, 3, _yaw_atti_name,   subname_PID,      PARAM_PUBLIC);
   params_set(&_pitch_atti,   8, 3, _pitch_atti_name, subname_PID,      PARAM_PUBLIC);
 
-#ifdef GIMBAL_USE_MAVLINK_CMD
-  mavlink_attitude = mavlinkComm_attitude_subscribe();
-#endif
+  #ifdef GIMBAL_USE_MAVLINK_CMD
+    mavlink_attitude = mavlinkComm_attitude_subscribe();
+  #endif
 
   chThdCreateStatic(gimbal_init_thread_wa, sizeof(gimbal_init_thread_wa),
                     NORMALPRIO - 5, gimbal_init_thread, NULL);
 
-#ifndef GIMBAL_INIT_TEST
-  chThdCreateStatic(gimbal_thread_wa, sizeof(gimbal_thread_wa),
-                    NORMALPRIO - 5, gimbal_thread, NULL);
-#endif
+  #ifndef GIMBAL_INIT_TEST
+    chThdCreateStatic(gimbal_thread_wa, sizeof(gimbal_thread_wa),
+                      NORMALPRIO - 5, gimbal_thread, NULL);
+  #endif
 
   gimbal_canUpdate();
   gimbal.state = GIMBAL_STATE_INITING;

@@ -23,6 +23,7 @@
  */
 
 #include "hal.h"
+#include "halconf.h"
 
 #if HAL_USE_CAN || defined(__DOXYGEN__)
 

@@ -28,15 +28,17 @@ static THD_FUNCTION(Attitude_thread, p)
     PGyroStruct pGyro = gyro_get(); // adis16265 single axial gyroscope
 
     // Initialize accelerometer and gyroscope from the main SPI bus
+    //    static const IMUConfigStruct imu1_conf =
+    //            {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_250, MPU6500_AXIS_REV_Y};
     static const IMUConfigStruct imu1_conf =
-            {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_250, MPU6500_AXIS_REV_Y};
+            {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_1000, MPU6500_AXIS_REV_X};
     imuInit(pIMU, &imu1_conf);
     chThdSleepMilliseconds(50);
 
-//    // Initialize magnetometer from the additional I2C bus
-//    static const magConfigStruct mag1_conf =
-//            {IST8310_ADDR_FLOATING, 200, IST8310_AXIS_REV_NO};
-//    ist8310_init(&mag1_conf);
+    // Initialize magnetometer from the additional I2C bus
+    //    static const magConfigStruct mag1_conf =
+    //            {IST8310_ADDR_FLOATING, 200, IST8310_AXIS_REV_NO};
+    //    ist8310_init(&mag1_conf);
 
     // Check temperature feedback before starting temp controller thread
     imuGetData(pIMU);
@@ -45,11 +47,12 @@ static THD_FUNCTION(Attitude_thread, p)
     else
         pIMU->errorCode |= IMU_TEMP_ERROR;
 
+    /*
     while(pIMU->temperature < IMU_TEMP_SETPOINT)
     {
         imuGetData(pIMU);
         chThdSleepMilliseconds(100);
-    }
+    } */
 
     pIMU->state = IMU_STATE_READY;
     attitude_imu_init(pIMU);
@@ -70,15 +73,14 @@ static THD_FUNCTION(Attitude_thread, p)
             pIMU->errorCode |= IMU_TEMP_WARNING;
 
         imuGetData(pIMU);
-//        ist8310_update();
+        //        ist8310_update();
 
-        // TODO: sensor selection
         // if adis 16470 exist
 
         // else if adis16265 exist
         attitude_update_fused(pIMU, pGyro);
         // else
-//        attitude_estimator_mpu6500_init(pIMU);
+        // attitude_estimator_mpu6500_init(pIMU);
 
         if (pIMU->accelerometer_not_calibrated || pIMU->gyroscope_not_calibrated) {
             chSysLock();

@@ -7,10 +7,13 @@
 #include "ch.h"
 #include "dbus.h"
 #include "string.h"
+#include "can_communication_task.h"
 
 static RC_Ctl_t RC_Ctl;
 //static thread_reference_t uart_dbus_thread_handler = NULL;
 //static dbus_error_t rxflag = false;
+
+static bool rc_can_flag = false;
 
 #ifdef RC_SAFE_LOCK
 systime_t update_time;
@@ -145,6 +148,11 @@ static void RC_reset(RC_Ctl_t *rc)
     rc->keyboard.key_code = 0;
 }
 
+void RC_canTxCmd(const uint8_t cmd)
+{
+    rc_can_flag = (cmd == DISABLE ? false : true);
+}
+
 #define  DBUS_INIT_WAIT_TIME_MS      4U
 #define  DBUS_WAIT_TIME_MS         100U
 static THD_WORKING_AREA(uart_dbus_thread_wa, 512);
@@ -189,6 +197,9 @@ static THD_FUNCTION(uart_dbus_thread, p)
             RC_reset(rc);
             timeout = MS2ST(DBUS_INIT_WAIT_TIME_MS);
         }
+
+        if(rc_can_flag)
+            RC_txCan(&RC_Ctl, COMM_CAN_BUS, CAN_GIMBAL_BOARD_ID);
     }
 }
 

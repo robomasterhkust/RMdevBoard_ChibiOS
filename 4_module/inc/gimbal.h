@@ -18,8 +18,8 @@
 #define GIMBAL_ENCODER_USE_SPEED
 
 //gimbal maximum movement speed in radian
-#define GIMBAL_MAX_SPEED_PITCH      2.0f
-#define GIMBAL_MAX_SPEED_YAW        4.0f
+#define GIMBAL_MAX_SPEED_PITCH      4.0f
+#define GIMBAL_MAX_SPEED_YAW        7.0f
 
 #define GIMBAL_CAN  &CAND1
 #define GIMBAL_CAN_EID  0x1FF

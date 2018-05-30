@@ -6,13 +6,19 @@
 #include "hal.h"
 #include "dbus.h"
 #include "can_communication_task.h"
+#include "string.h"
 
-static volatile Gimbal_Send_Dbus_canStruct dbus_from_gimbal_board;
+static volatile Gimbal_Send_Dbus_canStruct dbus_from_gimbal_board={
+        .channel0 = RC_CH_VALUE_OFFSET,
+        .channel1 = RC_CH_VALUE_OFFSET,
+        .s1       = 0,
+        .s2       = 0,
+        .key_code = 0
+};
 static volatile ROS_Msg_Struct ros_msg={
-        .chassis_vx = RC_CH_VALUE_OFFSET,
-        .chassis_vy = RC_CH_VALUE_OFFSET,
-        .chassis_vw = RC_CH_VALUE_OFFSET,
-        .pitch_vel_cmd = 0,
+        .chassis_vx = 0,
+        .chassis_vy = 0,
+        .chassis_vw = 0,
         .yaw_vel_cmd = 0
 };
 
@@ -42,8 +48,7 @@ static inline void can_process_ros_command(volatile ROS_Msg_Struct * msg, const 
     msg->chassis_vx = (int16_t)rxmsg->data16[0];
     msg->chassis_vy = (int16_t)rxmsg->data16[1];
     msg->chassis_vw = (int16_t)rxmsg->data16[2];
-//    msg->pitch_vel_cmd = (int16_t)rxmsg->data16[3];
-//    msg->yaw_vel_cmd = (int16_t)rxmsg->data16[4];
+    msg->yaw_vel_cmd= (int16_t)rxmsg->data16[3];
     chSysUnlock();
 }
 
@@ -65,4 +70,33 @@ void can_process_communication(const CANRxFrame * const rxmsg)
             break;
         default: break;
     }
+}
+
+/**
+ * CAN bus sub function for transmitting DBUS communication
+ * @param RC_Ctl
+ * @param CANx
+ * @param SID
+ */
+void RC_txCan(RC_Ctl_t* RC_Ctl, CANDriver *const CANx, const uint16_t SID)
+{
+    CANTxFrame txmsg;
+    Gimbal_Send_Dbus_canStruct txCan;
+
+    txmsg.IDE = CAN_IDE_STD;
+    txmsg.SID = SID;
+    txmsg.RTR = CAN_RTR_DATA;
+    txmsg.DLC = 0x08;
+
+    chSysLock();
+    txCan.channel0 = RC_Ctl->rc.channel0;
+    txCan.channel1 = RC_Ctl->rc.channel1;
+    txCan.s1 = RC_Ctl->rc.s1;
+    txCan.s2 = RC_Ctl->rc.s2;
+    txCan.key_code = RC_Ctl->keyboard.key_code;
+
+    memcpy(&(txmsg.data8), &txCan ,8);
+    chSysUnlock();
+
+    canTransmit(CANx, CAN_ANY_MAILBOX, &txmsg, MS2ST(100));
 }
