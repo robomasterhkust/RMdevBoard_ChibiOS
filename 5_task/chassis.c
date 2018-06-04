@@ -112,9 +112,9 @@ static void rm_chassis_process(void)
     rm.vy = (pGimbal->channel1 - RC_CH_VALUE_OFFSET) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
 #endif
 
-    rm.vx += (float)pROSMsg->chassis_vx;
-    rm.vy += (float)pROSMsg->chassis_vy;
-    rm.vw += (float)pROSMsg->chassis_vw;
+    rm.vx += (float)pROSMsg->vx;
+//    rm.vy += (float)pROSMsg->vy;
+    rm.vw += (float)pROSMsg->vz;
 }
 
 void mecanum_cal()

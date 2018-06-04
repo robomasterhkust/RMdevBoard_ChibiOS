@@ -198,7 +198,7 @@ static THD_FUNCTION(uart_dbus_thread, p)
             timeout = MS2ST(DBUS_INIT_WAIT_TIME_MS);
         }
 
-        if(rc_can_flag)
+         //if(rc_can_flag)
             RC_txCan(&RC_Ctl, COMM_CAN_BUS, CAN_GIMBAL_BOARD_ID);
     }
 }

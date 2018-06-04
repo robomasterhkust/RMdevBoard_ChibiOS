@@ -1,4 +1,4 @@
-//yaw_vel_cmd
+//
 // Created by beck on 5/4/2018.
 //
 
@@ -16,10 +16,9 @@ static volatile Gimbal_Send_Dbus_canStruct dbus_from_gimbal_board={
         .key_code = 0
 };
 static volatile ROS_Msg_Struct ros_msg={
-        .chassis_vx = 0,
-        .chassis_vy = 0,
-        .chassis_vw = 0,
-        .yaw_vel_cmd = 0
+        .vx = 0,
+        .vy = 0,
+        .vz = 0
 };
 
 volatile Gimbal_Send_Dbus_canStruct* can_get_sent_dbus(void){
@@ -45,10 +44,9 @@ static inline void  can_processSendDbusEncoder
 static inline void can_process_ros_command(volatile ROS_Msg_Struct * msg, const CANRxFrame* const rxmsg)
 {
     chSysLock();
-    msg->chassis_vx = (int16_t)rxmsg->data16[0];
-    msg->chassis_vy = (int16_t)rxmsg->data16[1];
-    msg->chassis_vw = (int16_t)rxmsg->data16[2];
-    msg->yaw_vel_cmd= (int16_t)rxmsg->data16[3];
+    msg->vx = (float)rxmsg->data16[0] * 0.00001f;
+    msg->vy = (float)rxmsg->data16[1] * 0.00001f;
+    msg->vz = (float)rxmsg->data16[2] * 0.00001f;
     chSysUnlock();
 }
 

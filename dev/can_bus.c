@@ -92,6 +92,7 @@ static THD_FUNCTION(can_rx, p)
 
 /*
  * Configure the CAN bus devices and start the two CAN bus thread
+ * Receiver thread only. The commands are sent from chassis_init() and gimbal_init()
  */
 void can_bus_init(void)
 {
