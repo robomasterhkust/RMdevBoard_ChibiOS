@@ -39,7 +39,7 @@ int main(void)
     extiinit();
 
     /* Init sequence 2: Power management */
-    LASER_ON();
+    LASER_OFF();
 //    POWER0_OFF();
 //    POWER1_OFF();
 //    POWER2_OFF();
@@ -59,7 +59,7 @@ int main(void)
 
     while (!is_motor_power_on()) {
         // LEDG8_TOGGLE();
-        LEDY_TOGGLE();
+//        LEDY_TOGGLE();
         chThdSleepMilliseconds(200);
     }
 
@@ -75,7 +75,7 @@ int main(void)
     detect_error_task_init();
 
     while (!chThdShouldTerminateX()) {
-        LEDR_TOGGLE();
+        // LEDR_TOGGLE();
 
         if (!power_failure()) {
             wdgReset(&WDGD1);
