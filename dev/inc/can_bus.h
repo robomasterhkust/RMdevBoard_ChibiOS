@@ -19,6 +19,16 @@
 /* CAN Bus standard ID for board to board communication */
 #define CAN_GIMBAL_BOARD_ID                         0x001
 #define CAN_CHASSIS_BOARD_ID                        0x002
+#define CAN_CHASSIS_BOARD_GAMEINFO_ID				0x003
+#define CAN_CHASSIS_BOARD_HLTH_ID					0x004
+#define CAN_CHASSIS_BOARD_PROJECTILE_ID				0x005
+#define CAN_CHASSIS_BOARD_POWER_POWERBUFFER_ID		0x006
+#define CAN_CHASSIS_BOARD_VOLT_CURRENT_ID			0x007
+#define CAN_CHASSIS_BOARD_SHOOTERHEAT_ID			0x008
+#define CAN_CHASSIS_BOARD_RFID_ID					0x009
+#define CAN_CHASSIS_BOARD_BUFFERINFO_ID				0x010
+#define CAN_CHASSIS_BOARD_LOCATION_X_Y_ID			0x011
+#define CAN_CHASSIS_BOARD_LOCATION_Z_YAW_ID			0x012
 #define CAN_NVIDIA_TX2_BOARD_ID                     0x103
 
 /* CAN Bus standard ID for motors  */
