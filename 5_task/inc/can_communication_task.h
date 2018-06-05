@@ -22,9 +22,9 @@ typedef struct{
 } Gimbal_Send_Dbus_canStruct;
 
 typedef struct {
-    float vx;
-    float vy;
-    float vz;
+    double vx;
+    double vy;
+    double vz;
 } ROS_Msg_Struct;
 
 typedef struct{
