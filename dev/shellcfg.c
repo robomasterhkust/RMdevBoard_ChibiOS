@@ -270,6 +270,31 @@ void cmd_temp(BaseSequentialStream * chp, int argc, char *argv[])
 //  }
 }
 
+void cmd_judge(BaseSequentialStream * chp, int argc, char *argv[])
+{
+  (void) argc,argv;
+//  uint32_t tick = chVTGetSystemTimeX();
+//  tick += US2ST(5U);
+
+  // while(1){ // you can uncomment this so that it continuously send the data out.
+              // this is useful in tuning the Temperature PID
+//      PIMUStruct _pimu = imu_get();
+      Chassis_Send_Judge_canStruct* _pJudge = can_get_sent_judge();
+
+//      pTPIDStruct _tempPID = TPID_get();
+      chprintf(chp,"Power:%f \n",(float)_pJudge->powerInfo.power);
+
+      chprintf(chp,"Current:%f\n",  (float)_pJudge->powerInfo.current);
+
+      chprintf(chp,"Volt:%f\n",(float)_pJudge->powerInfo.volt);
+
+ //     chprintf(chp,"drive: %i\n", (int)*_pdrive);
+//      chprintf(chp,"Temperature: %f\f\n", _pimu->temperature);
+//      chprintf(chp,"PID_value: %i\i\n", _tempPID->PID_Value);
+      chThdSleep(MS2ST(250));
+  // }
+}
+
 void cmd_dbus(BaseSequentialStream * chp, int argc, char *argv[])
 {
   (void) argc,argv;
@@ -343,6 +368,7 @@ static const ShellCommand commands[] =
   {"dbus", cmd_dbus},
   {"gyro", cmd_gyro},
   {"ultra", cmd_ultrasonic},
+  {"judge", cmd_judge},
 //  {"error", cmd_error},
   {NULL, NULL}
 };

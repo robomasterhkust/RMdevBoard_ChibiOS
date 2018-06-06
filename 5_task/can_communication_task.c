@@ -109,6 +109,12 @@ static inline void can_processSendJudgeData(volatile Chassis_Send_Judge_canStruc
                     msg->gameInfo.robotLevel = (uint8_t)rxmsg->data8[3];
                     msg->gameInfo.remainHealth = (uint16_t)rxmsg->data16[2];
                     msg->gameInfo.fullHealth = (uint16_t)rxmsg->data16[3];
+                    // if(judge_from_chassis_board.gameInfo.remainHealth >300){
+                    //     LEDB_ON();
+                    // }
+                    // if(judge_from_chassis_board.gameInfo.remainHealth <= 300){
+                    //     LEDB_OFF();
+                    // }
                     break;
         case CAN_CHASSIS_BOARD_HLTH_ID: msg->hlthInfo.hitPos = (uint8_t)rxmsg->data8[0];
                     msg->hlthInfo.deltaReason = ((uint8_t)rxmsg->data8[1]);
@@ -119,6 +125,11 @@ static inline void can_processSendJudgeData(volatile Chassis_Send_Judge_canStruc
                     break;
         case CAN_CHASSIS_BOARD_POWER_POWERBUFFER_ID: msg->powerInfo.power = (float)rxmsg->data32[0];//* 0.00001f;
                     msg->powerInfo.powerBuffer = (float)rxmsg->data32[1];//* 0.00001f;
+                    // if(judge_from_chassis_board.powerInfo.power < 0.005){
+                    //     LEDY_OFF();
+                    // }else{
+                    //     LEDY_ON();
+                    // }
                     break;
         case CAN_CHASSIS_BOARD_VOLT_CURRENT_ID: msg->powerInfo.volt = (float)rxmsg->data32[0];//* 0.00001f;
                     msg->powerInfo.current = (float)rxmsg->data32[1];//* 0.00001f;
@@ -261,7 +272,7 @@ void JudgeData_txCan(judge_fb_t* JudgeData, CANDriver *const CANx, const uint16_
     CANTxFrame txmsg;
 
     int i;
-    for(i = 0; i < sizeof(JudgementDataRetrievedType); i++){
+    for(i = 0; i < 10; i++){
         // Chassis_Send_Judge_canStruct txCan;
         txmsg.IDE = CAN_IDE_STD;
         txmsg.SID = JudgementDataRetrievedType[i];
@@ -338,6 +349,7 @@ void JudgeData_txCan(judge_fb_t* JudgeData, CANDriver *const CANx, const uint16_
                 break;
             }
             case CAN_CHASSIS_BOARD_LOCATION_Z_YAW_ID:{
+                // LEDB_ON();
                 location_fb_t2 txCan10;
                 txCan10.z = JudgeData->locationInfo.z;//* 0.00001f;
                 txCan10.yaw = JudgeData->locationInfo.yaw;//* 0.00001f;
