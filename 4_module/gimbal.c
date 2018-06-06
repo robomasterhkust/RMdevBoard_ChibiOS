@@ -102,12 +102,12 @@ static void gimbal_attiCmd(const float dt, const float yaw_theta1)
 
   rc_input_z = -  mapInput((float)rc->rc.channel2, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX,
                               -GIMBAL_MAX_SPEED_YAW, GIMBAL_MAX_SPEED_YAW)
-               -  mapInput((float)rc->mouse.x, -25, 25, -GIMBAL_MAX_SPEED_YAW, GIMBAL_MAX_SPEED_YAW);
-               //+  (float)ros_msg->chassis_vy * 0.00001f;
+               -  mapInput((float)rc->mouse.x, -25, 25, -GIMBAL_MAX_SPEED_YAW, GIMBAL_MAX_SPEED_YAW)
+               +  (float)ros_msg->vz;
   rc_input_y = -  mapInput((float)rc->rc.channel3, RC_CH_VALUE_MIN, RC_CH_VALUE_MAX,
                               -GIMBAL_MAX_SPEED_PITCH, GIMBAL_MAX_SPEED_PITCH)
-               +  mapInput((float)rc->mouse.y, -25, 25, -GIMBAL_MAX_SPEED_PITCH, GIMBAL_MAX_SPEED_PITCH);
-               //+  (float)ros_msg->chassis_vw * 0.00001f;
+               +  mapInput((float)rc->mouse.y, -25, 25, -GIMBAL_MAX_SPEED_PITCH, GIMBAL_MAX_SPEED_PITCH)
+               +  (float)ros_msg->vy;
 
   float input_z, input_y;
   if(cosf(yaw_theta1) > 0.1f)
@@ -167,7 +167,7 @@ static void gimbal_attiCmd(const float dt, const float yaw_theta1)
     else if(yaw_atti_cmd > 2.0f && gimbal.prev_yaw_cmd < -2.0f)
       gimbal.rev--;
 
-    gimbal.yaw_atti_cmd = yaw_atti_cmd + gimbal.rev * 2* M_PI;
+    gimbal.yaw_atti_cmd = yaw_atti_cmd + gimbal.rev * 2* (float)M_PI;
     gimbal.prev_yaw_cmd = yaw_atti_cmd;
   }
 

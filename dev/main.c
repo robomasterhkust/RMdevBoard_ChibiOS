@@ -9,7 +9,7 @@
 
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, eit her express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
 */
@@ -36,14 +36,14 @@ int main(void)
     params_init();
 
     // sdlog_init();
-    // extiinit();
+    extiinit();
 
     /* Init sequence 2: Power management */
-    LASER_ON();
+    LASER_OFF();
+//    POWER0_OFF();
 //    POWER1_OFF();
-//    POWER1_OFF();
-//    POWER1_OFF();
-//    POWER1_OFF();
+//    POWER2_OFF();
+//    POWER3_OFF();
 //    LEDG1_ON();
     LEDR_ON();
 
@@ -51,7 +51,7 @@ int main(void)
     attitude_estimator_init();
     // Initialize ADIS16265 single axial gyroscope
     single_axis_gyro_init_adis16265();
-    // imu_init_adis16470();
+    // Initialize CAN bus receiver
     can_bus_init();
     RC_init();
     // judgeinit();
@@ -59,7 +59,7 @@ int main(void)
 
     while (!is_motor_power_on()) {
         // LEDG8_TOGGLE();
-        LEDY_TOGGLE();
+//        LEDY_TOGGLE();
         chThdSleepMilliseconds(200);
     }
 
@@ -75,7 +75,7 @@ int main(void)
     detect_error_task_init();
 
     while (!chThdShouldTerminateX()) {
-        LEDR_TOGGLE();
+        // LEDR_TOGGLE();
 
         if (!power_failure()) {
             wdgReset(&WDGD1);

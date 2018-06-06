@@ -19,7 +19,7 @@ extern "C" {
 #endif
 
 #ifdef PARAMS_USE_UART
-  #define UART_PARAMS &UARTD2
+  #define UART_PARAMS &UARTD3
   #define PARAMS_BR 115200
 #elif defined(PARAMS_USE_USB)
   /*

@@ -10,7 +10,7 @@
 #include "can_bus.h"
 #include "dbus.h"
 
-#define COMM_CAN_BUS &CAND1
+#define COMM_CAN_BUS &CAND2
 
 typedef struct{
     uint16_t channel0;
@@ -21,11 +21,9 @@ typedef struct{
 } Gimbal_Send_Dbus_canStruct;
 
 typedef struct {
-    int16_t chassis_vx;
-    int16_t chassis_vy;
-    int16_t chassis_vw;
-    int16_t pitch_vel_cmd;
-    int16_t yaw_vel_cmd;
+    double vx;
+    double vy;
+    double vz;
 } ROS_Msg_Struct;
 
 #ifdef __cplusplus
