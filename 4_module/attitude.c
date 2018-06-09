@@ -105,6 +105,7 @@ uint8_t attitude_update_fused(PIMUStruct pIMU, PGyroStruct pGyro)
                                      sinf(pIMU->euler_angle[Roll]) * pIMU->gyroData[Z];
         pIMU->d_euler_angle[Yaw] = (sinf(pIMU->euler_angle[Roll]) * pIMU->gyroData[Y] +
                                     cosf(pIMU->euler_angle[Roll]) * pIMU->gyroData[Z]) / cosf(pIMU->euler_angle[Pitch]);
+        pIMU->prev_yaw = euler_angle[Yaw];
 #endif
 
         return IMU_OK;
