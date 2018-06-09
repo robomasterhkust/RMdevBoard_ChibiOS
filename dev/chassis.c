@@ -30,8 +30,8 @@ Gimbal_Send_Dbus_canStruct* pRC;
 float gimbal_initP = 0; 
 float record = 0; 
  
-#define TWIST_ANGLE 90
-#define TWIST_PERIOD 1000
+#define TWIST_ANGLE 135
+#define TWIST_PERIOD 800
  
  
 chassis_error_t chassis_getError(void){ 
@@ -189,9 +189,9 @@ static THD_FUNCTION(chassis_control, p)
       default:{ 
         chassis_stop_handle(); 
       }break; 
-    } 
+    }
     mecanum_cal();
-    //power_limit_handle();
+    power_limit_handle();
     drive_motor(); 
   } 
 } 
@@ -219,7 +219,7 @@ void chassis_init(void)
     motor_vel_controllers[j].error_int = 0.0f; 
     motor_vel_controllers[j].error_int_max = 0.0f; 
     motor_vel_controllers[j].ki = 0.1f;
-    motor_vel_controllers[j].kp = 50.0f;
+    motor_vel_controllers[j].kp = 100.0f;
   }}
   for(i=0;i<3;i++){
     chassis_heading_controller.error[i] = 0.0f; 
@@ -228,7 +228,7 @@ void chassis_init(void)
  
   chassis_heading_controller.error_int_max = 0.0f; 
   chassis_heading_controller.ki = 0.0f; 
-  chassis_heading_controller.kp = 60.0f;
+  chassis_heading_controller.kp = 70.0f;
   chassis_heading_controller.kd = 1.0f; 
   //************************************************************** 
 //  params_set(&motor_vel_controllers[FRONT_LEFT], 9,2,FLvelName,subname_PI,PARAM_PUBLIC); 
@@ -304,8 +304,7 @@ void mecanum_cal(){
  
 //  VAL_LIMIT(chassis.drive_sp, -MAX_CHASSIS_VX_SPEED, MAX_CHASSIS_VX_SPEED);  //mm/s 
 //  VAL_LIMIT(chassis.strafe_sp, -MAX_CHASSIS_VY_SPEED, MAX_CHASSIS_VY_SPEED);  //mm/s 
-//  VAL_LIMIT(chassis.rotate_sp, -MAX_CHASSIS_VR_SPEED, MAX_CHASSIS_VR_SPEED);  //deg/s 
-
+  VAL_LIMIT(chassis.rotate_sp, -MAX_CHASSIS_VR_SPEED, MAX_CHASSIS_VR_SPEED);  //deg/s
   chassis._motors[FRONT_RIGHT].speed_sp = 
     (chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp*rotate_ratio_fr)*wheel_rpm_ratio;   // CAN ID: 0x201 
   chassis._motors[BACK_RIGHT].speed_sp = 
@@ -333,12 +332,14 @@ void mecanum_cal(){
       chassis._motors[i].speed_sp *= rate; 
     }
   }
+  speed_limit_handle();
   for (int i = 0; i < CHASSIS_MOTOR_NUM; i++){
     chassis.current[i] = chassis_controlSpeed(&chassis._motors[i], &motor_vel_controllers[i]);
+    VAL_LIMIT(chassis.current[i], -16384, 16384);
     //chassis.current[i] = 0;
   }
-} 
- 
+}
+
 void drive_motor(){
   can_motorSetCurrent(CHASSIS_CAN, CHASSIS_CAN_EID, 
     chassis.current[FRONT_RIGHT], chassis.current[FRONT_LEFT],chassis.current[BACK_LEFT], chassis.current[BACK_RIGHT]); //BR,FR,--,-- 
@@ -402,30 +403,52 @@ float chassis_heading_control(pid_controller_t* controller,float get, float set)
   return output; 
  
 } 
+
+
+void speed_limit_handle(){
+  if(JudgeP->powerInfo.power > 80){
+    float ratio = (JudgeP->powerInfo.powerBuffer/50.0) - 0.2;
+    if(ratio<0){
+      ratio = 0;
+    }
+    for(int i =0; i<4;i++){
+      chassis._motors[i].speed_sp = chassis._motors[i]._speed + (chassis._motors[i].speed_sp - chassis._motors[i]._speed) * ratio;
+    }
+  }
+
+}
 void power_limit_handle(){
   //int power_limit = 80 + JudgeP->powerInfo.powerBuffer;
   int power_limit = 80;
-  float a0 = fabsf(chassis.current[FRONT_RIGHT] * 20/16384.0);
-  float a1 = fabsf(chassis.current[FRONT_LEFT] * 20/16384.0);
-  float a2 = fabsf(chassis.current[BACK_LEFT] * 20/16384.0);
-  float a3 = fabsf(chassis.current[BACK_RIGHT] * 20/16384.0);
-  int MAX = (power_limit - 3.5 - 0.14*(a0*a0+a1*a1+a2*a2+a3*a3))/0.005;
+  float a0 = fabs(chassis._encoders[0].act_current * 20.0/16384.0);
+  float a1 = fabs(chassis._encoders[1].act_current * 20.0/16384.0);
+  float a2 = fabs(chassis._encoders[2].act_current * 20.0/16384.0);
+  float a3 = fabs(chassis._encoders[3].act_current * 20.0/16384.0);
+  int MAX = (power_limit - 3 - 0.14*(a0*a0+a1*a1+a2*a2+a3*a3))/0.005;
 
-  int SUM =  fabsf(chassis._encoders[0].raw_speed)*a0/
-             +fabsf(chassis._encoders[1].raw_speed)*a1/
-             +fabsf(chassis._encoders[2].raw_speed)*a2/
-             +fabsf(chassis._encoders[3].raw_speed)*a3;
 
-  if(SUM > MAX){
+  float A0 = fabs(chassis.current[0] * 20.0/16384.0);
+  float A1 = fabs(chassis.current[1]* 20.0/16384.0);
+  float A2 = fabs(chassis.current[2] * 20.0/16384.0);
+  float A3 = fabs(chassis.current[3]* 20.0/16384.0);
+  int SUM =  fabs(chassis._encoders[0].raw_speed)*A0
+             +fabs(chassis._encoders[1].raw_speed)*A1
+             +fabs(chassis._encoders[2].raw_speed)*A2
+             +fabs(chassis._encoders[3].raw_speed)*A3;
+
+  if(SUM > MAX && JudgeP->powerInfo.power >= 80){
     chassis.current[FRONT_RIGHT] = chassis.current[FRONT_RIGHT] * MAX / SUM;
     chassis.current[FRONT_LEFT] = chassis.current[FRONT_LEFT] * MAX / SUM;
     chassis.current[BACK_LEFT] = chassis.current[BACK_LEFT] * MAX / SUM;
     chassis.current[BACK_RIGHT] = chassis.current[BACK_RIGHT] * MAX / SUM;
-    chassis.scale_down = true;
+    chassis.over_power = true;
   }
   else{
-    chassis.scale_down = false;
+    chassis.over_power = false;
   }
+
+
+
 }
  
  

@@ -35,12 +35,12 @@ else if((val) >= (max))\
 #define PERIMETER  478
 
 /* wheel track distance(mm) */
-#define WHEELTRACK  372 //403
+#define WHEELTRACK  425 //403
 /* wheelbase distance(mm) */
-#define WHEELBASE  347 //385
+#define WHEELBASE  315 //385
 
 /* gimbal is relative to chassis center x axis offset(mm) */
-#define GIMBAL_X_OFFSET 120 //150
+#define GIMBAL_X_OFFSET 87 //150
 /* gimbal is relative to chassis center y axis offset(mm) */
 #define GIMBAL_Y_OFFSET 0
 
@@ -52,7 +52,7 @@ else if((val) >= (max))\
 
 //  #define CHASSIS_DECELE_RATIO (1.0f/27.0f)
   /* single 3508 motor maximum speed, unit is rpm */
-  #define MAX_WHEEL_RPM        310 //8000  //8347rpm = 3500mm/s
+  #define MAX_WHEEL_RPM        414 //8000  //8347rpm = 3500mm/s
   /* chassis maximum translation speed, unit is mm/s */
   #define MAX_CHASSIS_VX_SPEED 3300  //8000rpm
   #define MAX_CHASSIS_VY_SPEED 3300
@@ -138,7 +138,7 @@ typedef struct{
   chassis_mode_e  last_ctrl_mode;
 
   float pid_last_error;
-  bool scale_down;
+  bool over_power;
   uint8_t errorFlag;
 
   ChassisEncoder_canStruct* _encoders;
@@ -158,6 +158,7 @@ void chassis_stop_handle(void);
 void separate_gimbal_handle(void);
 void follow_gimbal_handle(void);
 void power_limit_handle(void);
+void speed_limit_handle(void);
 
 
 

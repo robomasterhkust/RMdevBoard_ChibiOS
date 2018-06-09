@@ -7,7 +7,9 @@ int bitmap[15] = {};
 /* mouse button long press time */
 #define LONG_PRESS_TIME  1000  //ms
 /* key acceleration time */
-#define KEY_ACC_TIME     1500  //ms
+#define Up_ratio 0.6
+#define Normal_ratio 0.4
+#define Down_ratio 0.2
 
 kb_ctrl_t km;
 
@@ -37,24 +39,24 @@ static void move_speed_ctrl(uint8_t fast, uint8_t slow)
   {
     km.move = FAST_MODE;
 
-    km.x_spd_limit = 0.4f * CHASSIS_KB_MAX_SPEED_X ;
-    km.y_spd_limit = 0.4f * CHASSIS_KB_MAX_SPEED_Y ;
+    km.x_spd_limit = Up_ratio * CHASSIS_KB_MAX_SPEED_X ;
+    km.y_spd_limit = Up_ratio * CHASSIS_KB_MAX_SPEED_Y ;
 
   }
   else if (slow)
   {
     km.move = SLOW_MODE;
 
-    km.x_spd_limit = 0.2f * CHASSIS_KB_MAX_SPEED_X ;
-    km.y_spd_limit = 0.2f * CHASSIS_KB_MAX_SPEED_Y ;
+    km.x_spd_limit = Down_ratio * CHASSIS_KB_MAX_SPEED_X ;
+    km.y_spd_limit = Down_ratio * CHASSIS_KB_MAX_SPEED_Y ;
 
   }
   else
   {
     km.move = NORMAL_MODE;
 
-    km.x_spd_limit = 0.3f * CHASSIS_KB_MAX_SPEED_X ;
-    km.y_spd_limit = 0.3f * CHASSIS_KB_MAX_SPEED_Y ;
+    km.x_spd_limit = Normal_ratio * CHASSIS_KB_MAX_SPEED_X ;
+    km.y_spd_limit = Normal_ratio * CHASSIS_KB_MAX_SPEED_Y ;
 
   }
 }
@@ -65,25 +67,44 @@ static void move_direction_ctrl(uint8_t forward, uint8_t back,
   //add ramp
   if (forward)
   {
-    km.vy = km.y_spd_limit;
+    if(left || right){
+      km.vy = km.y_spd_limit/1.414;
+    }
+    else{
+      km.vy = km.y_spd_limit;
+    }
   }
   else if (back)
   {
-    km.vy = -km.y_spd_limit;
+    if(left || right){
+      km.vy = -km.y_spd_limit/1.414;
+    }
+    else{
+      km.vy = -km.y_spd_limit;
+    }
   }
   else
   {
     km.vy = 0;
-    //ramp_init(&fb_ramp, KEY_ACC_TIME/INFO_GET_PERIOD);
   }
 
   if (left)
   {
-    km.vx = -km.x_spd_limit ;
+    if(forward || back){
+      km.vx = -km.x_spd_limit/1.414;
+    }
+    else{
+      km.vx = -km.x_spd_limit;
+    }
   }
   else if (right)
   {
-    km.vx = km.x_spd_limit;
+    if(forward || back){
+      km.vx = km.x_spd_limit/1.414;
+    }
+    else{
+      km.vx = km.x_spd_limit;
+    }
   }
   else
   {
@@ -96,8 +117,6 @@ static void move_direction_ctrl(uint8_t forward, uint8_t back,
 
 void keyboard_chassis_process(chassisStruct* chassisP,Gimbal_Send_Dbus_canStruct* pRC){
     keyboard_to_bitmap(pRC);
-
-
     if(bitmap[KEY_R]){
       chassisP->ctrl_mode = DODGE_MODE;
     }
