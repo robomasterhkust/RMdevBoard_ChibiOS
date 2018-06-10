@@ -19,8 +19,7 @@
  * Application entry point.
  */
 
-int main(void)
-{
+int main(void) {
     /*
      * System initializations.
      * - HAL initialization, this also initializes the configured device drivers
@@ -54,7 +53,7 @@ int main(void)
     // Initialize CAN bus receiver
     can_bus_init();
     RC_init();
-    // judgeinit();
+    judgeinit();
     // test_init_all_pwm();
 
     while (!is_motor_power_on()) {
@@ -65,9 +64,9 @@ int main(void)
 
     /* Init sequence 4: actuators, display */
     // command_mixer_init();
-    gimbal_init();
-    shooter_init();
-    feeder_init();
+//    gimbal_init();
+//    shooter_init();
+//    feeder_init();
 
     // chassis_init();
 
