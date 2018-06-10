@@ -53,13 +53,10 @@ static void can_process_encoder_message(CANDriver *const canp, const CANRxFrame 
             case CAN_GIMBAL_BOARD_ID:
             case CAN_CHASSIS_BOARD_ID:
             case CAN_CHASSIS_BOARD_GAMEINFO_ID:
-            case CAN_CHASSIS_BOARD_HLTH_ID:
-            case CAN_CHASSIS_BOARD_PROJECTILE_ID:
+            case CAN_CHASSIS_BOARD_PROJECTILE_HLTH_ID:
             case CAN_CHASSIS_BOARD_POWER_POWERBUFFER_ID:
             case CAN_CHASSIS_BOARD_VOLT_CURRENT_ID:
-            case CAN_CHASSIS_BOARD_SHOOTERHEAT_ID:
-            case CAN_CHASSIS_BOARD_RFID_ID:
-            case CAN_CHASSIS_BOARD_BUFFERINFO_ID:
+            case CAN_CHASSIS_BOARD_SHOOTERHEAT_RFID_BUFFERINFO_ID:
             case CAN_CHASSIS_BOARD_LOCATION_X_Y_ID:
             case CAN_CHASSIS_BOARD_LOCATION_Z_YAW_ID:
             case CAN_NVIDIA_TX2_BOARD_ID:
