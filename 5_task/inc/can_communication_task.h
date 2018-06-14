@@ -7,6 +7,7 @@
 
 #include "hal.h"
 #include "stdint.h"
+#include "stdbool.h"
 #include "can_bus.h"
 #include "dbus.h"
 
@@ -18,6 +19,7 @@ typedef struct{
     uint8_t  s1;
     uint8_t  s2;
     uint16_t key_code;
+    bool updated;
 } Gimbal_Send_Dbus_canStruct;
 
 typedef struct {
@@ -33,7 +35,7 @@ extern "C" {
 volatile Gimbal_Send_Dbus_canStruct* can_get_sent_dbus(void);
 volatile ROS_Msg_Struct* can_get_ros_msg(void);
 void can_process_communication(const CANRxFrame * rxmsg);
-void RC_txCan(RC_Ctl_t* RC_Ctl, CANDriver *const CANx, const uint16_t SID);
+void RC_txCan(RC_Ctl_t* RC_Ctl, CANDriver *const CANx, uint16_t SID);
 
 #ifdef __cplusplus
 }

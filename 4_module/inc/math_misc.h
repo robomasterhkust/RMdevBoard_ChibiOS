@@ -124,6 +124,13 @@ static inline uint8_t matrix_invert3(const float src[3][3], float dst[3][3])
     return true;
 }
 
+/**
+ * Angular velocity to update quaternion, see YANG Shuo's section 4.2.1
+ * dq_eb = 1/2 q_eb * [w1, w2, w3, 0]
+ * @input q
+ * @input v
+ * @output dq
+ */
 static inline void q_derivative(const float q[4], const float v[3],
                                 float dq[4])
 {
@@ -135,6 +142,7 @@ static inline void q_derivative(const float q[4], const float v[3],
 
 /**
  * create Euler angles vector from the quaternion
+ * Using Body 3-2-1 Euler angle (ZYX Euler angle) to JPL quaternion
  */
 static inline void quarternion2euler(const float q[4], float euler_angle[3])
 {
@@ -145,6 +153,8 @@ static inline void quarternion2euler(const float q[4], float euler_angle[3])
 
 /**
  * create quaternion from euler angle
+ * Using Body 3-2-1 Euler angle (ZYX Euler angle) to JPL quaternion
+ * q[0] = q.w(), q[1] = q.x(), q[2] = q.y(), q[3] = q.z()
  */
 static inline void euler2quarternion(const float euler_angle[3], float q[4])
 {
@@ -160,6 +170,17 @@ static inline void euler2quarternion(const float euler_angle[3], float q[4])
     q[1] = (sinPhi_2 * cosTheta_2 * cosPsi_2 - cosPhi_2 * sinTheta_2 * sinPsi_2);
     q[2] = (cosPhi_2 * sinTheta_2 * cosPsi_2 + sinPhi_2 * cosTheta_2 * sinPsi_2);
     q[3] = (cosPhi_2 * cosTheta_2 * sinPsi_2 - sinPhi_2 * sinTheta_2 * cosPsi_2);
+}
+
+/**
+ * quaternion production in Hamilton Quaternion
+ */
+static inline void quaternion_product(const float a[4], const float b[4], float q[4])
+{
+    q[0] = a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3];
+    q[1] = a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2];
+    q[2] = a[0] * b[2] + a[2] * b[0] + a[3] * b[1] - a[1] * b[3];
+    q[3] = a[0] * b[3] + a[3] * b[0] + a[1] * b[2] - a[2] * b[1];
 }
 
 /**

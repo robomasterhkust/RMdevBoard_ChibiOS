@@ -29,6 +29,7 @@
 	#define RC_LOCK_TIME_S		 15
 #endif
 
+/*
 #define KEY_V       0x4000
 #define KEY_C       0x2000
 #define KEY_X       0x1000
@@ -44,6 +45,7 @@
 #define KEY_A       0x0004
 #define KEY_S       0x0002
 #define KEY_W       0x0001
+ */
 
 typedef enum{
 	RC_INDEX_PILOT = 0,
@@ -117,6 +119,7 @@ typedef struct{
 extern "C" {
 #endif
 
+void RC_canTxCmd(uint8_t cmd);
 RC_Ctl_t* RC_get(void);
 void RC_init(void);
 rc_state_t dbus_getError(void);

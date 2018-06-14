@@ -9,13 +9,16 @@
 
 #define GIMBAL_CONTROL_FREQ 1000U
 #define GIMBAL_CUTOFF_FREQ    30U
+#define GIMBAL_DYAW_CUTOFF_FREQ    2U
 
 //#define GIMBAL_ZERO
 //#define GIMBAL_INIT_TEST_PITCH    //Set Initialization position and PID value
 //#define GIMBAL_INIT_TEST          //Set Initialization position and PID value
 //#define GIMBAL_FF_TEST              //Set Initialization position and PID value
-//#define GIMBAL_USE_MAVLINK_CMD
+
 #define GIMBAL_ENCODER_USE_SPEED
+
+#define GIMBAL_DEBUG_ATTI FALSE
 
 //gimbal maximum movement speed in radian
 #define GIMBAL_MAX_SPEED_PITCH      4.0f
@@ -114,7 +117,6 @@ typedef struct{
 
 GimbalStruct* gimbal_get(void);
 void gimbal_setRune(uint8_t cmd);
-GimbalStruct* gimbal_get_sys_iden(void);
 uint32_t gimbal_get_error(void);
 void gimbal_init(void);
 void gimbal_kill(void);

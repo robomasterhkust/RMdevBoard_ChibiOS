@@ -19,6 +19,15 @@
  * Application entry point.
  */
 
+#if GIMBAL_DEBUG_ATTI
+extern float euler_local_new[3];
+extern float euler_local_old[3];
+extern float gimbalnew_q_world[4];
+extern float gimbalnew_q_gimbalcen[4];
+extern float gimbalcen_q_gimbalold[4];
+extern float gimbalcen_q_world[4];
+#endif
+
 int main(void)
 {
     /*
@@ -48,41 +57,48 @@ int main(void)
     LEDR_ON();
 
     /* Init sequence 3: sensors, comm */
-    attitude_estimator_init();
-    // Initialize ADIS16265 single axial gyroscope
-    single_axis_gyro_init_adis16265();
     // Initialize CAN bus receiver
     can_bus_init();
+    attitude_estimator_init();
+
+#ifndef RM_CHASSIS_BOARD
+    // Initialize ADIS16265 single axial gyroscope
+    single_axis_gyro_init_adis16265();
     RC_init();
-    // judgeinit();
-    // test_init_all_pwm();
 
     while (!is_motor_power_on()) {
         // LEDG8_TOGGLE();
-//        LEDY_TOGGLE();
+        LEDY_TOGGLE();
         chThdSleepMilliseconds(200);
     }
+#else
+    judgeinit();
+#endif
+
+    // test_init_all_pwm();
 
     /* Init sequence 4: actuators, display */
     // command_mixer_init();
+
+#ifndef RM_CHASSIS_BOARD
     gimbal_init();
     shooter_init();
     feeder_init();
-
-    // chassis_init();
+#else
+    chassis_init();
+#endif
 
     /* Init sequence 5: customized functions */
     detect_error_task_init();
 
     while (!chThdShouldTerminateX()) {
-        // LEDR_TOGGLE();
+        LEDR_TOGGLE();
 
         if (!power_failure()) {
             wdgReset(&WDGD1);
         } else {
             gimbal_kill();
         }
-
         chThdSleepMilliseconds(200);
     }
     return 0;

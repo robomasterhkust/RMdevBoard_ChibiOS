@@ -38,6 +38,7 @@ static inline void  can_processSendDbusEncoder
     db->s1       = rxmsg->data8[4];
     db->s2       = rxmsg->data8[5];
     db->key_code = rxmsg->data16[3];
+    db->updated = true;
     chSysUnlock();
 }
 
@@ -79,7 +80,7 @@ void can_process_communication(const CANRxFrame * const rxmsg)
  * @param CANx
  * @param SID
  */
-void RC_txCan(RC_Ctl_t* RC_Ctl, CANDriver *const CANx, const uint16_t SID)
+inline void RC_txCan(RC_Ctl_t* RC_Ctl, CANDriver *const CANx, const uint16_t SID)
 {
     CANTxFrame txmsg;
     Gimbal_Send_Dbus_canStruct txCan;

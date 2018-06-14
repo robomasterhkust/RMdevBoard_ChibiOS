@@ -1,19 +1,17 @@
 /*
  * chassis.h
  *
- * Updated on: 9 June, 2018
- *      Author: ZENG, Kuang; Tjian
+ *  Created on: 10 Jan, 2018
+ *      Author: ASUS
  */
 //#include "canBusProcess.h"
+#include "adis16265.h"
+#include "can_motor_task.h"
 
 #ifndef INC_CHASSIS_H_
 #define INC_CHASSIS_H_
 
-#include "adis16265.h"
-#include "can.h"
-#include "can_motor_task.h"
-
-#define CHASSIS_CAN  &CAND1        //CAND1
+#define CHASSIS_CAN  &CAND1
 #define CHASSIS_CAN_EID  0x200
 
 #define CHASSIS_UPDATE_FREQ 500
@@ -31,6 +29,7 @@ else if((val) >= (max))\
 }\
 } while(0)\
 
+
 #define powerlimit 80
 /************************ chassis parameter ****************************/
 /* the radius of wheel(mm) */
@@ -39,12 +38,12 @@ else if((val) >= (max))\
 #define PERIMETER  478
 
 /* wheel track distance(mm) */
-#define WHEELTRACK  425 //403
+#define WHEELTRACK  530 //403
 /* wheelbase distance(mm) */
-#define WHEELBASE  315 //385
+#define WHEELBASE  520 //385
 
 /* gimbal is relative to chassis center x axis offset(mm) */
-#define GIMBAL_X_OFFSET 87 //150
+#define GIMBAL_X_OFFSET 120 //150
 /* gimbal is relative to chassis center y axis offset(mm) */
 #define GIMBAL_Y_OFFSET 0
 
@@ -56,7 +55,7 @@ else if((val) >= (max))\
 
 //  #define CHASSIS_DECELE_RATIO (1.0f/27.0f)
 /* single 3508 motor maximum speed, unit is rpm */
-#define MAX_WHEEL_RPM        414 //8000  //8347rpm = 3500mm/s
+#define MAX_WHEEL_RPM        310 //8000  //8347rpm = 3500mm/s
 /* chassis maximum translation speed, unit is mm/s */
 #define MAX_CHASSIS_VX_SPEED 3300  //8000rpm
 #define MAX_CHASSIS_VY_SPEED 3300
@@ -68,7 +67,7 @@ else if((val) >= (max))\
 
 
 // DBUS MACRO
-#define CHASSIS_GEAR_RATIO    27U
+#define CHASSIS_GEAR_RATIO    19U
 //#define RPM_MAX    ((int16_t) 350)              //
 //#define RPM_MIN    ((int16_t) -350)              //
 #define HEADING_MIN     ((float) -3.14159) // - pi
@@ -104,6 +103,7 @@ typedef struct
     float _pos;
     uint8_t _wait_count;
 } motorPosStruct;
+
 typedef struct
 {
     float vx;
@@ -111,19 +111,21 @@ typedef struct
     float vw;
 
 } rc_ctrl_t;
+
 typedef enum
 {
     CHASSIS_MOTOR_0_NOT_CONNECTED = 1 << 0,
     CHASSIS_MOTOR_1_NOT_CONNECTED = 1 << 1,
     CHASSIS_MOTOR_2_NOT_CONNECTED = 1 << 2,
     CHASSIS_MOTOR_3_NOT_CONNECTED = 1 << 3
-};
+}chassis_motor_error;
 
 typedef enum
 {
     CHASSIS_OK = 0,
     CHASSIS_MOTOR_NOT_CONNECTED = 1 << 0
-};
+}chassis_motor_summary;
+
 typedef uint8_t chassis_error_t;
 
 typedef struct
@@ -142,21 +144,24 @@ typedef struct
     int16_t rotate_y_offset;
     int16_t current[4];
     float position_ref;
+//  int16_t       position_ref;
+//  uint8_t       follow_gimbal;
+
 
     chassis_mode_e ctrl_mode;
     chassis_mode_e last_ctrl_mode;
 
     float pid_last_error;
-    bool over_power;
     uint8_t errorFlag;
 
-    ChassisEncoder_canStruct *_encoders;
+    volatile ChassisEncoder_canStruct *_encoders;
     PGyroStruct _pGyro;
 } chassisStruct;
 
+/* define by official group */
+void mecanum_cal(void);
 
-void mecanum_calc();
-
+/*define by UST*/
 chassis_error_t chassis_getError(void);
 
 chassisStruct *chassis_get(void);
@@ -178,8 +183,6 @@ void separate_gimbal_handle(void);
 void follow_gimbal_handle(void);
 
 void power_limit_handle(void);
-
-void speed_limit_handle(void);
 
 
 #endif /* INC_CHASSIS_H_ */

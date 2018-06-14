@@ -6,6 +6,7 @@
 #include "hal.h"
 #include "attitude_estimator_task.h"
 #include "imu_temp.h"
+#include "main.h"
 
 #define MPU6500_UPDATE_PERIOD_US 1000000U/MPU6500_UPDATE_FREQ
 static THD_WORKING_AREA(Attitude_thread_wa, 4096);
@@ -77,10 +78,13 @@ static THD_FUNCTION(Attitude_thread, p)
 
         // if adis 16470 exist
 
-        // else if adis16265 exist
-        attitude_update_fused(pIMU, pGyro);
+#ifdef RM_CHASSIS_BOARD
+        // else if not adis16265 exist
+        attitude_estimator_mpu6500_init(pIMU);
+#else
         // else
-        // attitude_estimator_mpu6500_init(pIMU);
+        attitude_update_fused(pIMU, pGyro);
+#endif
 
         if (pIMU->accelerometer_not_calibrated || pIMU->gyroscope_not_calibrated) {
             chSysLock();

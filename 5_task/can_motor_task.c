@@ -50,13 +50,13 @@ static inline void can_processChassisEncoder
     cm->raw_speed = (int16_t) (rxmsg->data8[2]) << 8 | rxmsg->data8[3];
     cm->act_current = (int16_t) (rxmsg->data8[4]) << 8 | rxmsg->data8[5];
     cm->temperature = (uint8_t) rxmsg->data8[6];
-    chSysUnlock();
 
     if (cm->raw_angle - cm->last_raw_angle > CAN_ENCODER_RANGE / 2) cm->round_count--;
     else if (cm->raw_angle - cm->last_raw_angle < -CAN_ENCODER_RANGE / 2) cm->round_count++;
 
     cm->total_ecd = cm->round_count * CAN_ENCODER_RANGE + cm->raw_angle - cm->offset_raw_angle;
     cm->radian_angle = cm->total_ecd * CAN_ENCODER_RADIAN_RATIO;
+    chSysUnlock();
 }
 
 static inline void can_processGimbalEncoder
@@ -69,31 +69,33 @@ static inline void can_processGimbalEncoder
     gm->raw_angle = (uint16_t) (rxmsg->data8[0]) << 8 | rxmsg->data8[1];
     gm->raw_current = (int16_t) ((rxmsg->data8[2]) << 8 | rxmsg->data8[3]);
     gm->current_setpoint = (int16_t) ((rxmsg->data8[4]) << 8 | rxmsg->data8[5]);
-    chSysUnlock();
 
     if (gm->raw_angle - gm->last_raw_angle > CAN_ENCODER_RANGE / 2) gm->round_count--;
     else if (gm->raw_angle - gm->last_raw_angle < -CAN_ENCODER_RANGE / 2) gm->round_count++;
 
     gm->total_ecd = gm->round_count * CAN_ENCODER_RANGE + gm->raw_angle - gm->offset_raw_angle;
     gm->radian_angle = gm->total_ecd * CAN_ENCODER_RADIAN_RATIO;
+    chSysUnlock();
 }
 
 /**
  *  CAN bus sub function for decoding chassis encoder
  *  Chassis ID related encoder process, change the ID struct if hardware changed
  */
-void can_process_chassis_encoder(const CANRxFrame * const rxmsg)
+void can_process_chassis_encoder(const CANRxFrame *const rxmsg)
 {
     switch (rxmsg->SID) {
         case CAN_CHASSIS_FL_FEEDBACK_MSG_ID:
             chassis_encoder[FRONT_LEFT].msg_count++;
             chassis_encoder[FRONT_LEFT].msg_count <= 50 ? can_getMotorOffset(&chassis_encoder[FRONT_LEFT], rxmsg)
-                                                        : can_processChassisEncoder(&chassis_encoder[FRONT_LEFT], rxmsg);
+                                                        : can_processChassisEncoder(&chassis_encoder[FRONT_LEFT],
+                                                                                    rxmsg);
             break;
         case CAN_CHASSIS_FR_FEEDBACK_MSG_ID:
             chassis_encoder[FRONT_RIGHT].msg_count++;
             chassis_encoder[FRONT_RIGHT].msg_count <= 50 ? can_getMotorOffset(&chassis_encoder[FRONT_RIGHT], rxmsg)
-                                                         : can_processChassisEncoder(&chassis_encoder[FRONT_RIGHT], rxmsg);
+                                                         : can_processChassisEncoder(&chassis_encoder[FRONT_RIGHT],
+                                                                                     rxmsg);
             break;
         case CAN_CHASSIS_BL_FEEDBACK_MSG_ID:
             chassis_encoder[BACK_LEFT].msg_count++;
@@ -103,9 +105,11 @@ void can_process_chassis_encoder(const CANRxFrame * const rxmsg)
         case CAN_CHASSIS_BR_FEEDBACK_MSG_ID:
             chassis_encoder[BACK_RIGHT].msg_count++;
             chassis_encoder[BACK_RIGHT].msg_count <= 50 ? can_getMotorOffset(&chassis_encoder[BACK_RIGHT], rxmsg)
-                                                        : can_processChassisEncoder(&chassis_encoder[BACK_RIGHT], rxmsg);
+                                                        : can_processChassisEncoder(&chassis_encoder[BACK_RIGHT],
+                                                                                    rxmsg);
             break;
-        default: break;
+        default:
+            break;
     }
 }
 
@@ -113,9 +117,9 @@ void can_process_chassis_encoder(const CANRxFrame * const rxmsg)
  * CAN bus sub function for decoding extra motors, used mostly for hero
  * @param rxmsg
  */
-void can_process_extra_encoder(const CANRxFrame * const rxmsg)
+void can_process_extra_encoder(const CANRxFrame *const rxmsg)
 {
-    uint16_t i = (uint16_t)rxmsg->SID - (uint16_t)CAN_C620_EXTRA_ID_FEEDBACK_MSG_ID_5;
+    uint16_t i = (uint16_t) rxmsg->SID - (uint16_t) CAN_C620_EXTRA_ID_FEEDBACK_MSG_ID_5;
     switch (rxmsg->SID) {
         case CAN_C620_EXTRA_ID_FEEDBACK_MSG_ID_5:
         case CAN_C620_EXTRA_ID_FEEDBACK_MSG_ID_6:
@@ -125,7 +129,8 @@ void can_process_extra_encoder(const CANRxFrame * const rxmsg)
             extra_encoder[i].msg_count <= 50 ? can_getMotorOffset(&extra_encoder[i], rxmsg)
                                              : can_processChassisEncoder(&extra_encoder[i], rxmsg);
             break;
-        default: break;
+        default:
+            break;
     }
 }
 
@@ -133,7 +138,7 @@ void can_process_extra_encoder(const CANRxFrame * const rxmsg)
  * CAN bus sub function for decoding gimbal motors
  * @param rxmsg
  */
-void can_process_gimbal_encoder(const CANRxFrame * rxmsg)
+void can_process_gimbal_encoder(const CANRxFrame *rxmsg)
 {
     switch (rxmsg->SID) {
         case CAN_GIMBAL_YAW_FEEDBACK_MSG_ID:
@@ -142,7 +147,8 @@ void can_process_gimbal_encoder(const CANRxFrame * rxmsg)
         case CAN_GIMBAL_PITCH_FEEDBACK_MSG_ID:
             can_processGimbalEncoder(&gimbal_encoder[GIMBAL_PITCH], rxmsg);
             break;
-        default:break;
+        default:
+            break;
     }
 }
 
@@ -154,6 +160,7 @@ void can_process_gimbal_encoder(const CANRxFrame * rxmsg)
  * @notapi
  */
 CANTxFrame txmsg;
+
 void can_motorSetCurrent(CANDriver *const CANx,
                          const uint16_t SID,
                          const int16_t cm1_iq,

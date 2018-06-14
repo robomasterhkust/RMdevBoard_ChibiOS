@@ -180,14 +180,15 @@ static void extcb10(EXTDriver *extp, expchannel_t channel)
 
 static const EXTConfig extcfg = {
         {
+                {EXT_CH_MODE_DISABLED, NULL},
+                {EXT_CH_MODE_DISABLED, NULL},
+                {EXT_CH_MODE_DISABLED, NULL},
 //                {EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART |
 //                 EXT_MODE_GPIOA, ext_switch_cb0},   //EXTI0
 //                {EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART |
 //                 EXT_MODE_GPIOA, ext_switch_cb1},   //EXTI1
-                {EXT_CH_MODE_DISABLED, NULL},
-                {EXT_CH_MODE_DISABLED, NULL},
-                {EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART |
-                 EXT_MODE_GPIOB, ext_key_cb2},   //EXTI2
+//                {EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART |
+//                 EXT_MODE_GPIOB, ext_key_cb2},   //EXTI2
                 {EXT_CH_MODE_DISABLED, NULL},
 //                {EXT_CH_MODE_RISING_EDGE | EXT_CH_MODE_AUTOSTART |
 //                 EXT_MODE_GPIOA, ext_switch_cb3},   //EXTI3
@@ -223,7 +224,7 @@ void extiinit(void)
 //    extChannelEnable(&EXTD1, 0);
 //    last_exti_0_time = chVTGetSystemTimeX();
 
-    extChannelEnable(&EXTD1, 2);
+//    extChannelEnable(&EXTD1, 2);
 //    extChannelEnable(&EXTD1, 5);
 //    extChannelEnable(&EXTD1, 10);
 #ifdef MOTOR_TEST

@@ -8,6 +8,7 @@ TASKSRC =   \
             $(TASK_PATH)/can_motor_task.c \
             $(TASK_PATH)/can_communication_task.c \
             $(TASK_PATH)/feeder.c \
+            $(TASK_PATH)/keyboard.c \
             $(TASK_PATH)/bullet_count_task.c
             # $(TASK_PATH)/command_mixer_task.c \
             # $(TASK_PATH)/auto_fetch_task.c \
