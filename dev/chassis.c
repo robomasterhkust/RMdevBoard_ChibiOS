@@ -7,14 +7,13 @@
 #include <canBusProcess.h> 
 #include "ch.h" 
 #include "hal.h" 
- 
 #include "canBusProcess.h" 
 #include "gimbal.h" 
 #include "dbus.h" 
 #include "chassis.h"
 #include "adis16265.h" 
 #include "math_misc.h" 
-#include "math.h" 
+#include "math.h"
 #include "keyboard.h"
 #include "judge.h"
  
@@ -32,8 +31,13 @@ float record = 0;
  
 #define TWIST_ANGLE 135
 #define TWIST_PERIOD 800
- 
- 
+
+#define TWIST_MOVE_ANGLE 90
+#define TWIST_MOVE_PERIOD 1000
+
+#define accl_value 165.0/(2*500) // 500 is the frequency and 1 means 1 second
+#define accl_y 3300*0.4/(500)
+#define accl_x 3300*0.4/(500) //slide
 chassis_error_t chassis_getError(void){ 
   return chassis.errorFlag; 
 } 
@@ -81,7 +85,7 @@ static void chassis_encoderUpdate(void)
 static int16_t chassis_controlSpeed(motorStruct* motor, pi_controller_t* controller) 
 { 
 //  float wheel_rpm_ratio = 60.0f/(PERIMETER*CHASSIS_SPEED_PSC); 
-  float error = motor->speed_sp - motor->_speed;//*wheel_rpm_ratio; 
+  float error = motor->speed_curve - motor->_speed;//*wheel_rpm_ratio;
   controller->error_int += error * controller->ki; 
   controller->error_int = boundOutput(controller->error_int, controller->error_int_max); 
   float output = error*controller->kp + controller->error_int; 
@@ -89,7 +93,7 @@ static int16_t chassis_controlSpeed(motorStruct* motor, pi_controller_t* control
 } 
  
  
-#define H_MAX  200  // Heading PID_outputx 
+#define H_MAX  200  // Heading PID_outputx
 static int16_t chassis_controlHeading(chassisStruct* chassis, pid_controller_t* controller) 
 { 
   float error = chassis->heading_sp - chassis->_pGyro->angle; 
@@ -128,7 +132,8 @@ static THD_FUNCTION(chassis_control, p)
   Rc = RC_get();
   bool done = false; 
   uint32_t tick = chVTGetSystemTimeX(); 
-  chassis.ctrl_mode = MANUAL_SEPARATE_GIMBAL;
+  uint32_t tick_test = 0;
+  chassis.ctrl_mode = CHASSIS_STOP;
   while(!chThdShouldTerminateX()) 
   { 
 
@@ -145,15 +150,30 @@ static THD_FUNCTION(chassis_control, p)
       } 
     } 
 */
-
+    if(pRC->channel0 > 1684 || pRC->channel0 <0){
+      chassis.ctrl_mode = CHASSIS_STOP;
+    }
+    else{
+      chassis.ctrl_mode = MANUAL_FOLLOW_GIMBAL;
+    }
+    tick_test = ST2US(chVTGetSystemTimeX());
     tick += US2ST(CHASSIS_UPDATE_PERIOD_US); 
-    if(tick > chVTGetSystemTimeX()) 
+    if(tick > chVTGetSystemTimeX()){
       chThdSleepUntil(tick); 
+      chassis.over_time = false;
+    }
     else 
     { 
-      tick = chVTGetSystemTimeX(); 
-    } 
+      tick = chVTGetSystemTimeX();
+      chassis.over_time = true;
+    }
     chassis_encoderUpdate(); 
+    if(JudgeP->powerInfo.powerBuffer<=20){
+      chassis.ctrl_mode = SAVE_LIFE;
+      for(int i =0; i<4;i++){
+        motor_vel_controllers[i].error_int = 0;
+      }
+    }
     if(keyboard_enable(pRC)){
       keyboard_chassis_process(&chassis,pRC);
       rm.vx = 0;
@@ -186,13 +206,20 @@ static THD_FUNCTION(chassis_control, p)
       case MANUAL_FOLLOW_GIMBAL:{ 
         follow_gimbal_handle();
       }break; 
+      case DODGE_MOVE_MODE:{
+        dodge_move_handle();
+      }break;
+      case SAVE_LIFE:{
+        save_life();
+      }break;
       default:{ 
         chassis_stop_handle(); 
       }break; 
     }
     mecanum_cal();
-    power_limit_handle();
-    drive_motor(); 
+    //power_limit_handle();
+    drive_motor();
+    chassis.loop_time = ST2US(chVTGetSystemTimeX()) - tick_test;
   } 
 } 
  
@@ -207,18 +234,18 @@ void chassis_init(void)
 { 
   memset(&chassis,0,sizeof(chassisStruct)); 
   chassis.drive_sp = 0.0f; 
+  chassis.drive_curve = 0.0f;
+  chassis.strafe_curve = 0.0f;
   chassis.strafe_sp = 0.0f; 
   chassis.rotate_sp = 0.0f; 
   chassis.heading_sp = 0.0f; 
-  chassis.rotate_x_offset = 0.0f; 
-  chassis.rotate_y_offset = 0.0f; 
+  chassis.rotate_x_offset = GIMBAL_X_OFFSET;
+  chassis.rotate_y_offset = GIMBAL_Y_OFFSET;
   uint8_t i; 
   // *********************temporary section********************* 
     {int j; 
   for(j = 0; j < 4; j++){ 
-    motor_vel_controllers[j].error_int = 0.0f; 
-    motor_vel_controllers[j].error_int_max = 0.0f; 
-    motor_vel_controllers[j].ki = 0.1f;
+    motor_vel_controllers[j].ki = 0.2f;
     motor_vel_controllers[j].kp = 100.0f;
   }}
   for(i=0;i<3;i++){
@@ -240,7 +267,9 @@ void chassis_init(void)
   for (i = 0; i < 4; i++) 
   { 
     chassis.current[i] =0; 
-    chassis._motors[i].speed_sp = 0.0f; 
+    chassis._motors[i].speed_sp = 0.0f;
+    chassis._motors[i].speed_curve = 0.0f;
+
     lpfilter_init(lp_speed + i, CHASSIS_UPDATE_FREQ, 20); 
     motor_vel_controllers[i].error_int = 0.0f; 
     motor_vel_controllers[i].error_int_max = MOTOR_VEL_INT_MAX; 
@@ -251,15 +280,6 @@ void chassis_init(void)
                           NORMALPRIO, chassis_control, NULL); 
 } 
  
-
-/* 
- * 
- * 
- * 
- * 
- * 
- * */ 
- 
 void mecanum_cal(){
   static float rotate_ratio_fr; 
   static float rotate_ratio_fl; 
@@ -268,17 +288,8 @@ void mecanum_cal(){
   static float wheel_rpm_ratio; 
   chSysLock(); // ensure that the calculation is done in batch 
  
-  if(chassis.ctrl_mode == DODGE_MODE) 
-  { 
-    chassis.rotate_x_offset = GIMBAL_X_OFFSET; 
-    chassis.rotate_y_offset = 0; 
-  } 
-  else 
-  { 
-    chassis.rotate_x_offset = 120; //glb_struct.gimbal_x_offset; 
-    chassis.rotate_y_offset = 0; //glb_struct.gimbal_y_offset; 
-  } 
  
+
   if(1) //rotation_center_gimbal 
   { 
     rotate_ratio_fr = ((WHEELBASE+ WHEELTRACK)/2.0f \ 
@@ -305,14 +316,55 @@ void mecanum_cal(){
 //  VAL_LIMIT(chassis.drive_sp, -MAX_CHASSIS_VX_SPEED, MAX_CHASSIS_VX_SPEED);  //mm/s 
 //  VAL_LIMIT(chassis.strafe_sp, -MAX_CHASSIS_VY_SPEED, MAX_CHASSIS_VY_SPEED);  //mm/s 
   VAL_LIMIT(chassis.rotate_sp, -MAX_CHASSIS_VR_SPEED, MAX_CHASSIS_VR_SPEED);  //deg/s
+
+
+  if(fabs(chassis.strafe_curve) < fabs(chassis.strafe_sp)){
+    if(chassis.strafe_sp>0){
+      chassis.strafe_curve += accl_x;
+    }
+    else{
+      chassis.strafe_curve -= accl_x;
+    }
+
+    if(fabs(chassis.strafe_curve) >=fabs(chassis.strafe_sp)){
+      chassis.strafe_curve = chassis.strafe_sp;
+    }
+  }
+  else{
+    chassis.strafe_curve = chassis.strafe_sp;
+  }
+
+
+
+  if(fabs(chassis.drive_curve) < fabs(chassis.drive_sp)){
+    if(chassis.drive_sp>0){
+      chassis.drive_curve += accl_y;
+    }
+    else{
+      chassis.drive_curve -= accl_y;
+    }
+
+    if(fabs(chassis.drive_curve) >=fabs(chassis.drive_sp)){
+      chassis.drive_curve = chassis.drive_sp;
+    }
+  }
+  else{
+    chassis.drive_curve = chassis.drive_sp;
+  }
+
+
+
   chassis._motors[FRONT_RIGHT].speed_sp = 
-    (chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp*rotate_ratio_fr)*wheel_rpm_ratio;   // CAN ID: 0x201 
+    (chassis.strafe_curve - chassis.drive_curve + chassis.rotate_sp*rotate_ratio_fr)*wheel_rpm_ratio;   // CAN ID: 0x201
   chassis._motors[BACK_RIGHT].speed_sp = 
-    (-1*chassis.strafe_sp - chassis.drive_sp + chassis.rotate_sp*rotate_ratio_br)*wheel_rpm_ratio;       // CAN ID: 0x202 
+    (-1*chassis.strafe_curve - chassis.drive_curve + chassis.rotate_sp*rotate_ratio_br)*wheel_rpm_ratio;       // CAN ID: 0x202
   chassis._motors[FRONT_LEFT].speed_sp = 
-    (chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp*rotate_ratio_fl)*wheel_rpm_ratio;       // CAN ID: 0x203 
+    (chassis.strafe_curve + chassis.drive_curve + chassis.rotate_sp*rotate_ratio_fl)*wheel_rpm_ratio;       // CAN ID: 0x203
   chassis._motors[BACK_LEFT].speed_sp = 
-    (-1*chassis.strafe_sp + chassis.drive_sp + chassis.rotate_sp*rotate_ratio_bl)*wheel_rpm_ratio;     // CAN ID: 0x204 
+    (-1*chassis.strafe_curve + chassis.drive_curve + chassis.rotate_sp*rotate_ratio_bl)*wheel_rpm_ratio;     // CAN ID: 0x204
+
+
+
 
 
   float max = 0.0f; 
@@ -333,6 +385,26 @@ void mecanum_cal(){
     }
   }
   speed_limit_handle();
+  /*
+  for(int i =0;i<4;i++){
+    if(fabs(chassis._motors[i].speed_curve) < fabs(chassis._motors[i].speed_sp) && chassis.ctrl_mode != DODGE_MODE && chassis.ctrl_mode != DODGE_MOVE_MODE){
+      if(chassis._motors[i].speed_sp>0){
+        chassis._motors[i].speed_curve += accl_value;
+      }
+      else{
+        chassis._motors[i].speed_curve -= accl_value;
+      }
+
+      if(fabs(chassis._motors[i].speed_curve) >fabs(chassis._motors[i].speed_sp)){
+        chassis._motors[i].speed_curve = chassis._motors[i].speed_sp;
+      }
+    }
+    else{
+      chassis._motors[i].speed_curve = chassis._motors[i].speed_sp;
+    }
+  }
+
+*/
   for (int i = 0; i < CHASSIS_MOTOR_NUM; i++){
     chassis.current[i] = chassis_controlSpeed(&chassis._motors[i], &motor_vel_controllers[i]);
     VAL_LIMIT(chassis.current[i], -16384, 16384);
@@ -351,10 +423,46 @@ void chassis_twist_handle(){
   int16_t twist_angle  = TWIST_ANGLE; 
   twist_count++; 
   chassis.position_ref = gimbal_initP + twist_angle*sin(2*M_PI/twist_period*twist_count)*M_PI/180; 
-  /*Develop later 
-   * */ 
   chassis.rotate_sp = chassis_heading_control(&chassis_heading_controller,gimbal_p[0].radian_angle, chassis.position_ref); 
-} 
+}
+void dodge_move_handle(){
+  int16_t twist_period = TWIST_MOVE_PERIOD;
+  int16_t twist_angle  = TWIST_MOVE_ANGLE;
+  twist_count++;
+  chassis.position_ref = gimbal_initP + twist_angle*sin(2*M_PI/twist_period*twist_count)*M_PI/180;
+  chassis.rotate_sp = chassis_heading_control(&chassis_heading_controller,gimbal_p[0].radian_angle, chassis.position_ref);
+  float vy = km.vy;
+  float vx = km.vx;
+  float angle = (gimbal_p[0].radian_angle - gimbal_initP)*(2.0/3.0);
+  if(angle > 0){
+    chassis.drive_sp = 0.8*(vy*cos(angle)+vx*sin(angle));
+    chassis.strafe_sp = 0.8*((-1)*vy*sin(angle) + vx*cos(angle));
+  }
+  else{
+    chassis.drive_sp = 0.8*(vy* cos(-angle)+(-1)*vx*sin(-angle));
+    chassis.strafe_sp = 0.8*(vy*sin(-angle) + vx*cos(-angle));
+  }
+
+}
+void follow_gimbal_handle(){
+  if(twist_count != 0){
+    twist_count = 0;
+  }
+
+  float vy = km.vy + rm.vy;
+  float vx = km.vx + rm.vx;
+  float angle = (gimbal_p[0].radian_angle - gimbal_initP)*(2.0/3.0);
+  if(angle > 0){
+    chassis.drive_sp = (vy*cos(angle)+vx*sin(angle));
+    chassis.strafe_sp = (-1)*vy*sin(angle) + vx*cos(angle);
+  }
+  else{
+    chassis.drive_sp = (vy* cos(-angle)+(-1)*vx*sin(-angle));
+    chassis.strafe_sp = vy*sin(-angle) + vx*cos(-angle);
+  }
+  chassis.rotate_sp = chassis_heading_control(&chassis_heading_controller,gimbal_p[0].radian_angle, gimbal_initP);
+}
+
 void chassis_stop_handle(){ 
   chassis.strafe_sp =0; 
   chassis.drive_sp =0; 
@@ -377,29 +485,12 @@ void separate_gimbal_handle(){
   chassis.rotate_sp = rm.vw;
 } 
  
-void follow_gimbal_handle(){
-  if(twist_count != 0){
-    twist_count = 0;
-  }
-  float vy = km.vy + rm.vy;
-  float vx = km.vx + rm.vx;
-  float angle = (gimbal_p[0].radian_angle - gimbal_initP)*(2.0/3.0);
-  if(angle > 0){ 
-    chassis.drive_sp = (vy*cos(angle)+vx*sin(angle)); 
-    chassis.strafe_sp = (-1)*vy*sin(angle) + vx*cos(angle); 
-  } 
-  else{ 
-    chassis.drive_sp = (vy* cos(-angle)+(-1)*vx*sin(-angle)); 
-    chassis.strafe_sp = vy*sin(-angle) + vx*cos(-angle); 
-  } 
-  chassis.rotate_sp = chassis_heading_control(&chassis_heading_controller,gimbal_p[0].radian_angle, gimbal_initP);
-} 
+
 float chassis_heading_control(pid_controller_t* controller,float get, float set){ 
   controller->error[0] = set - get; 
   float output = controller->error[0]*controller->kp+controller->kd*(controller->error[0]-2*controller->error[1]+controller->error[2]);
   controller->error[1] = controller->error[0]; 
   controller->error[2] = controller->error[1]; 
- 
   return output; 
  
 } 
@@ -407,19 +498,66 @@ float chassis_heading_control(pid_controller_t* controller,float get, float set)
 
 void speed_limit_handle(){
   if(JudgeP->powerInfo.power > 80){
-    float ratio = (JudgeP->powerInfo.powerBuffer/50.0) - 0.2;
-    if(ratio<0){
-      ratio = 0;
+    if(JudgeP->powerInfo.powerBuffer<=40){
+      for(int i=0;i<4;i++){
+        if(chassis._motors[i].speed_sp >= chassis._motors[i]._speed && fabs(chassis._motors[i].speed_sp) >= fabs(chassis._motors[i]._speed)){
+          chassis._motors[i].speed_curve =  chassis._motors[i]._speed + accl_value;
+          if(chassis._motors[i].speed_curve > chassis._motors[i].speed_sp){
+            chassis._motors[i].speed_curve =chassis._motors[i].speed_sp;
+          }
+        }
+        else if(chassis._motors[i].speed_sp <= chassis._motors[i]._speed && fabs(chassis._motors[i].speed_sp) >= fabs(chassis._motors[i]._speed)){
+          chassis._motors[i].speed_curve =  chassis._motors[i]._speed - accl_value;
+          if(chassis._motors[i].speed_curve < chassis._motors[i].speed_sp){
+            chassis._motors[i].speed_curve =chassis._motors[i].speed_sp;
+          }
+        }
+        else{
+          chassis._motors[i].speed_curve = chassis._motors[i].speed_sp;
+        }
+      }
     }
-    for(int i =0; i<4;i++){
-      chassis._motors[i].speed_sp = chassis._motors[i]._speed + (chassis._motors[i].speed_sp - chassis._motors[i]._speed) * ratio;
+    else{
+      for(int i =0; i<4;i++){
+        if(chassis._motors[i].speed_sp > chassis._motors[i].speed_curve && fabs(chassis._motors[i].speed_sp) >fabs(chassis._motors[i].speed_curve)){
+          chassis._motors[i].speed_curve += accl_value;
+        }
+        else if(chassis._motors[i].speed_sp<chassis._motors[i].speed_curve && fabs(chassis._motors[i].speed_sp) >fabs(chassis._motors[i].speed_curve)){
+          chassis._motors[i].speed_curve -= accl_value;
+        }
+        else{
+          chassis._motors[i].speed_curve = chassis._motors[i].speed_sp;
+        }
+
+
+        if(fabs(chassis._motors[i].speed_curve) >=fabs(chassis._motors[i].speed_sp)){
+          chassis._motors[i].speed_curve = chassis._motors[i].speed_sp;
+        }
+      }
+    }
+  }
+  else{
+    for(int i=0;i<4;i++){
+      chassis._motors[i].speed_curve = chassis._motors[i].speed_sp;
+
     }
   }
 
 }
+void save_life(){
+  chassis.strafe_curve =0;
+  chassis.drive_curve = 0;
+  chassis.rotate_sp = 0;
+  chassis.strafe_sp = 0;
+  chassis.drive_sp = 0;
+
+  if(JudgeP->powerInfo.powerBuffer >=50){
+    chassis.ctrl_mode = MANUAL_FOLLOW_GIMBAL;
+  }
+
+}
 void power_limit_handle(){
-  //int power_limit = 80 + JudgeP->powerInfo.powerBuffer;
-  int power_limit = 80;
+  int power_limit = 80 + 0.5*JudgeP->powerInfo.powerBuffer;
   float a0 = fabs(chassis._encoders[0].act_current * 20.0/16384.0);
   float a1 = fabs(chassis._encoders[1].act_current * 20.0/16384.0);
   float a2 = fabs(chassis._encoders[2].act_current * 20.0/16384.0);

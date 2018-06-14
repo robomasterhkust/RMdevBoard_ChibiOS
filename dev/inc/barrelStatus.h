@@ -28,28 +28,28 @@
 #endif
 
 #ifdef INFANTRY
-    #define HEATLIMIT_LVL_1 1600
-    #define HEATLIMIT_LVL_2 3000
-    #define HEATLIMIT_LVL_3 6000
+    #define HEATLIMIT_LVL_1 90
+    #define HEATLIMIT_LVL_2 180
+    #define HEATLIMIT_LVL_3 360
 #endif
 
 #ifdef SENTRY
-  #define HEATLIMIT_LVL_1 4500
-  #define HEATLIMIT_LVL_2 4500
-  #define HEATLIMIT_LVL_3 4500
+  #define HEATLIMIT_LVL_1 360
+  #define HEATLIMIT_LVL_2 360
+  #define HEATLIMIT_LVL_3 360
 #endif
 
 #ifdef HERO
   #ifdef MM17
-    #define HEATLIMIT_LVL_1 1600
-    #define HEATLIMIT_LVL_2 3000
-    #define HEATLIMIT_LVL_3 6000
+    #define HEATLIMIT_LVL_1 90
+    #define HEATLIMIT_LVL_2 180
+    #define HEATLIMIT_LVL_3 360
   #endif
 
   #ifdef MM42
-    #define HEATLIMIT_LVL_1 3200
-    #define HEATLIMIT_LVL_2 6400
-    #define HEATLIMIT_LVL_3 12800
+    #define HEATLIMIT_LVL_1 90
+    #define HEATLIMIT_LVL_2 180
+    #define HEATLIMIT_LVL_3 360
   #endif
 #endif
 

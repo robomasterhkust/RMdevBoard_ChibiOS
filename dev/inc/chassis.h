@@ -52,7 +52,7 @@ else if((val) >= (max))\
 
 //  #define CHASSIS_DECELE_RATIO (1.0f/27.0f)
   /* single 3508 motor maximum speed, unit is rpm */
-  #define MAX_WHEEL_RPM        414 //8000  //8347rpm = 3500mm/s
+  #define MAX_WHEEL_RPM        350 //414 //8000  //8347rpm = 3500mm/s
   /* chassis maximum translation speed, unit is mm/s */
   #define MAX_CHASSIS_VX_SPEED 3300  //8000rpm
   #define MAX_CHASSIS_VY_SPEED 3300
@@ -83,10 +83,13 @@ typedef enum
   DODGE_MODE = 4,
   AUTO_SEPARATE_GIMBAL =5,
   AUTO_FOLLOW_GIMBAL =6,
+  DODGE_MOVE_MODE = 7,
+  SAVE_LIFE = 8,
 }chassis_mode_e;
 
 typedef struct{
   float speed_sp;
+  float speed_curve;
   float _speed;
   uint8_t _wait_count;
 } motorStruct;
@@ -129,9 +132,12 @@ typedef struct{
   float rotate_sp;
   float drive_sp;
   float strafe_sp;
+  float strafe_curve;
+  float drive_curve;
   int16_t         rotate_x_offset;
   int16_t         rotate_y_offset;
   int16_t         current[4];
+  int16_t         loop_time;
   float           position_ref;
 
   chassis_mode_e  ctrl_mode;
@@ -139,6 +145,7 @@ typedef struct{
 
   float pid_last_error;
   bool over_power;
+  bool over_time;
   uint8_t errorFlag;
 
   ChassisEncoder_canStruct* _encoders;
@@ -156,9 +163,11 @@ float chassis_heading_control(pid_controller_t*,float, float);
 void chassis_twist_handle(void);
 void chassis_stop_handle(void);
 void separate_gimbal_handle(void);
+void dodge_move_handle(void);
 void follow_gimbal_handle(void);
 void power_limit_handle(void);
 void speed_limit_handle(void);
+void save_life(void);
 
 
 

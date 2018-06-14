@@ -54,10 +54,11 @@ void updateBarrelStatus(void){
     }
 
     if(bulletType == mm17){
-      bStatus.currentHeatValue = pInfo.shooterHeat0;
+     bStatus.currentHeatValue = pInfo.shooterHeat0;
     }else if(bulletType == mm42){
       bStatus.currentHeatValue = pInfo.shooterHeat1;
     }
+
   #endif
 
 #ifdef GIMBAL

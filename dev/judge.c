@@ -471,12 +471,10 @@ void judgedatainit(void) {
 void judgeinit(void) {
 
   judgedatainit();
-
   palSetPadMode(GPIOG, 14, PAL_MODE_ALTERNATE(8));              //UART6 TX
   palSetPadMode(GPIOG, 9, PAL_MODE_ALTERNATE(8));               //UART6 RX
   sdStart(SERIAL_JUDGE, &SERIAL_JUDGE_CONFIG);                  //Start Serial Driver
   chThdCreateStatic(JudgeThread_wa, sizeof(JudgeThread_wa),     //Start Judge RX thread
                     NORMALPRIO + 5, JudgeThread, NULL);
-
 
 }

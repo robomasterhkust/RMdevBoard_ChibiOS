@@ -7,7 +7,8 @@ int bitmap[15] = {};
 /* mouse button long press time */
 #define LONG_PRESS_TIME  1000  //ms
 /* key acceleration time */
-#define Up_ratio 0.6
+#define slide_ratio 1
+#define Up_ratio 0.5
 #define Normal_ratio 0.4
 #define Down_ratio 0.2
 
@@ -39,7 +40,7 @@ static void move_speed_ctrl(uint8_t fast, uint8_t slow)
   {
     km.move = FAST_MODE;
 
-    km.x_spd_limit = Up_ratio * CHASSIS_KB_MAX_SPEED_X ;
+    km.x_spd_limit = slide_ratio*Up_ratio * CHASSIS_KB_MAX_SPEED_X ;
     km.y_spd_limit = Up_ratio * CHASSIS_KB_MAX_SPEED_Y ;
 
   }
@@ -47,7 +48,7 @@ static void move_speed_ctrl(uint8_t fast, uint8_t slow)
   {
     km.move = SLOW_MODE;
 
-    km.x_spd_limit = Down_ratio * CHASSIS_KB_MAX_SPEED_X ;
+    km.x_spd_limit = slide_ratio*Down_ratio * CHASSIS_KB_MAX_SPEED_X ;
     km.y_spd_limit = Down_ratio * CHASSIS_KB_MAX_SPEED_Y ;
 
   }
@@ -55,7 +56,7 @@ static void move_speed_ctrl(uint8_t fast, uint8_t slow)
   {
     km.move = NORMAL_MODE;
 
-    km.x_spd_limit = Normal_ratio * CHASSIS_KB_MAX_SPEED_X ;
+    km.x_spd_limit = slide_ratio*Normal_ratio * CHASSIS_KB_MAX_SPEED_X ;
     km.y_spd_limit = Normal_ratio * CHASSIS_KB_MAX_SPEED_Y ;
 
   }
@@ -117,8 +118,17 @@ static void move_direction_ctrl(uint8_t forward, uint8_t back,
 
 void keyboard_chassis_process(chassisStruct* chassisP,Gimbal_Send_Dbus_canStruct* pRC){
     keyboard_to_bitmap(pRC);
-    if(bitmap[KEY_R]){
-      chassisP->ctrl_mode = DODGE_MODE;
+    if(chassisP->ctrl_mode == SAVE_LIFE ||chassisP->ctrl_mode ==CHASSIS_STOP ){
+      // Do nothing. No input
+    }
+    else if(bitmap[KEY_R]){
+      if(bitmap[KEY_W] || bitmap[KEY_S] || bitmap[KEY_A] || bitmap[KEY_D]){
+        chassisP->ctrl_mode = DODGE_MOVE_MODE;
+        move_direction_ctrl(bitmap[KEY_W], bitmap[KEY_S], bitmap[KEY_A], bitmap[KEY_D]);
+      }
+      else{
+        chassisP->ctrl_mode = DODGE_MODE;
+      }
     }
     else if(bitmap[KEY_C]){
       chassisP->ctrl_mode = MANUAL_SEPARATE_GIMBAL;
