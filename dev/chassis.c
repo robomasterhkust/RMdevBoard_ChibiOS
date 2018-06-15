@@ -3,16 +3,18 @@
  * 
  *  Created on: 10 Jan, 2018 
  *      Author: ASUS 
- */ 
-#include <canBusProcess.h> 
-#include "ch.h" 
-#include "hal.h" 
-#include "canBusProcess.h" 
-#include "gimbal.h" 
-#include "dbus.h" 
+
+#include <canBusProcess.h>
+#include "ch.h"
+#include "hal.h"
+
+#include "canBusProcess.h"
+#include "gimbal.h"
+#include "dbus.h"
 #include "chassis.h"
-#include "adis16265.h" 
-#include "math_misc.h" 
+#include "adis16265.h"
+#include "math_misc.h"
+
 #include "math.h"
 #include "keyboard.h"
 #include "judge.h"
@@ -85,6 +87,7 @@ static void chassis_encoderUpdate(void)
 static int16_t chassis_controlSpeed(motorStruct* motor, pi_controller_t* controller) 
 { 
 //  float wheel_rpm_ratio = 60.0f/(PERIMETER*CHASSIS_SPEED_PSC); 
+
   float error = motor->speed_curve - motor->_speed;//*wheel_rpm_ratio;
   controller->error_int += error * controller->ki; 
   controller->error_int = boundOutput(controller->error_int, controller->error_int_max); 
@@ -103,6 +106,16 @@ static int16_t chassis_controlHeading(chassisStruct* chassis, pid_controller_t* 
   chassis->pid_last_error = error; 
   return (int16_t)(boundOutput(output, H_MAX)); 
 } 
+
+    float error = motor->speed_sp - motor->_speed;//*wheel_rpm_ratio;
+    controller->error_int += error * controller->ki;
+    controller->error_int = boundOutput(controller->error_int, controller->error_int_max);
+    float output = error * controller->kp + controller->error_int;
+    return (int16_t) (boundOutput(output, OUTPUT_MAX));
+}
+
+
+
 float CHASSIS_RC_MAX_SPEED_X = 3300.0f;
 float CHASSIS_RC_MAX_SPEED_Y = 3300.0f;
 float CHASSIS_RC_MAX_SPEED_R = 300.0f;
@@ -258,12 +271,13 @@ void chassis_init(void)
   chassis_heading_controller.kp = 70.0f;
   chassis_heading_controller.kd = 1.0f; 
   //************************************************************** 
+
 //  params_set(&motor_vel_controllers[FRONT_LEFT], 9,2,FLvelName,subname_PI,PARAM_PUBLIC); 
 //  params_set(&motor_vel_controllers[FRONT_RIGHT], 10,2,FRvelName,subname_PI,PARAM_PUBLIC); 
 //  params_set(&motor_vel_controllers[BACK_LEFT], 11,2,BLvelName,subname_PI,PARAM_PUBLIC); 
 //  params_set(&motor_vel_controllers[BACK_RIGHT], 12,2,BRvelName,subname_PI,PARAM_PUBLIC); 
 //  params_set(&heading_controller, 13, 3, HeadingName,subname_PID,PARAM_PUBLIC); 
- 
+
   for (i = 0; i < 4; i++) 
   { 
     chassis.current[i] =0; 
@@ -280,6 +294,7 @@ void chassis_init(void)
                           NORMALPRIO, chassis_control, NULL); 
 } 
  
+
 void mecanum_cal(){
   static float rotate_ratio_fr; 
   static float rotate_ratio_fl; 
@@ -471,9 +486,10 @@ void chassis_stop_handle(){
  
 
 
- /*
+/*
 static void chassis_operation_func(int16_t left_right, int16_t front_back, int16_t rotate)
 { 
+
   rc.vx =  left_right / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
   rc.vy =    front_back / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
   rc.vw =  rotate / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_R;

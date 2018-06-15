@@ -1,3 +1,4 @@
+
 /*
     ChibiOS - Copyright (C) 2006..2015 Giovanni Di Sirio
 
@@ -414,3 +415,4 @@
 #endif /* _HALCONF_H_ */
 
 /** @} */
+

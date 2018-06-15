@@ -77,3 +77,4 @@ void barrelHeatLimitControl_init(void);
 
 
 #endif /* INC_BARRELSTATUS_H_ */
+

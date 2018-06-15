@@ -1,3 +1,4 @@
+
 #ifndef _CAN_BUS_PROCESS_H_
 #define _CAN_BUS_PROCESS_H_
 
@@ -105,4 +106,3 @@ void can_motorSetCurrent(CANDriver *const CANx,
 
 
 #endif
-
