@@ -71,7 +71,7 @@ static THD_FUNCTION(pwm_thd, arg)
                 shooter_control(175);
                 break;
             case RC_S_MIDDLE:
-                shooter_control(135);
+                shooter_control(110);
                 break;
             case RC_S_DOWN:
                 safe = true;

@@ -69,7 +69,7 @@ static THD_FUNCTION(matlab_thread, p)
     BaseSequentialStream *chp = (BaseSequentialStream *) &SDU1;
 
     PIMUStruct PIMU = imu_get();
-    chassisStruct *chassis = chassis_get();
+//    chassisStruct *chassis = chassis_get();
 //  GimbalStruct* gimbal = gimbal_get();
 
     uint32_t tick = chVTGetSystemTimeX();
@@ -82,8 +82,8 @@ static THD_FUNCTION(matlab_thread, p)
             tick = chVTGetSystemTimeX();
         }
 
-        txbuf_f[0] = chassis->_motors[FRONT_LEFT].speed_sp;
-        txbuf_f[1] = chassis->_motors[FRONT_LEFT]._speed;
+//        txbuf_f[0] = chassis->_motors[FRONT_LEFT].speed_sp;
+//        txbuf_f[1] = chassis->_motors[FRONT_LEFT]._speed;
 
         transmit_matlab(chp, NULL, txbuf_f, 0, 2);
     }
