@@ -32,7 +32,6 @@ pBarrelStatus barrelStatus_get(void){
 
 void barrelStatus_init(void){
   bStatus.heatLimit = HEATLIMIT_LVL_1;
-  bStatus.firingStatus = 1;
   bStatus.currentHeatValue = 0;
 }
 
@@ -55,23 +54,17 @@ void updateBarrelStatus(void){
     }
 
     if(bulletType == mm17){
-      bStatus.currentHeatValue = pInfo.shooterHeat0;
+     bStatus.currentHeatValue = pInfo.shooterHeat0;
     }else if(bulletType == mm42){
       bStatus.currentHeatValue = pInfo.shooterHeat1;
     }
 
-    if(bStatus.currentHeatValue > bStatus.heatLimit){
-      bStatus.firingStatus = CEASED_FIRE;
-    }else{
-      bStatus.firingStatus = CAN_FIRE;
-    }
   #endif
 
 #ifdef GIMBAL
     BarrelStatus_canStruct* can_bStatus = can_get_sent_barrelStatus();
     bStatus.heatLimit = can_bStatus->heatLimit;
     bStatus.currentHeatValue = can_bStatus->currentHeatValue;
-    bStatus.firingStatus = can_bStatus->firingStatus;
 #endif
 }
 
@@ -88,9 +81,8 @@ static inline void BarrelStatus_txCan(CANDriver *const CANx, const uint16_t SID)
   chSysLock();
   txCan.currentHeatValue = bStatus.currentHeatValue;
   txCan.heatLimit = bStatus.heatLimit;
-  txCan.firingStatus = bStatus.firingStatus;
 
-  memcpy(&(txmsg.data8), &txCan ,8);
+  memcpy(&(txmsg.data8), &txCan ,sizeof(BarrelStatus_canStruct));
   chSysUnlock();
 
   canTransmit(CANx, CAN_ANY_MAILBOX, &txmsg, MS2ST(100));

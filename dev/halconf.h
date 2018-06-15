@@ -1,3 +1,4 @@
+
 /*
     ChibiOS - Copyright (C) 2006..2015 Giovanni Di Sirio
 
@@ -44,13 +45,6 @@
 #define LEDB_OFF()       (palClearPad(GPIOA, GPIOA_LED_B))
 #define LEDB_ON()      (palSetPad(GPIOA, GPIOA_LED_B))
 #define LEDB_TOGGLE()   (palTogglePad(GPIOA, GPIOA_LED_B))
-
-//#define LEDB_ON()       (palClearPad(GPIOA, GPIOA_TIM2_CH3))
-//#define LEDB_OFF()      (palSetPad(GPIOA, GPIOA_TIM2_CH3))
-//#define LEDB_TOGGLE()   (palTogglePad(GPIOA, GPIOA_TIM2_CH3))
-//#define LEDO_ON()       (palClearPad(GPIOA, GPIOA_TIM2_CH2))
-//#define LEDO_OFF()      (palSetPad(GPIOA, GPIOA_TIM2_CH2))
-//#define LEDO_TOGGLE()   (palTogglePad(GPIOA, GPIOA_TIM2_CH2))
 
 //Sets of command for Pneumatics Output
 #define PN1_ON()        (palSetPad(GPIOD, GPIOD_PNEUMATICS1))
@@ -340,7 +334,7 @@
  *          buffers.
  */
 #if !defined(SERIAL_BUFFERS_SIZE) || defined(__DOXYGEN__)
-#define SERIAL_BUFFERS_SIZE         16
+#define SERIAL_BUFFERS_SIZE         128
 #endif
 
 /*===========================================================================*/
@@ -421,3 +415,4 @@
 #endif /* _HALCONF_H_ */
 
 /** @} */
+

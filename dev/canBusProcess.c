@@ -15,7 +15,6 @@ static volatile GimbalEncoder_canStruct  gimbal_encoder[GIMBAL_MOTOR_NUM];
 static volatile ChassisEncoder_canStruct chassis_encoder[CHASSIS_MOTOR_NUM];
 static volatile ChassisEncoder_canStruct extra_encoder[EXTRA_MOTOR_NUM];
 static volatile Gimbal_Send_Dbus_canStruct gimbal_send_dbus;
-Gimbal_Send_Dbus_canStruct* pRC;
 static volatile BarrelStatus_canStruct chassis_send_barrel;
 /*
  * 500KBaud, automatic wakeup, automatic recover
@@ -73,7 +72,6 @@ static inline void  can_processSendBarrelStatus
     chSysLock();
     db->heatLimit           = (uint16_t)rxmsg->data16[0];
     db->currentHeatValue    = (uint16_t)rxmsg->data16[1];
-    db->firingStatus        = (uint8_t)(rxmsg->data8[4]);
     chSysUnlock();
 }
 
@@ -132,7 +130,7 @@ static inline void can_processGimbalEncoder
 
 static void can_processEncoderMessage(CANDriver* const canp, const CANRxFrame* const rxmsg)
 {
-  if(canp == &CAND1)
+  if(canp == &CAND2)
   {
     switch(rxmsg->SID)
     {
@@ -152,12 +150,6 @@ static void can_processEncoderMessage(CANDriver* const canp, const CANRxFrame* c
             chassis_encoder[BACK_RIGHT].msg_count++;
             chassis_encoder[BACK_RIGHT].msg_count <= 50 ? can_getMotorOffset(&chassis_encoder[BACK_RIGHT],rxmsg) : can_processChassisEncoder(&chassis_encoder[BACK_RIGHT],rxmsg);
           break;
-        case CAN_GIMBAL_YAW_FEEDBACK_MSG_ID:
-            can_processGimbalEncoder(&gimbal_encoder[GIMBAL_YAW] ,rxmsg);
-            break;
-        case CAN_GIMBAL_PITCH_FEEDBACK_MSG_ID:
-            can_processGimbalEncoder(&gimbal_encoder[GIMBAL_PITCH] ,rxmsg);
-            break;
         case CAN_GIMBAL_SEND_DBUS_ID:
             can_processSendDbusEncoder(&gimbal_send_dbus,rxmsg);
             break;
@@ -170,6 +162,12 @@ static void can_processEncoderMessage(CANDriver* const canp, const CANRxFrame* c
   {
     switch(rxmsg->SID)
     {
+        case CAN_GIMBAL_YAW_FEEDBACK_MSG_ID:
+            can_processGimbalEncoder(&gimbal_encoder[GIMBAL_YAW] ,rxmsg);
+            break;
+        case CAN_GIMBAL_PITCH_FEEDBACK_MSG_ID:
+            can_processGimbalEncoder(&gimbal_encoder[GIMBAL_PITCH] ,rxmsg);
+            break;
         case CAN_CHASSIS_FL_FEEDBACK_MSG_ID:
           can_processChassisEncoder(&extra_encoder[FRONT_LEFT] ,rxmsg);
           break;
@@ -200,7 +198,6 @@ static THD_FUNCTION(can_rx, p) {
   gimbal_send_dbus.channel1 = 1024;
   gimbal_send_dbus.key_code = 0;
   gimbal_send_dbus.updated = false;
-  pRC = can_get_sent_dbus();
   (void)p;
   chRegSetThreadName("can receiver");
   chEvtRegister(&canp->rxfull_event, &el, 0);

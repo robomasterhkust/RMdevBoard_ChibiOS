@@ -37,7 +37,7 @@ static inline void bound(float* input, const float max)
 static inline float boundOutput(const float input, const float max)
 {
   float output;
-  if(input < max && input > -max)
+  if(input <= max && input >= -max)
     output = input;
   else if(input > max)
     output = max;

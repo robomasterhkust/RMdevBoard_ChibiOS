@@ -38,13 +38,13 @@ static THD_FUNCTION(MotorToggleThread, arg)
         if (MotorOn) {
 
             MotorOn = FALSE;
-            palSetPad(GPIOA, GPIOA_LED_Y);
+            //palSetPad(GPIOE, GPIOE_LED_R);
             can_motorSetCurrent(&CAND1, 0x200, 32767, 32767, 32767, 32767);
             chThdSleepMilliseconds(1000);
 
         }
 
-        palClearPad(GPIOA, GPIOA_LED_Y);
+        //palClearPad(GPIOA, GPIOA_LED_Y);
         can_motorSetCurrent(&CAND1, 0x200, 0, 0, 0, 0);    //for some reason multiple calls
         can_motorSetCurrent(&CAND1, 0x200, 0, 0, 0, 0);    //are needed to stop the motors
         can_motorSetCurrent(&CAND1, 0x200, 0, 0, 0, 0);
