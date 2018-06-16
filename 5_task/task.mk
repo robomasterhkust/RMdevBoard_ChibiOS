@@ -2,7 +2,6 @@
 TASK_PATH = $(CHIBIOS)/5_task
 
 TASKSRC =   \
-            $(TASK_PATH)/chassis.c \
             $(TASK_PATH)/detect_error_task.c \
             $(TASK_PATH)/attitude_estimator_task.c \
             $(TASK_PATH)/can_motor_task.c \
