@@ -1,7 +1,7 @@
 #ifndef _MAIN_H_
 #define _MAIN_H_
 
-//#define RM_CHASSIS_BOARD
+// #define RM_CHASSIS_BOARD
 
 #include "ch.h"
 #include "hal.h"
@@ -28,6 +28,7 @@
 #include "judge.h"
 #include "shoot.h"
 #include "shooter_rm3508.h"
+#include "bullet_tracker_task.h"
 
 #include "command_mixer_task.h"
 #include "gimbal_simple_controller.h"

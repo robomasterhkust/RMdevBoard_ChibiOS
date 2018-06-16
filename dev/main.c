@@ -60,6 +60,7 @@ int main(void)
     // Initialize CAN bus receiver
     can_bus_init();
     attitude_estimator_init();
+    magazineTracker_init();
 
 #ifndef RM_CHASSIS_BOARD
     // Initialize ADIS16265 single axial gyroscope
@@ -72,6 +73,7 @@ int main(void)
         chThdSleepMilliseconds(200);
     }
 #else
+    barrelHeatLimitControl_init();
     judgeinit();
 #endif
 

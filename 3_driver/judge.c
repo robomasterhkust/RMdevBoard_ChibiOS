@@ -35,6 +35,7 @@
 #include "judge.h"
 #include <string.h>
 
+#include "barrel_heat_controller.h"
 
 /***********************************  CRC  ***********************************/
 //crc8 generator polynomial:G(x)=x8+x5+x4+1
@@ -343,6 +344,7 @@ static THD_FUNCTION(JudgeThread, arg) {
                                                         (size_t)JUDGE_BUFFER_SIZE);  //Non-blocking data read
                         chMtxUnlock(&inqueue_mutex);                                //Release resource
                         judgedecode();
+                        updateBarrelHeatStructure(&judgeInData);
                     }
 
                     FLUSH_I_QUEUE(SERIAL_JUDGE);
