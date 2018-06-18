@@ -3,7 +3,7 @@
  * 
  *  Created on: 10 Jan, 2018 
  *      Author: ASUS 
-
+*/
 #include <canBusProcess.h>
 #include "ch.h"
 #include "hal.h"
@@ -107,12 +107,7 @@ static int16_t chassis_controlHeading(chassisStruct* chassis, pid_controller_t* 
   return (int16_t)(boundOutput(output, H_MAX)); 
 } 
 
-    float error = motor->speed_sp - motor->_speed;//*wheel_rpm_ratio;
-    controller->error_int += error * controller->ki;
-    controller->error_int = boundOutput(controller->error_int, controller->error_int_max);
-    float output = error * controller->kp + controller->error_int;
-    return (int16_t) (boundOutput(output, OUTPUT_MAX));
-}
+
 
 
 
