@@ -138,19 +138,14 @@ static THD_FUNCTION(chassis_control, p)
   JudgeP = judgeDataGet();
   gimbal_p = can_getGimbalMotor(); 
   Rc = RC_get();
-  bool done = false; 
+  bool reboot = false;
   uint32_t tick = chVTGetSystemTimeX(); 
   uint32_t tick_test = 0;
   chassis.ctrl_mode = CHASSIS_STOP;
   while(!chThdShouldTerminateX()) 
   { 
 
-    if(pRC->updated && !done){
-      done = true; 
-      chassis.position_ref = gimbal_p[0].radian_angle;
-      gimbal_initP = gimbal_p[0].radian_angle; 
-      chassis.ctrl_mode = MANUAL_FOLLOW_GIMBAL; 
-    }
+
     /*
     if(done){ 
       if(fabsf(gimbal_p[0].radian_angle - gimbal_initP) > 3* M_PI/4){
@@ -160,10 +155,19 @@ static THD_FUNCTION(chassis_control, p)
 */
     if(pRC->channel0 > 1684 || pRC->channel0 <0){
       chassis.ctrl_mode = CHASSIS_STOP;
+      reboot = false;
     }
     else{
       chassis.ctrl_mode = MANUAL_FOLLOW_GIMBAL;
+      if(!reboot){
+        reboot = true;
+        chassis.position_ref = gimbal_p[0].radian_angle;
+        gimbal_initP = gimbal_p[0].radian_angle;
+        chassis.ctrl_mode = MANUAL_FOLLOW_GIMBAL;
+      }
     }
+
+
     tick_test = ST2US(chVTGetSystemTimeX());
     tick += US2ST(CHASSIS_UPDATE_PERIOD_US); 
     if(tick > chVTGetSystemTimeX()){
@@ -176,7 +180,7 @@ static THD_FUNCTION(chassis_control, p)
       chassis.over_time = true;
     }
     chassis_encoderUpdate(); 
-    if(JudgeP->powerInfo.powerBuffer<=20){
+    if(JudgeP->powerInfo.powerBuffer<=10){
       chassis.ctrl_mode = SAVE_LIFE;
       for(int i =0; i<4;i++){
         motor_vel_controllers[i].error_int = 0;

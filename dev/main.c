@@ -90,8 +90,8 @@ int main(void) {
   shellStart(); 
   params_init(); 
   can_processInit(); 
-  RC_init(); 
-  pwm_shooter_init(); 
+  //RC_init();
+  //pwm_shooter_init();
   judgeinit(); 
   barrelHeatLimitControl_init(); 
   extiinit(); //* 
