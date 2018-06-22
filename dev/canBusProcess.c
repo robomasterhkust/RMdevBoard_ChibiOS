@@ -1,4 +1,3 @@
-
 /**
  * Edward ZHANG, 20171101
  * @file    canBusProcess.c
@@ -194,8 +193,8 @@ static THD_FUNCTION(can_rx, p) {
   CANDriver* canp = (CANDriver*)p;
   event_listener_t el;
   CANRxFrame rxmsg;
-  gimbal_send_dbus.channel0 = 1024;
-  gimbal_send_dbus.channel1 = 1024;
+  gimbal_send_dbus.channel0 = -1;
+  gimbal_send_dbus.channel1 = -1;
   gimbal_send_dbus.key_code = 0;
   gimbal_send_dbus.updated = false;
   (void)p;
