@@ -21,23 +21,29 @@ kb_ctrl_t km;
 void keyboard_to_bitmap(Gimbal_Send_Dbus_canStruct* pRC){
     uint8_t i = 0;
     uint32_t n = pRC->key_code;
-    int j;
-    for(j=0 ; j< 15; j++){
+    for(int j=0 ; j< 15; j++){
         bitmap[i] = n % 2;
         n = n/2;
         i++;
     }
 }
+
 bool keyboard_enable(Gimbal_Send_Dbus_canStruct* pRC){
     return (pRC->s1 == MI);
     //return RC_get()->rc.s2 == UP;
 }
-void keyboard_reset(){
+
+bool visual_enable(Gimbal_Send_Dbus_canStruct* pRC) {
+    return (pRC->s1 == UP);
+}
+
+void keyboard_reset(void){
     km.vx = 0;
     km.vy = 0;
     km.vw = 0;
     km.twist_ctrl = 0;
 }
+
 static void move_speed_ctrl(uint8_t fast, uint8_t slow)
 {
     if (fast)

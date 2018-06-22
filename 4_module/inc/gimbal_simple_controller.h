@@ -10,6 +10,7 @@
 #include "can_motor_task.h"
 
 #define GIMBAL_CONTROL_FREQ 1000U
+#define VISUAL_CONTROL_TIME 0.033f // 30Hz
 #define GIMBAL_CUTOFF_FREQ    30U
 //#define GIMBAL_ENCODER_USE_SPEED
 #define GIMBAL_IQ_MAX 5000

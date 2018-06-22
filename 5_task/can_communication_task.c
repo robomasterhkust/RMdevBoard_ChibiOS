@@ -9,18 +9,19 @@
 #include "string.h"
 
 static volatile Gimbal_Send_Dbus_canStruct dbus_from_gimbal_board = {
-        .channel0 = RC_CH_VALUE_OFFSET,
-        .channel1 = RC_CH_VALUE_OFFSET,
-        .s1       = 0,
-        .s2       = 0,
-        .key_code = 0
+    .channel0 = RC_CH_VALUE_OFFSET,
+    .channel1 = RC_CH_VALUE_OFFSET,
+    .s1       = 0,
+    .s2       = 0,
+    .key_code = 0,
+    .updated  = false
 };
 static volatile ROS_Msg_Struct ros_msg = {
-        .vx = 0,
-        .vy = 0,
-        .vz = 0
+    .vx = 0,
+    .vy = 0,
+    .vz = 0,
+    .updated = false
 };
-
 static volatile Chassis_Send_Judge_canStruct judge_from_chassis_board = {
         .gameInfo.remainTime = 0,
         .gameInfo.gameStatus = 0,
@@ -93,6 +94,11 @@ static inline void can_process_ros_command(volatile ROS_Msg_Struct *msg, const C
     msg->vx = msg_vx * 0.001;
     msg->vy = msg_vy * 0.001;
     msg->vz = msg_vz * 0.001;
+    msg->updated = true;
+    
+    systime_t curr_tick = chVTGetSystemTimeX();
+    msg->dt = US2ST(curr_tick - msg->prev_tick) / 1e6f;
+    msg->prev_tick = curr_tick;
     chSysUnlock();
 }
 

@@ -9,7 +9,6 @@
 #ifndef INC_CHASSIS_H_
 #define INC_CHASSIS_H_
 
-#include "adis16265.h"
 #include "can.h"
 #include "can_motor_task.h"
 
@@ -87,11 +86,14 @@ typedef enum
     DODGE_MODE = 4,
     AUTO_SEPARATE_GIMBAL = 5,
     AUTO_FOLLOW_GIMBAL = 6,
+    DODGE_MOVE_MODE = 7,
+    SAVE_LIFE = 8,
 } chassis_mode_e;
 
 typedef struct
 {
     float speed_sp;
+    float speed_curve;
     float _speed;
     uint8_t _wait_count;
 } motorStruct;
@@ -104,26 +106,28 @@ typedef struct
     float _pos;
     uint8_t _wait_count;
 } motorPosStruct;
+
 typedef struct
 {
     float vx;
     float vy;
     float vw;
-
 } rc_ctrl_t;
+
 typedef enum
 {
     CHASSIS_MOTOR_0_NOT_CONNECTED = 1 << 0,
     CHASSIS_MOTOR_1_NOT_CONNECTED = 1 << 1,
     CHASSIS_MOTOR_2_NOT_CONNECTED = 1 << 2,
     CHASSIS_MOTOR_3_NOT_CONNECTED = 1 << 3
-};
+} chassis_state_t;
 
 typedef enum
 {
     CHASSIS_OK = 0,
     CHASSIS_MOTOR_NOT_CONNECTED = 1 << 0
-};
+} chassis_connect_t;
+
 typedef uint8_t chassis_error_t;
 
 typedef struct
@@ -138,9 +142,12 @@ typedef struct
     float rotate_sp;
     float drive_sp;
     float strafe_sp;
+    float strafe_curve;
+    float drive_curve;
     int16_t rotate_x_offset;
     int16_t rotate_y_offset;
     int16_t current[4];
+    unsigned long loop_time;
     float position_ref;
 
     chassis_mode_e ctrl_mode;
@@ -148,38 +155,43 @@ typedef struct
 
     float pid_last_error;
     bool over_power;
+    bool over_time;
     uint8_t errorFlag;
 
-    ChassisEncoder_canStruct *_encoders;
-    PGyroStruct _pGyro;
+    volatile ChassisEncoder_canStruct *_encoders;
+//    PGyroStruct _pGyro;
 } chassisStruct;
 
-
-void mecanum_calc();
+void mecanum_cal(void);
 
 chassis_error_t chassis_getError(void);
 
-chassisStruct *chassis_get(void);
+volatile chassisStruct *chassis_get(void);
 
 void chassis_init(void);
 
 void drive_kinematics(int RX_X2, int RX_Y1, int RX_X1);
 
-void drive_motor(void);
+//void drive_motor(void);
 
-float chassis_heading_control(pid_controller_t *, float, float);
+//float chassis_heading_control(pid_controller_t *, float, float);
+float chassis_heading_control(float, float);
 
 void chassis_twist_handle(void);
 
 void chassis_stop_handle(void);
 
+void dodge_move_handle(void);
+
 void separate_gimbal_handle(void);
 
-void follow_gimbal_handle(void);
+//void follow_gimbal_handle(void);
 
 void power_limit_handle(void);
 
 void speed_limit_handle(void);
+
+void save_life(void);
 
 
 #endif /* INC_CHASSIS_H_ */

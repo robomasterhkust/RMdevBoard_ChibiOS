@@ -48,12 +48,12 @@
 #define CHASSIS_KB_MAX_SPEED_X 3300.0f
 #define CHASSIS_KB_MAX_SPEED_Y 3300.0f
 
-enum
+typedef enum
 {
     UP = 1,
     MI = 3,
     DN = 2,
-};
+} left_switch_t;
 
 typedef enum
 {
@@ -97,8 +97,9 @@ typedef struct
 } kb_ctrl_t;
 
 extern kb_ctrl_t km;
+void keyboard_reset(void);
 void keyboard_chassis_process(chassisStruct*,Gimbal_Send_Dbus_canStruct* );
-void keyboard_reset();
 bool keyboard_enable(Gimbal_Send_Dbus_canStruct* );
+bool visual_enable(Gimbal_Send_Dbus_canStruct* );
 
 #endif //RM_CHIBIOS_KEYBOARD_H
