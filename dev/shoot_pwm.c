@@ -15,19 +15,19 @@ int perc = 2600;
 
 extern float map(float x, float in_min, float in_max, float out_min, float out_max);
 
-PWMConfig pwm8cfg = {
-        100000,   /* 1MHz PWM clock frequency.   */
-        1000,      /* Initial PWM period 1ms.       */
-        NULL,
-        {
-                {PWM_OUTPUT_ACTIVE_HIGH, NULL},
-                {PWM_OUTPUT_ACTIVE_HIGH, NULL},
-                {PWM_OUTPUT_ACTIVE_HIGH, NULL},
-                {PWM_OUTPUT_ACTIVE_HIGH, NULL}
-        },
-        0,
-        0
-};
+// PWMConfig pwm8cfg = {
+//         100000,   /* 1MHz PWM clock frequency.   */
+//         1000,      /* Initial PWM period 1ms.       */
+//         NULL,
+//         {
+//                 {PWM_OUTPUT_ACTIVE_HIGH, NULL},
+//                 {PWM_OUTPUT_ACTIVE_HIGH, NULL},
+//                 {PWM_OUTPUT_ACTIVE_HIGH, NULL},
+//                 {PWM_OUTPUT_ACTIVE_HIGH, NULL}
+//         },
+//         0,
+//         0
+// };
 
 PWMConfig pwm12cfg = {
         100000,   /* 1MHz PWM clock frequency.   */

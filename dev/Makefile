@@ -133,8 +133,8 @@ CSRC = $(STARTUPSRC) \
        canBusProcess.c dbus.c gimbal.c params.c usbcfg.c \
        calibrate_sensor.c gimbal_sys_iden.c shoot_pwm.c \
        exti.c pwm_struct.c imu_temp.c chassis.c keyboard.c judge.c\
-       adis16265.c sdlog.c error.c hcsr04.c \
-       barrelStatus.c
+       adis16265.c sdlog.c error.c \
+       barrelStatus.c bullet_tracker_task.c magazine_cover_task.c
 
 
 

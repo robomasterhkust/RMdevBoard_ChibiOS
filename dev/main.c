@@ -90,18 +90,20 @@ int main(void) {
   shellStart(); 
   params_init(); 
   can_processInit(); 
+  pwm_magazine_cover_init();
   RC_init(); 
-  pwm_shooter_init(); 
+  // pwm_shooter_init(); 
   judgeinit(); 
-  barrelHeatLimitControl_init(); 
-  extiinit(); //* 
+  barrelHeatLimitControl_init();
+  // extiinit(); //* 
   tempControllerInit(); //* 
   chassis_init(); 
   pGyro = gyro_init(); 
-  error_init(); 
+  // error_init(); 
   //pwm12init(); 
-  sdlog_init(); 
-  ultrasonic_init(); 
+  // sdlog_init();
+  // magazineTracker_init(); 
+
  
   //tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK); 
  

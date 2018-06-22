@@ -21,7 +21,9 @@
 #include "adis16265.h"
 #include "attitude.h"
 #include "calibrate_sensor.h"
-#include "hcsr04.h"
+// #include "hcsr04.h"
+#include "bullet_tracker_task.h"
+#include "magazine_cover_task.h"
 
 #include "gimbal.h"
 #include "chassis.h"
