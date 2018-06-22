@@ -18,7 +18,6 @@
 #include "math.h"
 #include "keyboard.h"
 #include "judge.h"
- 
 static volatile chassisStruct chassis; 
 GimbalEncoder_canStruct* gimbal_p; 
 RC_Ctl_t* Rc;
@@ -95,7 +94,7 @@ static int16_t chassis_controlSpeed(motorStruct* motor, pi_controller_t* control
   return (int16_t)(boundOutput(output,OUTPUT_MAX)); 
 } 
  
- 
+/*
 #define H_MAX  200  // Heading PID_outputx
 static int16_t chassis_controlHeading(chassisStruct* chassis, pid_controller_t* controller) 
 { 
@@ -106,7 +105,7 @@ static int16_t chassis_controlHeading(chassisStruct* chassis, pid_controller_t* 
   chassis->pid_last_error = error; 
   return (int16_t)(boundOutput(output, H_MAX)); 
 } 
-
+*/
 
 
 
@@ -144,8 +143,6 @@ static THD_FUNCTION(chassis_control, p)
   chassis.ctrl_mode = CHASSIS_STOP;
   while(!chThdShouldTerminateX()) 
   { 
-
-
     /*
     if(done){ 
       if(fabsf(gimbal_p[0].radian_angle - gimbal_initP) > 3* M_PI/4){
@@ -180,12 +177,14 @@ static THD_FUNCTION(chassis_control, p)
       chassis.over_time = true;
     }
     chassis_encoderUpdate(); 
+    /*
     if(JudgeP->powerInfo.powerBuffer<=10){
       chassis.ctrl_mode = SAVE_LIFE;
       for(int i =0; i<4;i++){
         motor_vel_controllers[i].error_int = 0;
       }
     }
+    */
     if(keyboard_enable(pRC)){
       keyboard_chassis_process(&chassis,pRC);
       rm.vx = 0;
