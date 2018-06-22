@@ -101,6 +101,7 @@ uint8_t attitude_update_fused(PIMUStruct pIMU, PGyroStruct pGyro)
         pIMU->euler_angle[Pitch] = euler_angle[Pitch];
         pIMU->euler_angle[Yaw] = pIMU->rev * 2.0f * (float)M_PI + euler_angle[Yaw];
 
+        // 飞行控制系统，71页，kinematics equation, ZYX Euler Angle
         pIMU->d_euler_angle[Pitch] = cosf(pIMU->euler_angle[Roll]) * pIMU->gyroData[Y] -
                                      sinf(pIMU->euler_angle[Roll]) * pIMU->gyroData[Z];
         pIMU->d_euler_angle[Yaw] = (sinf(pIMU->euler_angle[Roll]) * pIMU->gyroData[Y] +

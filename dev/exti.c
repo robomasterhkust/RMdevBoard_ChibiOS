@@ -16,7 +16,6 @@
 #include "adis16470.h"
 
 //comment out the line below to disable motor testing
-//#define MOTOR_TEST
 
 #define DEBOUNCE_TIME 100
 
@@ -25,53 +24,6 @@ extern thread_reference_t auto_fetch_thread_ref;
 
 static int count = 0;
 static systime_t last_exti_0_time;
-
-/*
- * Turns on all chassis motor for 1 sec when MotorOn is TRUE
- * Thread normally suspended, resumes when shield button is pushed
- * For power module development only
- */
-#ifdef MOTOR_TEST
-thread_reference_t button_thread_ref = NULL;
-static volatile bool MotorOn = FALSE;
-static THD_WORKING_AREA(MotorToggleThread_wa, 128);
-
-static THD_FUNCTION(MotorToggleThread, arg)
-{
-
-    (void) arg;
-    chSysLock();
-    while (!chThdShouldTerminateX()) {
-
-        chSysUnlock();
-        if (MotorOn) {
-
-            MotorOn = FALSE;
-            palSetPad(GPIOA, GPIOA_LED_Y);
-            can_motorSetCurrent(&CAND1, 0x200, 32767, 32767, 32767, 32767);
-            chThdSleepMilliseconds(1000);
-
-        }
-
-        palClearPad(GPIOA, GPIOA_LED_Y);
-        can_motorSetCurrent(&CAND1, 0x200, 0, 0, 0, 0);    //for some reason multiple calls
-        can_motorSetCurrent(&CAND1, 0x200, 0, 0, 0, 0);    //are needed to stop the motors
-        can_motorSetCurrent(&CAND1, 0x200, 0, 0, 0, 0);
-        can_motorSetCurrent(&CAND1, 0x200, 0, 0, 0, 0);
-        can_motorSetCurrent(&CAND1, 0x200, 0, 0, 0, 0);
-        can_motorSetCurrent(&CAND1, 0x200, 0, 0, 0, 0);
-        can_motorSetCurrent(&CAND1, 0x200, 0, 0, 0, 0);
-        can_motorSetCurrent(&CAND1, 0x200, 0, 0, 0, 0);
-        can_motorSetCurrent(&CAND1, 0x200, 0, 0, 0, 0);
-        can_motorSetCurrent(&CAND1, 0x200, 0, 0, 0, 0);
-        chSysLock();
-
-        chThdSuspendS(&button_thread_ref);
-
-    }
-}
-#endif
-
 
 /**
  * @brief EXTI 0 CALLBACK with debouncing
@@ -165,13 +117,6 @@ static void extcb10(EXTDriver *extp, expchannel_t channel)
     (void) extp;
     (void) channel;
 
-#ifdef MOTOR_TEST
-    chSysLockFromISR();
-    MotorOn = TRUE;
-    chThdResumeI(&button_thread_ref, MSG_OK);
-    chSysUnlockFromISR();
-#endif
-
 }
 
 /*
@@ -227,9 +172,5 @@ void extiinit(void)
 //    extChannelEnable(&EXTD1, 2);
 //    extChannelEnable(&EXTD1, 5);
 //    extChannelEnable(&EXTD1, 10);
-#ifdef MOTOR_TEST
-    chThdCreateStatic(MotorToggleThread_wa, sizeof(MotorToggleThread_wa),
-                      NORMALPRIO, MotorToggleThread, NULL);
-#endif
 
 }

@@ -11,10 +11,8 @@ add_custom_target(STLink COMMAND make upload -C ${PROJECT_SOURCE_DIR}/dev
 add_custom_target(Ozone COMMAND make -C ${PROJECT_SOURCE_DIR}/dev
         CLION_EXE_DIR=${PROJECT_BINARY_DIR})
 
-
 include_directories(dev/inc)
 include_directories(dev/conf)
-#include_directories(dev/pclint)
 file(GLOB_RECURSE DEV_SRC "dev/*.c")
 
 include_directories(3_driver/inc)
@@ -106,10 +104,6 @@ include_directories(os/rt/ports/ARMCMx os/rt/ports/ARMCMx/compilers/GCC)
 file(GLOB_RECURSE SHELL_SRC "os/various/shell.c" "os/various/evtimer.c" "os/various/syscalls.c"
         "os/hal/lib/streams/memstreams.c" "os/hal/lib/streams/chprintf.c")
 include_directories(os/various os/hal/lib/streams)
-
-# include Mavlink
-include_directories(mavlink)
-include_directories(mavlink/minimal)
 
 add_library(DEV ${DEV_SRC})
 add_library(DRIVER ${DRIVER_SRC})
