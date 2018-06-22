@@ -18,16 +18,6 @@
 /*
  * Application entry point.
  */
-
-#if GIMBAL_DEBUG_ATTI
-extern float euler_local_new[3];
-extern float euler_local_old[3];
-extern float gimbalnew_q_world[4];
-extern float gimbalnew_q_gimbalcen[4];
-extern float gimbalcen_q_gimbalold[4];
-extern float gimbalcen_q_world[4];
-#endif
-
 int main(void)
 {
     /*

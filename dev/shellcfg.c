@@ -5,6 +5,7 @@
  */
 
 #include "main.h"
+#include "judge.h"
 #include "shellcfg.h"
 
 #define SHELL_USE_USB
@@ -58,6 +59,7 @@ static void transmit_matlab
 
 #define HOST_TRANSMIT_FREQ  100U
 static THD_WORKING_AREA(matlab_thread_wa, 512);
+
 
 static THD_FUNCTION(matlab_thread, p)
 {
@@ -231,6 +233,7 @@ void cmd_gimbal_encoder(BaseSequentialStream *chp, int argc, char *argv[])
     chprintf(chp, "VelEncYaw:   %f\r\n", gimbal->motor[GIMBAL_YAW]._speed_enc);
 }
 
+
 void cmd_feeder(BaseSequentialStream *chp, int argc, char *argv[])
 {
     (void) argc, argv;
@@ -240,27 +243,7 @@ void cmd_feeder(BaseSequentialStream *chp, int argc, char *argv[])
     chprintf(chp, "feeder_encoder raw speed: %f\r\n", (float) feeder_encoder->raw_speed);
 }
 
-//TODO: delete the global variables after debug
-#if GIMBAL_DEBUG_ATTI
-extern float euler_local_new[3];
-extern float euler_local_old[3];
-extern float gimbalnew_q_world[4];
-extern float gimbalnew_q_gimbalcen[4];
-extern float gimbalcen_q_gimbalold[4];
-extern float gimbalcen_q_world[4];
 
-
-void cmd_gimbal_attitude(BaseSequentialStream *chp, int argc, char *argv[])
-{
-    (void) argc, argv;
-    chprintf(chp, "euler_local_new: %f %f %f\r\n", euler_local_new[0], euler_local_new[1], euler_local_new[2]);
-    chprintf(chp, "euler_local_old: %f %f %f\r\n", euler_local_old[0], euler_local_old[1], euler_local_old[2]);
-    chprintf(chp, "gimbalnew_q_world: %f %f %f %f\r\n", gimbalnew_q_world[0], gimbalnew_q_world[1], gimbalnew_q_world[2], gimbalnew_q_world[3]);
-    chprintf(chp, "gimbalnew_q_gimbalcen: %f %f %f %f\r\n", gimbalnew_q_gimbalcen[0], gimbalnew_q_gimbalcen[1], gimbalnew_q_gimbalcen[2], gimbalnew_q_gimbalcen[3]);
-    chprintf(chp, "gimbalcen_q_gimbalold: %f %f %f %f\r\n", gimbalcen_q_gimbalold[0], gimbalcen_q_gimbalold[1], gimbalcen_q_gimbalold[2], gimbalcen_q_gimbalold[3]);
-    chprintf(chp, "gimbalcen_q_world: %f %f %f %f\r\n", gimbalcen_q_world[0], gimbalcen_q_world[1], gimbalcen_q_world[2], gimbalcen_q_world[3]);
-}
-#endif
 
 void cmd_temp(BaseSequentialStream *chp, int argc, char *argv[])
 {
@@ -277,6 +260,30 @@ void cmd_temp(BaseSequentialStream *chp, int argc, char *argv[])
 //      chprintf(chp,"PID_value: %i\i\n", _tempPID->PID_Value);
 //      chThdSleep(MS2ST(500));
 //  }
+}
+void cmd_judge(BaseSequentialStream *chp, int argc, char *argv[]) {
+    (void) argc, argv;
+    //  uint32_t tick = chVTGetSystemTimeX();
+    //  tick += US2ST(5U);
+    
+    // while(1){ // you can uncomment this so that it continuously send the data out.
+    // this is useful in tuning the Temperature PID
+    //      PIMUStruct _pimu = imu_get();
+    Chassis_Send_Judge_canStruct *_pJudge = can_get_sent_judge();
+    
+    judge_fb_t *hehe = judgeDataGet();
+    //      pTPIDStruct _tempPID = TPID_get();
+    chprintf(chp, "Power:%f \r\n", (float) hehe->powerInfo.power);
+    
+    chprintf(chp, "Current:%f \r\n", (float) hehe->powerInfo.current);
+    
+    chprintf(chp, "Volt:%f \r\n", (float) hehe->powerInfo.volt);
+    
+    //     chprintf(chp,"drive: %i\n", (int)*_pdrive);
+    //      chprintf(chp,"Temperature: %f\f\n", _pimu->temperature);
+    //      chprintf(chp,"PID_value: %i\i\n", _tempPID->PID_Value);
+    chThdSleep(MS2ST(250));
+    // }
 }
 
 void cmd_dbus(BaseSequentialStream *chp, int argc, char *argv[])
@@ -352,9 +359,8 @@ static const ShellCommand commands[] =
                 {"dbus", cmd_dbus},
                 {"gyro", cmd_gyro},
                 {"ultra", cmd_ultrasonic},
-#if GIMBAL_DEBUG_ATTI
-                {"a", cmd_gimbal_attitude},
-#endif
+                {"judge", cmd_judge},
+//  {"error", cmd_error},
                 {NULL, NULL}
         };
 

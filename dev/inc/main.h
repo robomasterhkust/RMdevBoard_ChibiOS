@@ -1,7 +1,7 @@
 #ifndef _MAIN_H_
 #define _MAIN_H_
 
-//#define RM_CHASSIS_BOARD
+#define RM_CHASSIS_BOARD
 
 #include "ch.h"
 #include "hal.h"
@@ -16,6 +16,7 @@
 #include "math_misc.h"
 #include "can_bus.h"
 #include "dbus.h"
+#include "keyboard.h"
 
 #include "attitude_estimator_task.h"
 #include "adis16470.h"

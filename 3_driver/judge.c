@@ -34,6 +34,7 @@
 #include "hal.h"
 #include "judge.h"
 #include <string.h>
+#include "can_communication_task.h"
 
 
 /***********************************  CRC  ***********************************/
@@ -343,6 +344,7 @@ static THD_FUNCTION(JudgeThread, arg) {
                                                         (size_t)JUDGE_BUFFER_SIZE);  //Non-blocking data read
                         chMtxUnlock(&inqueue_mutex);                                //Release resource
                         judgedecode();
+                        JudgeData_txCan(&judgeInData, COMM_CAN_BUS, CAN_CHASSIS_BOARD_ID);
                     }
 
                     FLUSH_I_QUEUE(SERIAL_JUDGE);
@@ -381,6 +383,7 @@ static THD_FUNCTION(JudgeThread, arg) {
 
         FLUSH_I_QUEUE(SERIAL_JUDGE);
         memset((void*)sdrxbuf, 0, JUDGE_BUFFER_SIZE);               //Flush RX buffer
+
     }
 
 }
@@ -477,6 +480,5 @@ void judgeinit(void) {
     sdStart(SERIAL_JUDGE, &SERIAL_JUDGE_CONFIG);                  //Start Serial Driver
     chThdCreateStatic(JudgeThread_wa, sizeof(JudgeThread_wa),     //Start Judge RX thread
                       NORMALPRIO + 5, JudgeThread, NULL);
-
 
 }
