@@ -185,6 +185,8 @@ typedef struct user_data_t{
 
 judge_fb_t* judgeDataGet(void);
 
+bool judge_is_powered(void);
+
 void judgedecode(void);
 
 void judgeinit(void);

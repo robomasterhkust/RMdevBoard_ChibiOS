@@ -264,6 +264,15 @@ judge_fb_t* judgeDataGet(void) {
 }
 
 /*
+ * Check if the judgement system is on
+ */
+bool judge_is_powered(void) {
+    
+    return judgeInData.powerInfo.volt != 0;
+    
+}
+
+/*
  * Sends user data to operator screen through judgment system
  * input: 3 float and 1 byte of data
  * return: length of data sent (in bytes)

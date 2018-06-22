@@ -1,7 +1,7 @@
 #ifndef _MAIN_H_
 #define _MAIN_H_
 
-#define RM_CHASSIS_BOARD
+//#define RM_CHASSIS_BOARD
 
 #include "ch.h"
 #include "hal.h"
