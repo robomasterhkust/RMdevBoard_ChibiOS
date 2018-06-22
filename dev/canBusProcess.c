@@ -1,4 +1,3 @@
-
 /**
  * Edward ZHANG, 20171101
  * @file    canBusProcess.c

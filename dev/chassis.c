@@ -180,7 +180,8 @@ static THD_FUNCTION(chassis_control, p)
     /*
     if(JudgeP->powerInfo.powerBuffer<=10){
       chassis.ctrl_mode = SAVE_LIFE;
-      for(int i =0; i<4;i++){
+      int i;
+      for(i =0; i<4;i++){
         motor_vel_controllers[i].error_int = 0;
       }
     }
@@ -382,7 +383,8 @@ void mecanum_cal(){
 
   float max = 0.0f; 
   //find max item 
-  for (int i = 0; i < 4; i++)
+  int i;
+  for (i = 0; i < 4; i++)
   { 
     if (fabsf(chassis._motors[i].speed_sp) > max){
       max = fabsf(chassis._motors[i].speed_sp);
@@ -418,7 +420,7 @@ void mecanum_cal(){
   }
 
 */
-  for (int i = 0; i < CHASSIS_MOTOR_NUM; i++){
+  for (i = 0; i < CHASSIS_MOTOR_NUM; i++){
     chassis.current[i] = chassis_controlSpeed(&chassis._motors[i], &motor_vel_controllers[i]);
     VAL_LIMIT(chassis.current[i], -16384, 16384);
     //chassis.current[i] = 0;
@@ -513,7 +515,8 @@ float chassis_heading_control(pid_controller_t* controller,float get, float set)
 void speed_limit_handle(){
   if(JudgeP->powerInfo.power > 80){
     if(JudgeP->powerInfo.powerBuffer<=40){
-      for(int i=0;i<4;i++){
+      int i;
+      for(i=0;i<4;i++){
         if(chassis._motors[i].speed_sp >= chassis._motors[i]._speed && fabs(chassis._motors[i].speed_sp) >= fabs(chassis._motors[i]._speed)){
           chassis._motors[i].speed_curve =  chassis._motors[i]._speed + accl_value;
           if(chassis._motors[i].speed_curve > chassis._motors[i].speed_sp){
@@ -532,7 +535,8 @@ void speed_limit_handle(){
       }
     }
     else{
-      for(int i =0; i<4;i++){
+      int i;
+      for(i =0; i<4;i++){
         if(chassis._motors[i].speed_sp > chassis._motors[i].speed_curve && fabs(chassis._motors[i].speed_sp) >fabs(chassis._motors[i].speed_curve)){
           chassis._motors[i].speed_curve += accl_value;
         }
@@ -551,7 +555,8 @@ void speed_limit_handle(){
     }
   }
   else{
-    for(int i=0;i<4;i++){
+    int i;
+    for(i=0;i<4;i++){
       chassis._motors[i].speed_curve = chassis._motors[i].speed_sp;
 
     }

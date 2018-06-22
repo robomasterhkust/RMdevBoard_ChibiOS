@@ -223,6 +223,17 @@ void cmd_temp(BaseSequentialStream * chp, int argc, char *argv[])
 //  }
 }
 
+void cmd_uart(BaseSequentialStream *chp, int argc, char *argv[])
+{
+    (void) argc, argv;
+    Bullet_Tracker_t* _pBulletTracker = bulletTracker_get();
+    uint32_t* _temp = getBulletTrackerError();
+    chprintf(chp, "Bullet Count: %i\n", _pBulletTracker->bullet_tracker.bulletCount);
+    chprintf(chp, "Stats: %i\n", *_temp);
+    
+//      float* pDist = hcsr04_getDistance();
+//      chprintf(chp,"Distance: %f\n", *pDist);
+}
 
 void cmd_dbus(BaseSequentialStream * chp, int argc, char *argv[])
 {
@@ -283,9 +294,10 @@ static const ShellCommand commands[] =
   {"test", cmd_test},
   {"cal", cmd_calibrate},
   {"\xEE", cmd_data},
-#ifdef MAVLINK_COMM_TEST
-  {"mavlink", cmd_mavlink},
-#endif
+  {"bullet", cmd_uart},
+// #ifdef MAVLINK_COMM_TEST
+//   {"mavlink", cmd_mavlink},
+// #endif
 #ifdef PARAMS_USE_USB
   {"\xFD",cmd_param_scale},
   {"\xFB",cmd_param_update},

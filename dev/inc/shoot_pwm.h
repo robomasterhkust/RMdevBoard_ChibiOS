@@ -8,7 +8,7 @@
 #ifndef SHOOT_PWM_H_
 #define SHOOT_PWM_H_
 
-extern PWMDriver PWMD8;
+//extern PWMDriver PWMD8;
 extern PWMDriver PWMD12;
 
 extern float map(float x, float in_min, float in_max, float out_min, float out_max);
