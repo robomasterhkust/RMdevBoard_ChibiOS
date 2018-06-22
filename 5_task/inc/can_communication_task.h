@@ -27,6 +27,7 @@ typedef struct {
     double vx;
     double vy;
     double vz;
+    bool updated;
 } ROS_Msg_Struct;
 
 typedef struct {
