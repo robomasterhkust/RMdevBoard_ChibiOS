@@ -90,14 +90,9 @@ int main(void) {
   shellStart(); 
   params_init(); 
   can_processInit(); 
-<<<<<<< HEAD
   pwm_magazine_cover_init();
   RC_init(); 
-  // pwm_shooter_init(); 
-=======
-  //RC_init();
-  //pwm_shooter_init();
->>>>>>> 786e0ebe9f4f7ad683774bbf872abcf5c2244006
+  // pwm_shooter_init();
   judgeinit(); 
   barrelHeatLimitControl_init();
   // extiinit(); //* 
