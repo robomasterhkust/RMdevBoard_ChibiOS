@@ -28,6 +28,8 @@ typedef struct {
     double vy;
     double vz;
     bool updated;
+    systime_t prev_tick;
+    float dt;
 } ROS_Msg_Struct;
 
 typedef struct {
