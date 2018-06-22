@@ -318,7 +318,8 @@ void mecanum_cal()
 
     float max = 0.0f;
     //find max item
-    for (int i = 0; i < 4; i++) {
+    int i;
+    for (i = 0; i < 4; i++) {
         if (fabsf(chassis._motors[i].speed_sp) > max) {
             max = fabsf(chassis._motors[i].speed_sp);
         }
@@ -332,7 +333,7 @@ void mecanum_cal()
         }
     }
     speed_limit_handle();
-    for (int i = 0; i < CHASSIS_MOTOR_NUM; i++) {
+    for (i = 0; i < CHASSIS_MOTOR_NUM; i++) {
         chassis.current[i] = chassis_controlSpeed(&chassis._motors[i], &motor_vel_controllers[i]);
         VAL_LIMIT(chassis.current[i], -16384, 16384);
         //chassis.current[i] = 0;
@@ -421,7 +422,8 @@ void speed_limit_handle()
         if (ratio < 0) {
             ratio = 0;
         }
-        for (int i = 0; i < 4; i++) {
+        int i;
+        for (i = 0; i < 4; i++) {
             chassis._motors[i].speed_sp =
                     chassis._motors[i]._speed + (chassis._motors[i].speed_sp - chassis._motors[i]._speed) * ratio;
         }

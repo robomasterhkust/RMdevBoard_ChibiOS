@@ -71,7 +71,7 @@ static THD_FUNCTION(matlab_thread, p)
     BaseSequentialStream *chp = (BaseSequentialStream *) &SDU1;
 
     PIMUStruct PIMU = imu_get();
-    chassisStruct *chassis = chassis_get();
+//    chassisStruct *chassis = chassis_get();
 //  GimbalStruct* gimbal = gimbal_get();
 
     uint32_t tick = chVTGetSystemTimeX();
@@ -84,8 +84,8 @@ static THD_FUNCTION(matlab_thread, p)
             tick = chVTGetSystemTimeX();
         }
 
-        txbuf_f[0] = chassis->_motors[FRONT_LEFT].speed_sp;
-        txbuf_f[1] = chassis->_motors[FRONT_LEFT]._speed;
+//        txbuf_f[0] = chassis->_motors[FRONT_LEFT].speed_sp;
+//        txbuf_f[1] = chassis->_motors[FRONT_LEFT]._speed;
 
         transmit_matlab(chp, NULL, txbuf_f, 0, 2);
     }
@@ -335,6 +335,18 @@ void cmd_ultrasonic(BaseSequentialStream *chp, int argc, char *argv[])
 //      chprintf(chp,"Distance: %f\n", *pDist);
 }
 
+void cmd_uart(BaseSequentialStream *chp, int argc, char *argv[])
+{
+    (void) argc, argv;
+    Bullet_Tracker_t* _pBulletTracker = bulletTracker_get();
+    uint32_t* _temp = getBulletTrackerError();
+    chprintf(chp, "Bullet Count: %i\n", _pBulletTracker->bullet_tracker.bulletCount);
+    chprintf(chp, "Stats: %i\n", *_temp);
+    
+//      float* pDist = hcsr04_getDistance();
+//      chprintf(chp,"Distance: %f\n", *pDist);
+}
+
 /**
  * @brief array of shell commands, put the corresponding command and functions below
  * {"command", callback_function}
@@ -346,6 +358,7 @@ static const ShellCommand commands[] =
                 {"g", cmd_gimbal_encoder},
                 {"f", cmd_feeder},
                 {"\xEE", cmd_data},
+                {"bullet", cmd_uart},
 //#ifdef MAVLINK_COMM_TEST
 //  {"mavlink", cmd_mavlink},
 //#endif

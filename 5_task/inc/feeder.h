@@ -9,7 +9,7 @@
 
 #define FEEDER_BULLET_PER_TURN  7U
 #define FEEDER_GEAR             36U
-#define FEEDER_SET_RPS          9U     //Rounds per second of feeder
+#define FEEDER_SET_RPS          5U     //Rounds per second of feeder
 
 #define FEEDER_OUTPUT_MAX       10000U
 #define FEEDER_OUTPUT_MAX_BACK   6000U  //output limit for stuck-bullet turning back

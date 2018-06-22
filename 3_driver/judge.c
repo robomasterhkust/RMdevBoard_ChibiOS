@@ -36,6 +36,7 @@
 #include <string.h>
 #include "can_communication_task.h"
 
+#include "barrel_heat_controller.h"
 
 /***********************************  CRC  ***********************************/
 //crc8 generator polynomial:G(x)=x8+x5+x4+1

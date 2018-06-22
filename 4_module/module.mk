@@ -8,7 +8,8 @@ MODULESRC =    $(MATHSRC)\
                $(MODULE_PATH)/attitude_estimator_mpu6500.c \
                $(MODULE_PATH)/math_misc.c \
                $(MODULE_PATH)/gimbal.c \
-               $(MODULE_PATH)/chassis_velocity_generator.c
+               $(MODULE_PATH)/chassis_velocity_generator.c\
+               $(MODULE_PATH)/barrel_heat_controller.c
                # $(MODULE_PATH)/gimbal_simple_controller.c
                # $(MODULE_PATH)/gimbal_hero.c \
                # $(MODULE_PATH)/gimbal_sys_iden.c
