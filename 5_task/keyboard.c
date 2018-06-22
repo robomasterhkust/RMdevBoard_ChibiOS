@@ -21,7 +21,8 @@ kb_ctrl_t km;
 void keyboard_to_bitmap(Gimbal_Send_Dbus_canStruct* pRC){
     uint8_t i = 0;
     uint32_t n = pRC->key_code;
-    for(int j=0 ; j< 15; j++){
+    int j;
+    for(j=0 ; j< 15; j++){
         bitmap[i] = n % 2;
         n = n/2;
         i++;
