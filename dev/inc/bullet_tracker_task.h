@@ -10,7 +10,7 @@
 
 #define BULLET_TRACKER_BUFFER_SIZE             ((uint8_t)1)
 
-#define UART_BULLET_TRACKER                    &UARTD3
+#define UART_BULLET_TRACKER                    &UARTD2
 
 typedef struct
 {
@@ -31,7 +31,7 @@ extern "C" {
 
 Bullet_Tracker_t* bulletTracker_get(void);
 void bulletTracker_init(void);
-uint32_t* getBulletTrackerError(void);
+int* getBulletTrackerError(void);
 
 #ifdef __cplusplus
 }

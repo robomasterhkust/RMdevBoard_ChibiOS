@@ -82,15 +82,19 @@ int main(void) {
   chSysInit(); 
  
  
-  LEDG_ON(); 
+  // LEDG_ON(); 
   //palClearPad(GPIOA, GPIOA_LED_Y); 
   //palClearPad(GPIOA, GPIOA_LED_B); 
  
  
   shellStart(); 
-  params_init(); 
+  params_init();
+  //*** 
+  // extiinit();
+  //***
   can_processInit(); 
   pwm_magazine_cover_init();
+  magazineTracker_init(); 
   RC_init(); 
   // pwm_shooter_init();
   judgeinit(); 
@@ -123,4 +127,17 @@ int main(void) {
   } 
  
   return 0; 
+
+  // while (!chThdShouldTerminateX()) {
+  //     LEDR_TOGGLE();
+
+  //     // if (!power_failure()) {
+  //     //     wdgReset(&WDGD1);
+  //     // } else {
+  //     //     gimbal_kill();
+  //     // }
+  //     chThdSleepMilliseconds(200);
+  // }
+  // return 0;
+
 } 

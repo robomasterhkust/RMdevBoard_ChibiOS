@@ -84,7 +84,7 @@ static UARTConfig uart_cfg = {
         NULL, NULL, rxend, NULL, NULL,
         100000,
         USART_CR1_PCE,
-        0,
+        0, // USART_CR1_LINEN
         0
 };
 
