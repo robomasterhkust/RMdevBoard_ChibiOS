@@ -118,6 +118,7 @@ int main(void) {
                     Attitude_thread, NULL); //* 
  
  
+  customData_init();
  
   while (true) 
   { 

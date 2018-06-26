@@ -111,11 +111,13 @@ void magazineTracker_init(void)
 
     bulletTracker.uart = UART_BULLET_TRACKER;
     bulletTracker.thread_handler = NULL;
+    bulletTracker.inited = false;
 
     uartStart(bulletTracker.uart, &uart_cfg);
     dmaStreamRelease(bulletTracker.uart->dmatx);
 
     bulletTrackerReset(&bulletTracker);
+    bulletTracker.inited = true;
 
     chThdCreateStatic(uart_bullet_tracker_thread_wa, sizeof(uart_bullet_tracker_thread_wa),
                       NORMALPRIO + 7,

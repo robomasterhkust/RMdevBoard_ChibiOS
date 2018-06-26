@@ -16,12 +16,12 @@ typedef struct
 {
 	uint8_t rxbuf[BULLET_TRACKER_BUFFER_SIZE];
 	bool rx_start_flag;
-
 	UARTDriver* uart;
 	thread_reference_t thread_handler;
 	struct{
 		uint8_t bulletCount;
 	}bullet_tracker;
+	bool inited;
 }Bullet_Tracker_t;
 
 
