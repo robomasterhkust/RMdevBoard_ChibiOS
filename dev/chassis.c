@@ -177,7 +177,7 @@ static THD_FUNCTION(chassis_control, p)
       chassis.over_time = true;
     }
     chassis_encoderUpdate(); 
-    /*
+
     if(JudgeP->powerInfo.powerBuffer<=10){
       chassis.ctrl_mode = SAVE_LIFE;
       int i;
@@ -185,7 +185,7 @@ static THD_FUNCTION(chassis_control, p)
         motor_vel_controllers[i].error_int = 0;
       }
     }
-    */
+
     if(keyboard_enable(pRC)){
       keyboard_chassis_process(&chassis,pRC);
       rm.vx = 0;

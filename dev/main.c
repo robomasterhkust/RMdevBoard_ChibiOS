@@ -102,7 +102,7 @@ int main(void) {
   // error_init(); 
   //pwm12init(); 
   // sdlog_init();
-  // magazineTracker_init(); 
+  magazineTracker_init();
 
  
   //tft_init(TFT_HORIZONTAL, CYAN, YELLOW, BLACK); 
