@@ -10,7 +10,7 @@
 
 #define BULLET_TRACKER_BUFFER_SIZE             ((uint8_t)1)
 
-#define UART_BULLET_TRACKER                    &UARTD2
+#define UART_BULLET_TRACKER                    &UARTD3
 
 typedef struct
 {
