@@ -27,7 +27,7 @@ typedef magCoverState{
     OPEN = 1
 };
 
-static magCoverState currentState = CLOSE;
+static magCoverState currentState = OPEN;
 
 // void magCoverClose(void){
 //     pwmStop(&PWMD5);
