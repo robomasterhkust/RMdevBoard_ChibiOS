@@ -1,7 +1,7 @@
 #include "magazine_cover_task.h"
 #include "hal.h"
 
-static PWMConfig pwm5cfg = {
+static PWMConfig pwm8cfg = {
         1000000,   /* 1MHz PWM clock frequency.   */
         20000,      /* Initial PWM period 20ms.       */
         NULL,
@@ -22,6 +22,13 @@ static PWMConfig pwm5cfg = {
 const int LEFTCOVER = 1; // D
 const int RIGHTCOVER = 2; // C
 
+typedef magCoverState{
+    CLOSE = 0,
+    OPEN = 1
+};
+
+static magCoverState currentState = CLOSE;
+
 // void magCoverClose(void){
 //     pwmStop(&PWMD5);
 //     pwmStart(&PWMD5,&pwm5cfg);
@@ -37,17 +44,23 @@ const int RIGHTCOVER = 2; // C
 // }
 
 void magCoverClose(void){
-    pwmStop(&PWMD8);
-    pwmStart(&PWMD8,&pwm5cfg);
-    pwmEnableChannel(&PWMD8, LEFTCOVER, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 5000));
-    pwmEnableChannel(&PWMD8, RIGHTCOVER, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 5));
+    if(currentState == OPEN){
+        pwmStop(&PWMD8);
+        pwmStart(&PWMD8,&pwm8cfg);
+        pwmEnableChannel(&PWMD8, LEFTCOVER, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 5000));
+        pwmEnableChannel(&PWMD8, RIGHTCOVER, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 5));
+    }
+
 }
 
 void magCoverOpen(void){
-    pwmStop(&PWMD8);
-    pwmStart(&PWMD8,&pwm5cfg);
-    pwmEnableChannel(&PWMD8, LEFTCOVER, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 500));
-    pwmEnableChannel(&PWMD8, RIGHTCOVER, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 1000));
+    if(currentState == CLOSE){
+        pwmStop(&PWMD8);
+        pwmStart(&PWMD8,&pwm8cfg);
+        pwmEnableChannel(&PWMD8, LEFTCOVER, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 500));
+        pwmEnableChannel(&PWMD8, RIGHTCOVER, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 1000));
+    }
+
 }
 
 void pwm_magazine_cover_init(void)
@@ -60,9 +73,8 @@ void pwm_magazine_cover_init(void)
         pwmEnableChannel(pwmp, 2, PWM_PERCENTAGE_TO_WIDTH(pwmp, p));
         pwmEnableChannel(pwmp, 3, PWM_PERCENTAGE_TO_WIDTH(pwmp, p));
     }
-    pwmStart(&PWMD8,&pwm5cfg);
+    pwmStart(&PWMD8,&pwm8cfg);
 
     magCoverClose();
     // chThdSleepSeconds(1);
 }
-
