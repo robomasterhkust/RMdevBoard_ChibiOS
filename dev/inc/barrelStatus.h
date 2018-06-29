@@ -20,7 +20,7 @@
 #define MM17
 //#define 42MM
 
-#define BARREL_UPDATE_FREQ 500
+#define BARREL_UPDATE_FREQ 50
 #define BARREL_UPDATE_PERIOD_US 1000000/BARREL_UPDATE_FREQ
 
 #ifndef CAN_CHASSIS_SEND_BARREL_ID
@@ -77,4 +77,3 @@ void barrelHeatLimitControl_init(void);
 
 
 #endif /* INC_BARRELSTATUS_H_ */
-
