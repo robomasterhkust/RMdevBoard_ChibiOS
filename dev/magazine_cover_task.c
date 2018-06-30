@@ -23,6 +23,8 @@ Gimbal_Send_Dbus_canStruct* PRC;
 const int LEFTCOVER = 1; // D
 const int RIGHTCOVER = 2; // C
 
+
+
 // void magCoverClose(void){
 //     pwmStop(&PWMD5);
 //     pwmStart(&PWMD5,&pwm5cfg);
@@ -38,6 +40,7 @@ const int RIGHTCOVER = 2; // C
 // }
 
 void magCoverClose(void){
+
 //    pwmStop(&PWMD8);
 //    pwmStart(&PWMD8,&pwm8cfg);
     pwmEnableChannel(&PWMD8, LEFTCOVER, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 5000));
@@ -49,7 +52,11 @@ void magCoverOpen(void){
 //    pwmStart(&PWMD8,&pwm8cfg);
     pwmEnableChannel(&PWMD8, LEFTCOVER, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 500));
     pwmEnableChannel(&PWMD8, RIGHTCOVER, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 1000));
+
+
 }
+
+
 static THD_WORKING_AREA(magazine_cover_wa, 2048);
 static THD_FUNCTION(magazine_cover, p)
 {
@@ -97,4 +104,3 @@ void pwm_magazine_cover_init(void)
                                NORMALPRIO, magazine_cover, NULL);
     // chThdSleepSeconds(1);
 }
-
