@@ -174,8 +174,6 @@ static THD_FUNCTION(chassis_control, p)
     }
     chassis_encoderUpdate(); 
 
-
-
     if(JudgeP->powerInfo.powerBuffer<=10){
       chassis.ctrl_mode = SAVE_LIFE;
       int i;
