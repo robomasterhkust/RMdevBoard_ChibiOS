@@ -4,6 +4,7 @@
 
 static Custom_Data_t customData;
 static bool allInited = false;
+static size_t sizeout;
 
 bool checkInit(void){
 	if(allInited){
@@ -23,7 +24,7 @@ bool checkInit(void){
 	}
 }
 
-#define  CUSTOM_DATA_UPDATE_PERIOD      100U // the update frequency is 100ms
+#define  CUSTOM_DATA_UPDATE_PERIOD      90U // the update frequency is 100ms
 static THD_WORKING_AREA(custom_data_thread_wa, 512);
 
 static THD_FUNCTION(custom_data_thread, p)
@@ -34,19 +35,19 @@ static THD_FUNCTION(custom_data_thread, p)
     // systime_t timeout = MS2ST(CUSTOM_DATA_UPDATE_PERIOD);
 
     while (!chThdShouldTerminateX()) {
-    	if(checkInit()){
+    	if(false){
     		Bullet_Tracker_t* pBT = bulletTracker_get();
 	    	d->data1 = (float)(pBT->bullet_tracker.bulletCount);
 	    	d->data2 = 0.0f; // edit
 	    	d->data3 = 0.0f; // edit
 	    	d->lights8 = 0;  // edit
     	}else{
-    		d->data1 = 0.12345;
-    		d->data2 = 0.12345;
-    		d->data3 = 0.12345;
-    		d->lights8 = 0b11111111;
+    		d->data1 = 0.0f;
+    		d->data2 = 1.0f;
+    		d->data3 = 0.0f;
+    		d->lights8 = 0b10101010;
     	}
-    	judgeDataWrite(d->data1, d->data2, d->data3, d->lights8); 
+    	sizeout = judgeDataWrite(d->data1, d->data2, d->data3, d->lights8); 
     	chThdSleepMilliseconds(CUSTOM_DATA_UPDATE_PERIOD);
     }
 }

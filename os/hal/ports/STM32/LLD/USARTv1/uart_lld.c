@@ -418,11 +418,11 @@ OSAL_IRQ_HANDLER(STM32_UART5_HANDLER) {
 #if !defined(STM32_USART6_HANDLER)
 #error "STM32_USART6_HANDLER not defined"
 #endif
-/**
+/*
  * @brief   USART6 IRQ handler.
  *
  * @isr
- *//*
+ */
 OSAL_IRQ_HANDLER(STM32_USART6_HANDLER) {
 
   OSAL_IRQ_PROLOGUE();
@@ -430,7 +430,7 @@ OSAL_IRQ_HANDLER(STM32_USART6_HANDLER) {
   serve_usart_irq(&UARTD6);
 
   OSAL_IRQ_EPILOGUE();
-}*/
+}
 #endif /* STM32_UART_USE_USART6 */
 
 /*===========================================================================*/
