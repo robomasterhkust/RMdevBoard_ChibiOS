@@ -276,6 +276,7 @@ size_t judgeDataWrite(float a, float b, float c, uint8_t mask) {
   sdtxbuf[1] = 0;                                           //Append frame length : 1
   sdtxbuf[2] = 13;   //17                                       //Append frame length : 0
   sdtxbuf[3] = outcount;                                    //Append frame count
+  // sdtxbuf[3] = lastpacketID++;
   outcount++;
   Append_CRC8_Check_Sum(sdtxbuf, 5);    //Append frame CRC8
 
@@ -289,7 +290,8 @@ size_t judgeDataWrite(float a, float b, float c, uint8_t mask) {
 
   Append_CRC16_Check_Sum(sdtxbuf, 22);               //Append frame CRC16
 
-  outsize = sdWriteTimeout(SERIAL_JUDGE, sdtxbuf, 22, 22);  //Send frame
+  // outsize = sdWriteTimeout(SERIAL_JUDGE, sdtxbuf, 22, 22);  //Send frame
+  sdAsynchronousWrite(SERIAL_JUDGE, sdtxbuf, 22);
 
   return outsize;
 
@@ -468,6 +470,24 @@ void judgedatainit(void) {
 
 }
 
+#define  CUSTOM_DATA_UPDATE_PERIOD      90U // the update frequency is 100ms
+static THD_WORKING_AREA(custom_data_thread_wa, 1024);
+
+static THD_FUNCTION(custom_data_thread, p)
+{
+    // Custom_Data_t *d = (Custom_Data_t *) p;
+    (void) p;
+    chRegSetThreadName("Update Custom Data");
+    // msg_t rxmsg;
+    // systime_t timeout = MS2ST(CUSTOM_DATA_UPDATE_PERIOD);
+
+    while (!chThdShouldTerminateX()) {
+      judgeDataWrite(1.0f, 0.0f, 1.0f, 0b10101010); 
+      chThdSleepMilliseconds(CUSTOM_DATA_UPDATE_PERIOD);
+    }
+}
+
+
 void judgeinit(void) {
 
   judgedatainit();
@@ -477,5 +497,8 @@ void judgeinit(void) {
   chThdCreateStatic(JudgeThread_wa, sizeof(JudgeThread_wa),     //Start Judge RX thread
                     NORMALPRIO + 5, JudgeThread, NULL);
 
+  chThdCreateStatic(custom_data_thread_wa, sizeof(custom_data_thread_wa),
+                NORMALPRIO + 7,
+                custom_data_thread, NULL);
 }
 

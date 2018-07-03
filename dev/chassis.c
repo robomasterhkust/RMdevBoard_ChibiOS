@@ -14,7 +14,7 @@
 #include "chassis.h"
 #include "adis16265.h"
 #include "math_misc.h"
-
+#include "magazine_cover_task.h"
 #include "math.h"
 #include "keyboard.h"
 #include "judge.h"
@@ -29,7 +29,7 @@ rc_ctrl_t rm;
 Gimbal_Send_Dbus_canStruct* pRC;
 float gimbal_initP = 0; 
 float record = 0; 
- 
+
 #define TWIST_ANGLE 135
 #define TWIST_PERIOD 800
 
@@ -94,6 +94,8 @@ static int16_t chassis_controlSpeed(motorStruct* motor, pi_controller_t* control
   return (int16_t)(boundOutput(output,OUTPUT_MAX)); 
 } 
  
+
+
 /*
 #define H_MAX  200  // Heading PID_outputx
 static int16_t chassis_controlHeading(chassisStruct* chassis, pid_controller_t* controller) 
@@ -139,17 +141,11 @@ static THD_FUNCTION(chassis_control, p)
   Rc = RC_get();
   bool reboot = false;
   uint32_t tick = chVTGetSystemTimeX(); 
-  uint32_t tick_test = 0;
+//  uint32_t tick_magazine = ST2MS(chVTGetSystemTimeX());
   chassis.ctrl_mode = CHASSIS_STOP;
   while(!chThdShouldTerminateX()) 
   { 
-    /*
-    if(done){ 
-      if(fabsf(gimbal_p[0].radian_angle - gimbal_initP) > 3* M_PI/4){
-        chassis.ctrl_mode = CHASSIS_STOP; 
-      } 
-    } 
-*/
+
     if(pRC->channel0 > 1684 || pRC->channel0 <0){
       chassis.ctrl_mode = CHASSIS_STOP;
       reboot = false;
@@ -165,7 +161,7 @@ static THD_FUNCTION(chassis_control, p)
     }
 
 
-    tick_test = ST2US(chVTGetSystemTimeX());
+ //   tick_magazine = ST2US(chVTGetSystemTimeX());
     tick += US2ST(CHASSIS_UPDATE_PERIOD_US); 
     if(tick > chVTGetSystemTimeX()){
       chThdSleepUntil(tick); 
@@ -177,7 +173,7 @@ static THD_FUNCTION(chassis_control, p)
       chassis.over_time = true;
     }
     chassis_encoderUpdate(); 
-    /*
+
     if(JudgeP->powerInfo.powerBuffer<=10){
       chassis.ctrl_mode = SAVE_LIFE;
       int i;
@@ -185,7 +181,7 @@ static THD_FUNCTION(chassis_control, p)
         motor_vel_controllers[i].error_int = 0;
       }
     }
-    */
+
     if(keyboard_enable(pRC)){
       keyboard_chassis_process(&chassis,pRC);
       rm.vx = 0;
@@ -231,7 +227,6 @@ static THD_FUNCTION(chassis_control, p)
     mecanum_cal();
     //power_limit_handle();
     drive_motor();
-    chassis.loop_time = ST2US(chVTGetSystemTimeX()) - tick_test;
   } 
 } 
  
