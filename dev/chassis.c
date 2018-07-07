@@ -23,22 +23,23 @@ GimbalEncoder_canStruct* gimbal_p;
 RC_Ctl_t* Rc;
 judge_fb_t* JudgeP;
 pi_controller_t motor_vel_controllers[CHASSIS_MOTOR_NUM]; 
-pid_controller_t chassis_heading_controller; 
+pid_controller_t chassis_heading_controller;
+pid_controller_t dancing_controller; 
 lpfilterStruct lp_speed[CHASSIS_MOTOR_NUM]; 
 rc_ctrl_t rm;
 Gimbal_Send_Dbus_canStruct* pRC;
 float gimbal_initP = 0; 
 float record = 0; 
 
-#define TWIST_ANGLE 135
+#define TWIST_ANGLE 150
 #define TWIST_PERIOD 800
 
 #define TWIST_MOVE_ANGLE 90
 #define TWIST_MOVE_PERIOD 1000
 
 #define accl_value 165.0/(2*500) // 500 is the frequency and 1 means 1 second
-#define accl_y 3300*0.4/(500)
-#define accl_x 3300*0.4/(500) //slide
+#define accl_y 3300*0.6/(500)
+#define accl_x 3300*0.6/(500) //slide
 chassis_error_t chassis_getError(void){ 
   return chassis.errorFlag; 
 } 
@@ -253,17 +254,25 @@ void chassis_init(void)
     {int j; 
   for(j = 0; j < 4; j++){ 
     motor_vel_controllers[j].ki = 0.2f;
-    motor_vel_controllers[j].kp = 100.0f;
+    motor_vel_controllers[j].kp = 150.0f; // 100
   }}
   for(i=0;i<3;i++){
-    chassis_heading_controller.error[i] = 0.0f; 
+    chassis_heading_controller.error[i] = 0.0f;
+    dancing_controller.error[i] = 0.0f; 
   } 
   chassis_heading_controller.error_int = 0.0f; 
  
   chassis_heading_controller.error_int_max = 0.0f; 
   chassis_heading_controller.ki = 0.0f; 
   chassis_heading_controller.kp = 70.0f;
-  chassis_heading_controller.kd = 1.0f; 
+  chassis_heading_controller.kd = 1.0f;
+
+  dancing_controller.error_int = 0.0f; 
+ 
+  dancing_controller.error_int_max = 200.0f; 
+  dancing_controller.ki = 0.1f; 
+  dancing_controller.kp = 70.0f;
+  dancing_controller.kd = 1.0f;  
   //************************************************************** 
 
 //  params_set(&motor_vel_controllers[FRONT_LEFT], 9,2,FLvelName,subname_PI,PARAM_PUBLIC); 
@@ -433,14 +442,14 @@ void chassis_twist_handle(){
   int16_t twist_angle  = TWIST_ANGLE; 
   twist_count++; 
   chassis.position_ref = gimbal_initP + twist_angle*sin(2*M_PI/twist_period*twist_count)*M_PI/180; 
-  chassis.rotate_sp = chassis_heading_control(&chassis_heading_controller,gimbal_p[0].radian_angle, chassis.position_ref); 
+  chassis.rotate_sp = chassis_heading_control(&dancing_controller,gimbal_p[0].radian_angle, chassis.position_ref); 
 }
 void dodge_move_handle(){
   int16_t twist_period = TWIST_MOVE_PERIOD;
   int16_t twist_angle  = TWIST_MOVE_ANGLE;
   twist_count++;
   chassis.position_ref = gimbal_initP + twist_angle*sin(2*M_PI/twist_period*twist_count)*M_PI/180;
-  chassis.rotate_sp = chassis_heading_control(&chassis_heading_controller,gimbal_p[0].radian_angle, chassis.position_ref);
+  chassis.rotate_sp = chassis_heading_control(&dancing_controller,gimbal_p[0].radian_angle, chassis.position_ref);
   float vy = km.vy;
   float vx = km.vx;
   float angle = (gimbal_p[0].radian_angle - gimbal_initP)*(2.0/3.0);

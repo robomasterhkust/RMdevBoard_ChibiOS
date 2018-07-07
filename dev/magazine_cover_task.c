@@ -76,10 +76,10 @@ static THD_FUNCTION(magazine_cover, p)
     }
 
     if(PRC->s1 == UP){
-      magCoverClose();
+      magCoverOpen();
     }
     else{
-      magCoverOpen();
+      magCoverClose();
     }
 
 

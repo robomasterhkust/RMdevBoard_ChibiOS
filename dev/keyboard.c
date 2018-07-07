@@ -8,8 +8,8 @@ int bitmap[15] = {};
 #define LONG_PRESS_TIME  1000  //ms
 /* key acceleration time */
 #define slide_ratio 1
-#define Up_ratio 0.5
-#define Normal_ratio 0.4
+#define Up_ratio 0.8
+#define Normal_ratio 0.6
 #define Down_ratio 0.2
 
 kb_ctrl_t km;
