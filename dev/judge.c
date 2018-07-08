@@ -469,7 +469,7 @@ void judgedatainit(void) {
 #endif
 
 }
-
+/*
 #define  CUSTOM_DATA_UPDATE_PERIOD      90U // the update frequency is 100ms
 static THD_WORKING_AREA(custom_data_thread_wa, 1024);
 
@@ -486,6 +486,7 @@ static THD_FUNCTION(custom_data_thread, p)
       chThdSleepMilliseconds(CUSTOM_DATA_UPDATE_PERIOD);
     }
 }
+*/
 
 
 void judgeinit(void) {
@@ -496,9 +497,10 @@ void judgeinit(void) {
   sdStart(SERIAL_JUDGE, &SERIAL_JUDGE_CONFIG);                  //Start Serial Driver
   chThdCreateStatic(JudgeThread_wa, sizeof(JudgeThread_wa),     //Start Judge RX thread
                     NORMALPRIO + 5, JudgeThread, NULL);
-
+/*
   chThdCreateStatic(custom_data_thread_wa, sizeof(custom_data_thread_wa),
                 NORMALPRIO + 7,
                 custom_data_thread, NULL);
+*/
 }
 

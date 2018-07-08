@@ -75,7 +75,7 @@ static THD_FUNCTION(magazine_cover, p)
       tick = chVTGetSystemTimeX();
     }
 
-    if(PRC->s1 == UP){
+    if(PRC->s1 == MI){
       magCoverOpen();
     }
     else{

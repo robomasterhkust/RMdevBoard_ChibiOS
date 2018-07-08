@@ -24,12 +24,14 @@ RC_Ctl_t* Rc;
 judge_fb_t* JudgeP;
 pi_controller_t motor_vel_controllers[CHASSIS_MOTOR_NUM]; 
 pid_controller_t chassis_heading_controller;
-pid_controller_t dancing_controller; 
+pid_controller_t dancing_controller;
+pid_controller_t power_limit_controller;
 lpfilterStruct lp_speed[CHASSIS_MOTOR_NUM]; 
 rc_ctrl_t rm;
 Gimbal_Send_Dbus_canStruct* pRC;
 float gimbal_initP = 0; 
 float record = 0; 
+bool reboot = false;
 
 #define TWIST_ANGLE 150
 #define TWIST_PERIOD 800
@@ -37,9 +39,9 @@ float record = 0;
 #define TWIST_MOVE_ANGLE 90
 #define TWIST_MOVE_PERIOD 1000
 
-#define accl_value 165.0/(2*500) // 500 is the frequency and 1 means 1 second
-#define accl_y 3300*0.6/(500)
-#define accl_x 3300*0.6/(500) //slide
+#define accl_value 165.0/(500) // 500 is the frequency and 1 means 1 second
+#define accl_y 3300*0.4/(500)
+#define accl_x 3300*0.4/(500) //slide
 chassis_error_t chassis_getError(void){ 
   return chassis.errorFlag; 
 } 
@@ -140,7 +142,6 @@ static THD_FUNCTION(chassis_control, p)
   JudgeP = judgeDataGet();
   gimbal_p = can_getGimbalMotor(); 
   Rc = RC_get();
-  bool reboot = false;
   uint32_t tick = chVTGetSystemTimeX(); 
 //  uint32_t tick_magazine = ST2MS(chVTGetSystemTimeX());
   chassis.ctrl_mode = CHASSIS_STOP;
@@ -174,14 +175,15 @@ static THD_FUNCTION(chassis_control, p)
       chassis.over_time = true;
     }
     chassis_encoderUpdate(); 
-
-    if(JudgeP->powerInfo.powerBuffer<=10){
-      chassis.ctrl_mode = SAVE_LIFE;
+/*
+    if(JudgeP->powerInfo.powerBuffer<=5){
       int i;
       for(i =0; i<4;i++){
         motor_vel_controllers[i].error_int = 0;
       }
+      chassis.ctrl_mode = SAVE_LIFE;
     }
+    */
 
     if(keyboard_enable(pRC)){
       keyboard_chassis_process(&chassis,pRC);
@@ -226,7 +228,6 @@ static THD_FUNCTION(chassis_control, p)
       }break; 
     }
     mecanum_cal();
-    //power_limit_handle();
     drive_motor();
   } 
 } 
@@ -267,9 +268,15 @@ void chassis_init(void)
   chassis_heading_controller.kp = 70.0f;
   chassis_heading_controller.kd = 1.0f;
 
+
+  power_limit_controller.error_int = 0.0f;
+  power_limit_controller.error_int_max = 0.0f;
+  power_limit_controller.ki = 0.0f;
+  power_limit_controller.kp = 10.0f;
+  power_limit_controller.kd = 0.0f;
+
   dancing_controller.error_int = 0.0f; 
- 
-  dancing_controller.error_int_max = 200.0f; 
+  dancing_controller.error_int_max = 200.0f;
   dancing_controller.ki = 0.1f; 
   dancing_controller.kp = 70.0f;
   dancing_controller.kd = 1.0f;  
@@ -336,39 +343,45 @@ void mecanum_cal(){
   VAL_LIMIT(chassis.rotate_sp, -MAX_CHASSIS_VR_SPEED, MAX_CHASSIS_VR_SPEED);  //deg/s
 
 
-  if(fabs(chassis.strafe_curve) < fabs(chassis.strafe_sp)){
-    if(chassis.strafe_sp>0){
-      chassis.strafe_curve += accl_x;
-    }
-    else{
-      chassis.strafe_curve -= accl_x;
-    }
-
-    if(fabs(chassis.strafe_curve) >=fabs(chassis.strafe_sp)){
-      chassis.strafe_curve = chassis.strafe_sp;
-    }
+  if(JudgeP->powerInfo.powerBuffer<=40 && reboot){
+    power_limit_handle();
   }
   else{
-    chassis.strafe_curve = chassis.strafe_sp;
-  }
 
+    if(fabs(chassis.strafe_curve) <= fabs(chassis.strafe_sp)){
+      if(chassis.strafe_sp>0){
+        chassis.strafe_curve += accl_x;
+      }
+      else{
+        chassis.strafe_curve -= accl_x;
+      }
 
-
-  if(fabs(chassis.drive_curve) < fabs(chassis.drive_sp)){
-    if(chassis.drive_sp>0){
-      chassis.drive_curve += accl_y;
+      if(fabs(chassis.strafe_curve) >=fabs(chassis.strafe_sp)){
+        chassis.strafe_curve = chassis.strafe_sp;
+      }
     }
     else{
-      chassis.drive_curve -= accl_y;
+      chassis.strafe_curve = chassis.strafe_sp;
     }
 
-    if(fabs(chassis.drive_curve) >=fabs(chassis.drive_sp)){
+
+    if(fabs(chassis.drive_curve) < fabs(chassis.drive_sp)){
+      if(chassis.drive_sp>0){
+        chassis.drive_curve += accl_y;
+      }
+      else{
+        chassis.drive_curve -= accl_y;
+      }
+
+      if(fabs(chassis.drive_curve) >=fabs(chassis.drive_sp)){
+        chassis.drive_curve = chassis.drive_sp;
+      }
+    }
+    else{
       chassis.drive_curve = chassis.drive_sp;
     }
   }
-  else{
-    chassis.drive_curve = chassis.drive_sp;
-  }
+
 
 
 
@@ -403,8 +416,15 @@ void mecanum_cal(){
       chassis._motors[i].speed_sp *= rate; 
     }
   }
-  speed_limit_handle();
-  /*
+
+
+
+
+
+
+
+  //speed_limit_handle();
+// Need more consideration!!!s
   for(int i =0;i<4;i++){
     if(fabs(chassis._motors[i].speed_curve) < fabs(chassis._motors[i].speed_sp) && chassis.ctrl_mode != DODGE_MODE && chassis.ctrl_mode != DODGE_MOVE_MODE){
       if(chassis._motors[i].speed_sp>0){
@@ -423,7 +443,7 @@ void mecanum_cal(){
     }
   }
 
-*/
+
   for (i = 0; i < CHASSIS_MOTOR_NUM; i++){
     chassis.current[i] = chassis_controlSpeed(&chassis._motors[i], &motor_vel_controllers[i]);
     VAL_LIMIT(chassis.current[i], -16384, 16384);
@@ -514,7 +534,14 @@ float chassis_heading_control(pid_controller_t* controller,float get, float set)
   return output; 
  
 } 
+float power_limit_control(pid_controller_t* controller,float get, float set){
+  controller->error[0] = set - get;
+  float output = controller->error[0]*controller->kp+controller->kd*(controller->error[0]-2*controller->error[1]+controller->error[2]);
+  controller->error[1] = controller->error[0];
+  controller->error[2] = controller->error[1];
+  return output;
 
+}
 
 void speed_limit_handle(){
   if(JudgeP->powerInfo.power > 80){
@@ -580,6 +607,53 @@ void save_life(){
 
 }
 void power_limit_handle(){
+  if(chassis.strafe_sp >0){
+    chassis.strafe_curve = chassis.strafe_curve - power_limit_control(&power_limit_controller,JudgeP->powerInfo.power,powerlimit);
+
+    if(chassis.strafe_curve > chassis.strafe_sp){
+      chassis.strafe_curve = chassis.strafe_sp;
+    }
+
+    if(chassis.strafe_curve <= 0){
+      chassis.strafe_curve = 0;
+    }
+  }
+  else if(chassis.strafe_sp <0){
+    chassis.strafe_curve = chassis.strafe_curve + power_limit_control(&power_limit_controller,JudgeP->powerInfo.power,powerlimit);
+    if(chassis.strafe_curve < chassis.strafe_sp){
+      chassis.strafe_curve = chassis.strafe_sp;
+    }
+    if(chassis.strafe_curve >= 0){
+      chassis.strafe_curve = 0;
+    }
+  }
+  else{
+    chassis.strafe_curve = 0;
+  }
+
+  if(chassis.drive_sp > 0){
+    chassis.drive_curve = chassis.drive_curve - power_limit_control(&power_limit_controller,JudgeP->powerInfo.power,powerlimit);
+
+    if(chassis.drive_curve > chassis.drive_sp){
+      chassis.drive_curve = chassis.drive_sp;
+    }
+    if(chassis.drive_curve <= 0){
+      chassis.drive_curve = 0;
+    }
+  }
+  else if(chassis.drive_sp < 0){
+    chassis.drive_curve = chassis.drive_curve + power_limit_control(&power_limit_controller,JudgeP->powerInfo.power,powerlimit);
+    if(chassis.drive_curve < chassis.drive_sp){
+      chassis.drive_curve = chassis.drive_sp;
+    }
+    if(chassis.drive_curve >= 0){
+      chassis.drive_curve = 0;
+    }
+  }
+  else{
+    chassis.drive_curve = 0;
+  }
+  /*
   int power_limit = 80 + 0.5*JudgeP->powerInfo.powerBuffer;
   float a0 = fabs(chassis._encoders[0].act_current * 20.0/16384.0);
   float a1 = fabs(chassis._encoders[1].act_current * 20.0/16384.0);
@@ -607,7 +681,7 @@ void power_limit_handle(){
   else{
     chassis.over_power = false;
   }
-
+*/
 
 
 }
