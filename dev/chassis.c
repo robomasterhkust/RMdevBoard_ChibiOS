@@ -39,9 +39,12 @@ bool reboot = false;
 #define TWIST_MOVE_ANGLE 90
 #define TWIST_MOVE_PERIOD 1000
 
-#define accl_value 165.0/(500) // 500 is the frequency and 1 means 1 second
+
+#define accl_value 165.0/(2*500) // 500 is the frequency and 1 means 1 second
 #define accl_y 3300*0.4/(500)
 #define accl_x 3300*0.4/(500) //slide
+#define deccl_y 4500/(500)
+#define deccl_x 4500/(500)
 chassis_error_t chassis_getError(void){ 
   return chassis.errorFlag; 
 } 
@@ -343,11 +346,11 @@ void mecanum_cal(){
   VAL_LIMIT(chassis.rotate_sp, -MAX_CHASSIS_VR_SPEED, MAX_CHASSIS_VR_SPEED);  //deg/s
 
 
+
   if(JudgeP->powerInfo.powerBuffer<=40 && reboot){
     power_limit_handle();
   }
   else{
-
     if(fabs(chassis.strafe_curve) <= fabs(chassis.strafe_sp)){
       if(chassis.strafe_sp>0){
         chassis.strafe_curve += accl_x;
@@ -359,13 +362,34 @@ void mecanum_cal(){
       if(fabs(chassis.strafe_curve) >=fabs(chassis.strafe_sp)){
         chassis.strafe_curve = chassis.strafe_sp;
       }
+
     }
     else{
-      chassis.strafe_curve = chassis.strafe_sp;
+      // if(fabs(chassis.strafe_sp) < 0.003){ // check whether the user intended to stop
+        float previous_strafe_curve = chassis.strafe_curve;
+        if(chassis.strafe_curve > 0){
+          chassis.strafe_curve -= deccl_x;
+        }else{
+          chassis.strafe_curve += deccl_x;
+        }
+
+        if(fabs(chassis.strafe_sp) < 0.003){
+          if(((previous_strafe_curve > 0) & (chassis.strafe_curve < 0)) | ((previous_strafe_curve < 0) & (chassis.strafe_curve > 0))){
+            chassis.strafe_curve = 0;
+          }
+        }
+        else if(fabs(chassis.strafe_curve) < fabs(chassis.strafe_sp)){
+          chassis.strafe_curve = chassis.strafe_sp;
+        }
+        else{
+          chassis.strafe_curve = chassis.strafe_sp;
+        }
     }
 
 
-    if(fabs(chassis.drive_curve) < fabs(chassis.drive_sp)){
+
+
+    if(fabs(chassis.drive_curve) <= fabs(chassis.drive_sp)){
       if(chassis.drive_sp>0){
         chassis.drive_curve += accl_y;
       }
@@ -373,14 +397,36 @@ void mecanum_cal(){
         chassis.drive_curve -= accl_y;
       }
 
+
       if(fabs(chassis.drive_curve) >=fabs(chassis.drive_sp)){
         chassis.drive_curve = chassis.drive_sp;
       }
+
     }
     else{
-      chassis.drive_curve = chassis.drive_sp;
+        float previous_drive_curve = chassis.drive_curve;
+        if(chassis.drive_curve > 0){
+          chassis.drive_curve -= deccl_x;
+        }else{
+          chassis.drive_curve += deccl_x;
+        }
+
+        if(fabs(chassis.drive_sp) < 0.003){
+          if(((previous_drive_curve > 0) & (chassis.drive_curve < 0)) | ((previous_drive_curve < 0) & (chassis.drive_curve > 0))){
+            chassis.drive_curve = 0;
+          }
+        }
+        else if(fabs(chassis.drive_curve) < fabs(chassis.drive_sp)){
+          chassis.drive_curve = chassis.drive_sp;
+        }
+        else{
+          chassis.drive_curve = chassis.drive_sp;
+        }
     }
   }
+
+
+
 
 
 
