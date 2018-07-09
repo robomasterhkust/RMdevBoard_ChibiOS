@@ -19,7 +19,7 @@ Gimbal_Send_Dbus_canStruct* PRC;
 // const int LEFTCOVER = 0; // D
 // const int RIGHTCOVER = 1; // C
 
-
+static bool internalState = false; // True = open; False = close;
 const int LEFTCOVER = 1; // D
 const int RIGHTCOVER = 2; // C
 
@@ -39,19 +39,35 @@ const int RIGHTCOVER = 2; // C
 //     pwmEnableChannel(&PWMD5, RIGHTCOVER, PWM_PERCENTAGE_TO_WIDTH(&PWMD5, 1000));
 // }
 
+void magCoverToggle(void){
+  if(!internalState){
+    magCoverOpen();
+    internalState = true;
+    chThdSleepMilliseconds(500);
+  }else{
+    magCoverClose();
+    internalState = false;
+    chThdSleepMilliseconds(500);
+  }
+}
+
 void magCoverClose(void){
 
 //    pwmStop(&PWMD8);
 //    pwmStart(&PWMD8,&pwm8cfg);
-    pwmEnableChannel(&PWMD8, LEFTCOVER, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 5000));
-    pwmEnableChannel(&PWMD8, RIGHTCOVER, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 5));
+    // if(!internalState){
+      pwmEnableChannel(&PWMD8, LEFTCOVER, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 5000));
+      pwmEnableChannel(&PWMD8, RIGHTCOVER, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 5));
+    // }
 }
 
 void magCoverOpen(void){
 //    pwmStop(&PWMD8);
 //    pwmStart(&PWMD8,&pwm8cfg);
-    pwmEnableChannel(&PWMD8, LEFTCOVER, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 500));
-    pwmEnableChannel(&PWMD8, RIGHTCOVER, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 1000));
+  // if(internalState){
+    pwmEnableChannel(&PWMD8, LEFTCOVER, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 500)); //800
+    pwmEnableChannel(&PWMD8, RIGHTCOVER, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 1000)); //750
+  // }
 
 
 }

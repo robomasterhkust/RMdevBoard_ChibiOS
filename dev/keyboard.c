@@ -3,6 +3,8 @@
 #include "ch.h"
 #include "hal.h"
 #include "dbus.h"
+#include "magazine_cover_task.h"
+
 int bitmap[15] = {};
 /* mouse button long press time */
 #define LONG_PRESS_TIME  1000  //ms
@@ -139,6 +141,10 @@ void keyboard_chassis_process(chassisStruct* chassisP,Gimbal_Send_Dbus_canStruct
       move_speed_ctrl(bitmap[KEY_SHIFT], bitmap[KEY_CTRL]);
       move_direction_ctrl(bitmap[KEY_W], bitmap[KEY_S], bitmap[KEY_A], bitmap[KEY_D]);
     }
+
+    // if(bitmap[KEY_Q]){
+    //   magCoverToggle();
+    // }
 
    // chassis_operation_func(bitmap);
 
