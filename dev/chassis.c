@@ -44,8 +44,8 @@ bool reboot = false;
 #define accl_value 165.0/(500) // 500 is the frequency and 1 means 1 second
 #define accl_y 3300*0.4/(500)
 #define accl_x 3300*0.4/(500) //slide
-#define deccl_y 3300/(500)
-#define deccl_x 3300/(500)
+#define deccl_y 3300*1.2/(500)
+#define deccl_x 3300*1.2/(500)
 chassis_error_t chassis_getError(void){ 
   return chassis.errorFlag; 
 } 
@@ -388,13 +388,13 @@ void mecanum_cal(){
       }
 
     }
-    else{
+    else if(fabs(chassis.strafe_curve) > fabs(chassis.strafe_sp)){
       // if(fabs(chassis.strafe_sp) < 0.003){ // check whether the user intended to stop
         float previous_strafe_curve = chassis.strafe_curve;
         if(chassis.strafe_curve > 0){
-          chassis.strafe_curve -= deccl_x;
+          chassis.strafe_curve -= deccl_y;
         }else{
-          chassis.strafe_curve += deccl_x;
+          chassis.strafe_curve += deccl_y;
         }
 
         if(fabs(chassis.strafe_sp) < 0.003){
@@ -408,6 +408,8 @@ void mecanum_cal(){
         else{
           chassis.strafe_curve = chassis.strafe_sp;
         }
+    }else{
+      chassis.strafe_curve = chassis.strafe_sp;
     }
 
 
@@ -433,7 +435,7 @@ void mecanum_cal(){
       }
 
     }
-    else{
+    else if(fabs(chassis.drive_curve) > fabs(chassis.drive_sp)){
         float previous_drive_curve = chassis.drive_curve;
         if(chassis.drive_curve > 0){
           chassis.drive_curve -= deccl_x;
@@ -452,6 +454,8 @@ void mecanum_cal(){
         else{
           chassis.drive_curve = chassis.drive_sp;
         }
+    }else{
+      chassis.drive_curve = chassis.drive_sp;
     }
  // }
 
@@ -501,7 +505,8 @@ void mecanum_cal(){
 
   //speed_limit_handle();
 // Need more consideration!!!s
-  for(int i =0;i<4;i++){
+  
+  for(i =0;i<4;i++){
     if(fabs(chassis._motors[i].speed_curve) < fabs(chassis._motors[i].speed_sp) && chassis.ctrl_mode != DODGE_MODE && chassis.ctrl_mode != DODGE_MOVE_MODE){
       if(chassis._motors[i].speed_sp>0){
         chassis._motors[i].speed_curve += accl_value;
