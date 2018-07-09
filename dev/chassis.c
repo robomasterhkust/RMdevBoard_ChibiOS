@@ -26,6 +26,7 @@ pi_controller_t motor_vel_controllers[CHASSIS_MOTOR_NUM];
 pid_controller_t chassis_heading_controller;
 pid_controller_t dancing_controller;
 pid_controller_t power_limit_controller;
+pid_controller_t acceleration_limit_controller;
 lpfilterStruct lp_speed[CHASSIS_MOTOR_NUM]; 
 rc_ctrl_t rm;
 Gimbal_Send_Dbus_canStruct* pRC;
@@ -40,11 +41,11 @@ bool reboot = false;
 #define TWIST_MOVE_PERIOD 1000
 
 
-#define accl_value 165.0/(2*500) // 500 is the frequency and 1 means 1 second
+#define accl_value 165.0/(500) // 500 is the frequency and 1 means 1 second
 #define accl_y 3300*0.4/(500)
 #define accl_x 3300*0.4/(500) //slide
-#define deccl_y 4500/(500)
-#define deccl_x 4500/(500)
+#define deccl_y 3300/(500)
+#define deccl_x 3300/(500)
 chassis_error_t chassis_getError(void){ 
   return chassis.errorFlag; 
 } 
@@ -100,6 +101,17 @@ static int16_t chassis_controlSpeed(motorStruct* motor, pi_controller_t* control
   return (int16_t)(boundOutput(output,OUTPUT_MAX)); 
 } 
  
+
+float acceleration_limit_control(pid_controller_t* controller,float get, float set){
+  controller->error[0] = set - get;
+  controller->error_int += controller->error[0] * controller->ki;
+  controller->error_int = boundOutput(controller->error_int, controller->error_int_max);
+  float output = controller->error_int+controller->error[0]*controller->kp+controller->kd*(controller->error[0]-2*controller->error[1]+controller->error[2]);
+  controller->error[1] = controller->error[0];
+  controller->error[2] = controller->error[1];
+  return boundOutput(output,accl_y);
+
+}
 
 
 /*
@@ -186,7 +198,7 @@ static THD_FUNCTION(chassis_control, p)
       }
       chassis.ctrl_mode = SAVE_LIFE;
     }
-    */
+*/
 
     if(keyboard_enable(pRC)){
       keyboard_chassis_process(&chassis,pRC);
@@ -278,6 +290,12 @@ void chassis_init(void)
   power_limit_controller.kp = 10.0f;
   power_limit_controller.kd = 0.0f;
 
+  acceleration_limit_controller.error_int = 0.0f;
+  acceleration_limit_controller.error_int_max = accl_x;
+  acceleration_limit_controller.ki = 0.00005f;
+  acceleration_limit_controller.kp = 0.03f;
+  acceleration_limit_controller.kd = 0.018f;
+
   dancing_controller.error_int = 0.0f; 
   dancing_controller.error_int_max = 200.0f;
   dancing_controller.ki = 0.1f; 
@@ -347,16 +365,22 @@ void mecanum_cal(){
 
 
 
-  if(JudgeP->powerInfo.powerBuffer<=40 && reboot){
-    power_limit_handle();
-  }
-  else{
-    if(fabs(chassis.strafe_curve) <= fabs(chassis.strafe_sp)){
+//  if(JudgeP->powerInfo.powerBuffer<=40 && reboot){
+//    power_limit_handle();
+//  }
+//  else{
+    if(fabs(chassis.strafe_curve) < fabs(chassis.strafe_sp)){
       if(chassis.strafe_sp>0){
-        chassis.strafe_curve += accl_x;
+        chassis.strafe_curve += acceleration_limit_control(&acceleration_limit_controller,JudgeP->powerInfo.power,80);
+        if(chassis.strafe_curve <=0){
+          chassis.strafe_curve = 0;
+        }
       }
       else{
-        chassis.strafe_curve -= accl_x;
+        chassis.strafe_curve -= acceleration_limit_control(&acceleration_limit_controller,JudgeP->powerInfo.power,80);
+        if(chassis.strafe_curve >=0){
+          chassis.strafe_curve = 0;
+        }
       }
 
       if(fabs(chassis.strafe_curve) >=fabs(chassis.strafe_sp)){
@@ -389,12 +413,18 @@ void mecanum_cal(){
 
 
 
-    if(fabs(chassis.drive_curve) <= fabs(chassis.drive_sp)){
+    if(fabs(chassis.drive_curve) < fabs(chassis.drive_sp)){
       if(chassis.drive_sp>0){
-        chassis.drive_curve += accl_y;
+        chassis.drive_curve += acceleration_limit_control(&acceleration_limit_controller,JudgeP->powerInfo.power,80);
+        if(chassis.drive_curve <= 0){
+          chassis.drive_curve = 0;
+        }
       }
       else{
-        chassis.drive_curve -= accl_y;
+        chassis.drive_curve -= acceleration_limit_control(&acceleration_limit_controller,JudgeP->powerInfo.power,80);
+        if(chassis.drive_curve >= 0){
+          chassis.drive_curve = 0;
+        }
       }
 
 
@@ -423,7 +453,7 @@ void mecanum_cal(){
           chassis.drive_curve = chassis.drive_sp;
         }
     }
-  }
+ // }
 
 
 
@@ -588,6 +618,8 @@ float power_limit_control(pid_controller_t* controller,float get, float set){
   return output;
 
 }
+
+
 
 void speed_limit_handle(){
   if(JudgeP->powerInfo.power > 80){
