@@ -150,7 +150,6 @@ static void rm_chassis_process(void) {
   */
 }
 
-#if defined(RM_INFANTRY) || defined(RM_HERO)
 static inline void motor_debug_can(CANDriver *const CANx) {
   CANTxFrame txmsg;
   MotorDebug_canStruct[CHASSIS_MOTOR_NUM] motor_debug;
@@ -187,17 +186,12 @@ static inline void motor_debug_can(CANDriver *const CANx) {
   chSysUnlock();
   canTransmit(CANx, CAN_ANY_MAILBOX, &txmsg, MS2ST(100));
 }
-#endif
 
 static THD_WORKING_AREA(chassis_can_Thd_wa, 1024);
 static THD_FUNCTION(chassis_can_Thd, p) {
   (void)p;
   while (!chThdShouldTerminateX()) {
-
-#if defined(RM_INFANTRY) || defined(RM_HERO)
     motor_debug_can(MOTOR_DEBUG_CAN);
-#endif
-
     chThdSleep(CHASSIS_CAN_UPDATE_PERIOD);
   }
 }
@@ -238,7 +232,7 @@ static THD_FUNCTION(chassis_control, p) {
       tick = chVTGetSystemTimeX();
       chassis.over_time = true;
     }
-    chassis_encoderUpdate(); 
+    chassis_encoderUpdate();
 /*
     if(JudgeP->powerInfo.powerBuffer<=5){
       int i;
@@ -389,6 +383,8 @@ void chassis_init(void) {
   chassis._encoders = can_getExtraMotor();
   chThdCreateStatic(chassis_control_wa, sizeof(chassis_control_wa), NORMALPRIO,
                     chassis_control, NULL);
+  chThdCreateStatic(chassis_can_Thd_wa, sizeof(chassis_can_Thd_wa), NORMALPRIO,
+                    chassis_can_Thd, NULL);
 }
 
 void mecanum_cal() {
