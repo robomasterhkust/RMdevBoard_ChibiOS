@@ -8,7 +8,7 @@
 #include "string.h"
 #include "adis16265.h"
 
-#define BARREL_CAN        &CAND2
+#define BARREL_CAN        &CAND1
 
 #define GIMBAL_MOTOR_NUM  2U
 #define CHASSIS_MOTOR_NUM 4U

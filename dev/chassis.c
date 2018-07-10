@@ -370,7 +370,7 @@ void mecanum_cal(){
 //  }
 //  else{
     if(fabs(chassis.strafe_curve) < fabs(chassis.strafe_sp)){
-      if(chassis.strafe_sp>0){
+      if(chassis.strafe_sp>=0){
         chassis.strafe_curve += acceleration_limit_control(&acceleration_limit_controller,JudgeP->powerInfo.power,80);
         if(chassis.strafe_curve <=0){
           chassis.strafe_curve = 0;
@@ -391,7 +391,7 @@ void mecanum_cal(){
     else if(fabs(chassis.strafe_curve) > fabs(chassis.strafe_sp)){
       // if(fabs(chassis.strafe_sp) < 0.003){ // check whether the user intended to stop
         float previous_strafe_curve = chassis.strafe_curve;
-        if(chassis.strafe_curve > 0){
+        if(chassis.strafe_curve >= 0){
           chassis.strafe_curve -= deccl_y;
         }else{
           chassis.strafe_curve += deccl_y;
@@ -416,7 +416,7 @@ void mecanum_cal(){
 
 
     if(fabs(chassis.drive_curve) < fabs(chassis.drive_sp)){
-      if(chassis.drive_sp>0){
+      if(chassis.drive_sp>=0){
         chassis.drive_curve += acceleration_limit_control(&acceleration_limit_controller,JudgeP->powerInfo.power,80);
         if(chassis.drive_curve <= 0){
           chassis.drive_curve = 0;
