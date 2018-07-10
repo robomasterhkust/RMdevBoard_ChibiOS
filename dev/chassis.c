@@ -115,7 +115,7 @@ float acceleration_limit_control(pid_controller_t* controller,float get, float s
 
 bool chassis_absolute_speed(float i){
   float rpm = fabsf(chassis._motors[0]._speed)/4 + fabsf(chassis._motors[1]._speed)/4 + fabsf(chassis._motors[2]._speed)/4 + fabsf(chassis._motors[3]._speed)/4;
-  if(rpm < 100*i){
+  if(rpm > 125*i){
     return true;
   }
   return false;
@@ -208,7 +208,7 @@ static THD_FUNCTION(chassis_control, p)
 */
     if(JudgeP->powerInfo.powerBuffer<=30){
       chassis.power_limit = 2.5*JudgeP->powerInfo.powerBuffer;
-      if(chassis.power_limit <= 25 && JudgeP->powerInfo.power > 100 && !chassis_absolute_speed(1)){
+      if(chassis.power_limit <= 25 && JudgeP->powerInfo.power > 80 && !chassis_absolute_speed(1)){
 
         chassis.ctrl_mode = SAVE_LIFE;
         //chassis.power_limit = 0;
