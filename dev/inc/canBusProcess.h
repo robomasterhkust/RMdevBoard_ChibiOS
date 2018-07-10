@@ -28,6 +28,11 @@
 #define CAN_ENCODER_RANGE           8192            // 0x2000
 #define CAN_ENCODER_RADIAN_RATIO    7.669904e-4f    // 2*M_PI / 0x2000
 
+#define CAN_CHASSIS_DEBUG_FR 0x211
+#define CAN_CHASSIS_DEBUG_FL 0x212
+#define CAN_CHASSIS_DEBUG_BL 0x213
+#define CAN_CHASSIS_DEBUG_BR 0x214
+
 typedef enum
 {
   GIMBAL_YAW = 0,
@@ -89,6 +94,11 @@ typedef struct{
   uint16_t heatLimit;
   uint16_t currentHeatValue;
 } BarrelStatus_canStruct;
+
+typedef struct{
+  float _speed;
+  float speed_curve;
+} MotorDebug_canStruct;
 
 volatile GimbalEncoder_canStruct* can_getGimbalMotor(void);
 volatile ChassisEncoder_canStruct* can_getChassisMotor(void);
