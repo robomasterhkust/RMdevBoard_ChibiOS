@@ -44,8 +44,8 @@ bool reboot = false;
 #define accl_value 165.0/(500) // 500 is the frequency and 1 means 1 second
 #define accl_y 3300*0.4/(500)
 #define accl_x 3300*0.4/(500) //slide
-#define deccl_y 3300*1.2/(500)
-#define deccl_x 3300*1.2/(500)
+#define deccl_y 3300/(500)
+#define deccl_x 3300/(500)
 chassis_error_t chassis_getError(void){ 
   return chassis.errorFlag; 
 } 
@@ -113,6 +113,13 @@ float acceleration_limit_control(pid_controller_t* controller,float get, float s
 
 }
 
+bool chassis_absolute_speed(float i){
+  float rpm = fabsf(chassis._motors[0]._speed)/4 + fabsf(chassis._motors[1]._speed)/4 + fabsf(chassis._motors[2]._speed)/4 + fabsf(chassis._motors[3]._speed)/4;
+  if(rpm < 100*i){
+    return true;
+  }
+  return false;
+}
 
 /*
 #define H_MAX  200  // Heading PID_outputx
@@ -199,6 +206,23 @@ static THD_FUNCTION(chassis_control, p)
       chassis.ctrl_mode = SAVE_LIFE;
     }
 */
+    if(JudgeP->powerInfo.powerBuffer<=30){
+      chassis.power_limit = 2.5*JudgeP->powerInfo.powerBuffer;
+      if(chassis.power_limit <= 25 && JudgeP->powerInfo.power > 100 && !chassis_absolute_speed(1)){
+
+        chassis.ctrl_mode = SAVE_LIFE;
+        //chassis.power_limit = 0;
+        int i;
+        for(i =0; i<4;i++){
+          motor_vel_controllers[i].error_int = 0;
+        }
+        power_limit_controller.error_int = 0;
+
+      }
+    }
+    else{
+      chassis.power_limit = 80;
+    }
 
     if(keyboard_enable(pRC)){
       keyboard_chassis_process(&chassis,pRC);
@@ -371,13 +395,13 @@ void mecanum_cal(){
 //  else{
     if(fabs(chassis.strafe_curve) < fabs(chassis.strafe_sp)){
       if(chassis.strafe_sp>=0){
-        chassis.strafe_curve += acceleration_limit_control(&acceleration_limit_controller,JudgeP->powerInfo.power,80);
+        chassis.strafe_curve += acceleration_limit_control(&acceleration_limit_controller,JudgeP->powerInfo.power,chassis.power_limit);
         if(chassis.strafe_curve <=0){
           chassis.strafe_curve = 0;
         }
       }
       else{
-        chassis.strafe_curve -= acceleration_limit_control(&acceleration_limit_controller,JudgeP->powerInfo.power,80);
+        chassis.strafe_curve -= acceleration_limit_control(&acceleration_limit_controller,JudgeP->powerInfo.power,chassis.power_limit);
         if(chassis.strafe_curve >=0){
           chassis.strafe_curve = 0;
         }
