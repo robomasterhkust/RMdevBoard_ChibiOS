@@ -152,7 +152,7 @@ static void rm_chassis_process(void) {
 
 static inline void motor_debug_can(CANDriver *const CANx) {
   CANTxFrame txmsg;
-  MotorDebug_canStruct[CHASSIS_MOTOR_NUM] motor_debug;
+  MotorDebug_canStruct motor_debug[CHASSIS_MOTOR_NUM];
   uint8_t i;
   for (i = 0; i < CHASSIS_MOTOR_NUM; i++) {
     motor_debug[i]._speed = chassis._motors[i]._speed;

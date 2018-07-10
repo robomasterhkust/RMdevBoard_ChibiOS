@@ -186,9 +186,6 @@ void power_limit_handle(void);
 void speed_limit_handle(void);
 void save_life(void);
 
-#if defined(RM_INFANTRY) || defined(RM_HERO)
-    #include "canBusProcess.h"
-    #define MOTOR_DEBUG_CAN   &CAND2
-#endif
+#define MOTOR_DEBUG_CAN   &CAND2
 
 #endif /* INC_CHASSIS_H_ */
