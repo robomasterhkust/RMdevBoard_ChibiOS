@@ -15,6 +15,9 @@
 #define CHASSIS_UPDATE_FREQ 500
 #define CHASSIS_UPDATE_PERIOD_US 1000000/CHASSIS_UPDATE_FREQ
 
+#define CHASSIS_CAN_UPDATE_FREQ 50
+#define CHASSIS_CAN_UPDATE_PERIOD US2ST(1000000/CHASSIS_CAN_UPDATE_FREQ)
+
 #define VAL_LIMIT(val, min, max) \
 do {\
 if((val) <= (min))\
@@ -183,6 +186,9 @@ void power_limit_handle(void);
 void speed_limit_handle(void);
 void save_life(void);
 
-
+#if defined(RM_INFANTRY) || defined(RM_HERO)
+    #include "canBusProcess.h"
+    #define MOTOR_DEBUG_CAN   &CAND2
+#endif
 
 #endif /* INC_CHASSIS_H_ */
