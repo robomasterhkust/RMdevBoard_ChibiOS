@@ -188,6 +188,8 @@ void judgedecode(void);
 
 void judgeinit(void);
 
+bool getJudgeInitStatus(void);
+
 size_t judgeDataWrite(float a, float b, float c, uint8_t mask); 
 
 #endif /* INC_JUDGE_H_ */

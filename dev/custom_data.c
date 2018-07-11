@@ -1,22 +1,24 @@
 #include "custom_data.h"
 #include "judge.h"
 #include "bullet_tracker_task.h"
+#include "magazine_cover_task.h"
+#include <stdbool.h>
 
 static Custom_Data_t customData;
 static bool allInited = false;
 static size_t sizeout;
+static Bullet_Tracker_t* pBT;
+// static projectile_fb_t projectile;
+static judge_fb_t* pJudge;
+static magCoverStruct_t* pMC;
+
 
 bool checkInit(void){
-	if(allInited){
-		return true;
-	}
-	Bullet_Tracker_t* pBT = bulletTracker_get();
 	bool bulletCountInit = pBT->inited;
-	bool data2Init = false; // edit
-	bool data3Init = false; // edit
-	bool lights8Init = false; // edit
+	bool judgeDataInit = getJudgeInitStatus(); 
+	bool magCoverInit = getMagCoverInitStatus(); 
 
-	if(bulletCountInit & data2Init & data3Init & lights8Init){
+	if(bulletCountInit & judgeDataInit & magCoverInit){
 		allInited = true;
 		return true;
 	}else{
@@ -35,18 +37,17 @@ static THD_FUNCTION(custom_data_thread, p)
     // systime_t timeout = MS2ST(CUSTOM_DATA_UPDATE_PERIOD);
 
     while (!chThdShouldTerminateX()) {
-    	if(false){
-    		Bullet_Tracker_t* pBT = bulletTracker_get();
+    	if(allInited){
 	    	d->data1 = (float)(pBT->bullet_tracker.bulletCount);
-	    	d->data2 = 0.0f; // edit
-	    	d->data3 = 0.0f; // edit
-	    	d->lights8 = 0;  // edit
+	    	d->data2 = (float)(pJudge->projectileInfo.bulletSpeed); // edit
+	    	d->data3 = (float)(-1.0); // edit
+	    	d->lights8 = 0b00000000 | (uint8_t)(pMC->internalState);  // edit
     	}else{
-    		d->data1 += 0.0001f;
-    		uint32_t h = 0x11000011;
-    		memcpy(&d->data2, &h, 4);
-    		d->data3 = 0.0f;
-    		d->lights8 = 0b00101010;
+    		checkInit();
+    		d->data1 = -1.0f;
+    		d->data2 = -1.0f;
+    		d->data3 = -1.0f;
+    		d->lights8 = 0b00000000;
     	}
     	sizeout = judgeDataWrite(d->data1, d->data2, d->data3, d->lights8); 
     	chThdSleepMilliseconds(CUSTOM_DATA_UPDATE_PERIOD);
@@ -54,6 +55,11 @@ static THD_FUNCTION(custom_data_thread, p)
 }
 
 void customData_init(void){
+
+    pBT = bulletTracker_get();
+    pJudge = judgeDataGet();
+    pMC = getMagCover();
+
 	customData.data1 = 0.0f;
 	customData.data2 = 0.0f;
 	customData.data3 = 0.0f;
