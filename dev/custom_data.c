@@ -5,6 +5,7 @@
 static Custom_Data_t customData;
 static bool allInited = false;
 static size_t sizeout;
+int16_t count = 0;
 
 bool checkInit(void){
 	if(allInited){
@@ -24,17 +25,20 @@ bool checkInit(void){
 	}
 }
 
-// #define  CUSTOM_DATA_UPDATE_PERIOD      90U // the update frequency is 100ms
-// static THD_WORKING_AREA(custom_data_thread_wa, 1024);
+ #define  CUSTOM_DATA_UPDATE_PERIOD      90U // the update frequency is 100ms
+ static THD_WORKING_AREA(custom_data_thread_wa, 1024);
 
-// static THD_FUNCTION(custom_data_thread, p)
-// {
-//     Custom_Data_t *d = (Custom_Data_t *) p;
-//     chRegSetThreadName("Update Custom Data");
-//     // msg_t rxmsg;
-//     // systime_t timeout = MS2ST(CUSTOM_DATA_UPDATE_PERIOD);
-
-//     while (!chThdShouldTerminateX()) {
+ static THD_FUNCTION(custom_data_thread, p)
+ {
+     Custom_Data_t *d = (Custom_Data_t *) p;
+     chRegSetThreadName("Update Custom Data");
+     // msg_t rxmsg;
+     // systime_t timeout = MS2ST(CUSTOM_DATA_UPDATE_PERIOD);
+     d->data1 = 0.0f;
+     d->data2 = 0.0f;
+     d->data3 = 0.0f;
+     d->lights8 = 0b00101010;
+     while (!chThdShouldTerminateX()) {
 //     	if(false){
 //     		Bullet_Tracker_t* pBT = bulletTracker_get();
 // 	    	d->data1 = (float)(pBT->bullet_tracker.bulletCount);
@@ -45,12 +49,19 @@ bool checkInit(void){
 //     		d->data1 = 0.0f;
 //     		d->data2 = 1.0f;
 //     		d->data3 = 0.0f;
-//     		d->lights8 = 0b10101010;
+//     		d->lights8 = 0b00101010;
 //     	}
-//     	sizeout = judgeDataWrite(d->data1, d->data2, d->data3, d->lights8); 
-//     	chThdSleepMilliseconds(CUSTOM_DATA_UPDATE_PERIOD);
-//     }
-// }
+       count++;
+       if(count >= 10){
+         count =0;
+         d->data1 += 1.0f;
+         d->data2 += 1.0f;
+         d->data3 += 1.0f;
+       }
+       sizeout = judgeDataWrite(d->data1, d->data2, d->data3, d->lights8);
+       chThdSleepMilliseconds(CUSTOM_DATA_UPDATE_PERIOD);
+     }
+ }
 
 void customData_init(void){
 	customData.data1 = 0.0f;
@@ -58,8 +69,8 @@ void customData_init(void){
 	customData.data3 = 0.0f;
 	customData.lights8 = 0;
 
-    // chThdCreateStatic(custom_data_thread_wa, sizeof(custom_data_thread_wa),
-    //               NORMALPRIO + 7,
-    //               custom_data_thread, &customData);
+     chThdCreateStatic(custom_data_thread_wa, sizeof(custom_data_thread_wa),
+                   NORMALPRIO + 7,
+                   custom_data_thread, &customData);
 
 }

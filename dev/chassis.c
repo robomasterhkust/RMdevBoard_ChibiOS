@@ -242,6 +242,7 @@ static THD_FUNCTION(chassis_control, p) {
       chassis.ctrl_mode = SAVE_LIFE;
     }
 */
+    chassis.power_limit = 1.3*JudgeP->powerInfo.powerBuffer;
     if(JudgeP->powerInfo.powerBuffer<=30){
       chassis.power_limit = 2.5*JudgeP->powerInfo.powerBuffer;
       if(chassis.power_limit <= 25 && JudgeP->powerInfo.power > 80 && !chassis_absolute_speed(1)){
@@ -387,7 +388,7 @@ void chassis_init(void) {
                     chassis_can_Thd, NULL);
 }
 
-void mecanum_cal() {
+void mecanum_cal(){
   static float rotate_ratio_fr;
   static float rotate_ratio_fl;
   static float rotate_ratio_br;
@@ -478,13 +479,13 @@ void mecanum_cal() {
   if (fabs(chassis.drive_curve) < fabs(chassis.drive_sp)) {
     if (chassis.drive_sp >= 0) {
       chassis.drive_curve += acceleration_limit_control(
-          &acceleration_limit_controller, JudgeP->powerInfo.power, 80);
+          &acceleration_limit_controller, JudgeP->powerInfo.power, chassis.power_limit);
       if (chassis.drive_curve <= 0) {
         chassis.drive_curve = 0;
       }
     } else {
       chassis.drive_curve -= acceleration_limit_control(
-          &acceleration_limit_controller, JudgeP->powerInfo.power, 80);
+          &acceleration_limit_controller, JudgeP->powerInfo.power, chassis.power_limit);
       if (chassis.drive_curve >= 0) {
         chassis.drive_curve = 0;
       }
@@ -670,7 +671,7 @@ float chassis_heading_control(pid_controller_t *controller, float get,
                         controller->error[2]);
   controller->error[1] = controller->error[0];
   controller->error[2] = controller->error[1];
-  return output;
+  return boundOutput(output,100);
 }
 float power_limit_control(pid_controller_t *controller, float get, float set) {
   controller->error[0] = set - get;
