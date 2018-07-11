@@ -2,6 +2,7 @@
 #include "hal.h"
 #include "canBusProcess.h"
 #include "dbus.h"
+#include "keyboard.h"
 static PWMConfig pwm8cfg = {
         1000000,   /* 1MHz PWM clock frequency.   */
         20000,      /* Initial PWM period 20ms.       */
@@ -20,6 +21,8 @@ Gimbal_Send_Dbus_canStruct* PRC;
 // const int RIGHTCOVER = 1; // C
 
 static bool internalState = false; // True = open; False = close;
+static int* bitmap_for_magCover;
+static bool Q_press = false;
 const int LEFTCOVER = 1; // D
 const int RIGHTCOVER = 2; // C
 
@@ -43,11 +46,10 @@ void magCoverToggle(void){
   if(!internalState){
     magCoverOpen();
     internalState = true;
-    chThdSleepMilliseconds(500);
   }else{
     magCoverClose();
     internalState = false;
-    chThdSleepMilliseconds(500);
+
   }
 }
 
@@ -77,7 +79,7 @@ static THD_WORKING_AREA(magazine_cover_wa, 2048);
 static THD_FUNCTION(magazine_cover, p)
 {
 
-  (void)p;
+  (void*)p;
   chRegSetThreadName("Magazine_cover");
   PRC = can_get_sent_dbus();
   uint32_t tick = chVTGetSystemTimeX();
@@ -90,13 +92,23 @@ static THD_FUNCTION(magazine_cover, p)
     {
       tick = chVTGetSystemTimeX();
     }
+    if(bitmap_for_magCover[KEY_Q]){
+      if(!Q_press){
+        magCoverToggle();
+      }
+      Q_press = true;
 
-    if(PRC->s1 == MI){
-      magCoverOpen();
     }
     else{
-      magCoverClose();
+      Q_press = false;
     }
+
+    // if(PRC->s1 == MI){
+    //   magCoverOpen();
+    // }
+    // else{
+    //   magCoverClose();
+    // }
 
 
   }
@@ -114,6 +126,8 @@ void pwm_magazine_cover_init(void)
         pwmEnableChannel(pwmp, 3, PWM_PERCENTAGE_TO_WIDTH(pwmp, p));
     }
     pwmStart(&PWMD8,&pwm8cfg);
+
+    bitmap_for_magCover = Bitmap_get();
 
     magCoverClose();
     chThdCreateStatic(magazine_cover_wa, sizeof(magazine_cover_wa),

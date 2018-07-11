@@ -25,6 +25,7 @@ bool checkInit(void){
 	}
 }
 
+
  #define  CUSTOM_DATA_UPDATE_PERIOD      90U // the update frequency is 100ms
  static THD_WORKING_AREA(custom_data_thread_wa, 1024);
 
@@ -63,6 +64,7 @@ bool checkInit(void){
      }
  }
 
+
 void customData_init(void){
 	customData.data1 = 0.0f;
 	customData.data2 = 0.0f;
@@ -72,5 +74,6 @@ void customData_init(void){
      chThdCreateStatic(custom_data_thread_wa, sizeof(custom_data_thread_wa),
                    NORMALPRIO + 7,
                    custom_data_thread, &customData);
+
 
 }

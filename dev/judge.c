@@ -283,9 +283,9 @@ size_t judgeDataWrite(float a, float b, float c, uint8_t mask) {
   sdtxbuf[5] = 1; // 6                                           //Append frame type : 1
   sdtxbuf[6] = 0; // 7                                          //Append frame type : 0
 
-  memcpy(sdtxbuf + 7, &a, 4);                         //Append frame data
-  memcpy(sdtxbuf + 11, &b, 4);                        //Append frame data
-  memcpy(sdtxbuf + 15, &c, 4);                        //Append frame data
+  memcpy(sdtxbuf + 7, &a, sizeof(float));                         //Append frame data
+  memcpy(sdtxbuf + 11, &b, sizeof(float));                        //Append frame data
+  memcpy(sdtxbuf + 15, &c, sizeof(float));                        //Append frame data
   memcpy(sdtxbuf + 19, &mask, 1);                     //Append frame data
 
   Append_CRC16_Check_Sum(sdtxbuf, 22);               //Append frame CRC16

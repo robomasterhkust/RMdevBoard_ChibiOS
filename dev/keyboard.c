@@ -31,6 +31,10 @@ bool keyboard_enable(Gimbal_Send_Dbus_canStruct* pRC){
   return (pRC->s1 == MI);
   //return RC_get()->rc.s2 == UP;
 }
+int* Bitmap_get(){
+  return bitmap;
+}
+
 void keyboard_reset(){
   km.vx = 0;
   km.vy = 0;
@@ -142,9 +146,7 @@ void keyboard_chassis_process(chassisStruct* chassisP,Gimbal_Send_Dbus_canStruct
       move_direction_ctrl(bitmap[KEY_W], bitmap[KEY_S], bitmap[KEY_A], bitmap[KEY_D]);
     }
 
-    // if(bitmap[KEY_Q]){
-    //   magCoverToggle();
-    // }
+
 
    // chassis_operation_func(bitmap);
 

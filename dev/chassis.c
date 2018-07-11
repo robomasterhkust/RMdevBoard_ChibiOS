@@ -131,6 +131,7 @@ controller->error_int_max);
 }
 */
 
+
 float CHASSIS_RC_MAX_SPEED_X = 3300.0f;
 float CHASSIS_RC_MAX_SPEED_Y = 3300.0f;
 float CHASSIS_RC_MAX_SPEED_R = 300.0f;
@@ -242,12 +243,11 @@ static THD_FUNCTION(chassis_control, p) {
       chassis.ctrl_mode = SAVE_LIFE;
     }
 */
-    chassis.power_limit = 1.3*JudgeP->powerInfo.powerBuffer;
-    if(JudgeP->powerInfo.powerBuffer<=30){
-      chassis.power_limit = 2.5*JudgeP->powerInfo.powerBuffer;
-      if(chassis.power_limit <= 25 && JudgeP->powerInfo.power > 80 && !chassis_absolute_speed(1)){
 
-
+    if(JudgeP->powerInfo.powerBuffer<=60 && JudgeP->powerInfo.powerBuffer >=5){
+      chassis.power_limit = 1.3*JudgeP->powerInfo.powerBuffer;
+    }else {
+      if(JudgeP->powerInfo.power > 80 && !chassis_absolute_speed(1)){
         chassis.ctrl_mode = SAVE_LIFE;
         // chassis.power_limit = 0;
         int i;
@@ -256,8 +256,7 @@ static THD_FUNCTION(chassis_control, p) {
         }
         power_limit_controller.error_int = 0;
       }
-    } else {
-      chassis.power_limit = 80;
+      chassis.power_limit = 7;
     }
 
     if (keyboard_enable(pRC)) {

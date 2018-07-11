@@ -91,4 +91,5 @@ extern kb_ctrl_t km;
 void keyboard_chassis_process(chassisStruct*,Gimbal_Send_Dbus_canStruct* );
 void keyboard_reset();
 bool keyboard_enable(Gimbal_Send_Dbus_canStruct* );
+int* Bitmap_get();
 #endif
