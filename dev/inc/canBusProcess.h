@@ -96,8 +96,8 @@ typedef struct{
 } BarrelStatus_canStruct;
 
 typedef struct{
-  float _speed;
-  float speed_curve;
+  int16_t _speed;
+  int16_t speed_curve;
 } MotorDebug_canStruct;
 
 volatile GimbalEncoder_canStruct* can_getGimbalMotor(void);
