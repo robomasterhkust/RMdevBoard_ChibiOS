@@ -15,6 +15,9 @@
 #define CHASSIS_UPDATE_FREQ 500
 #define CHASSIS_UPDATE_PERIOD_US 1000000/CHASSIS_UPDATE_FREQ
 
+#define CHASSIS_CAN_UPDATE_FREQ 50
+#define CHASSIS_CAN_UPDATE_PERIOD US2ST(1000000/CHASSIS_CAN_UPDATE_FREQ)
+
 #define VAL_LIMIT(val, min, max) \
 do {\
 if((val) <= (min))\
@@ -138,6 +141,7 @@ typedef struct {
   float strafe_sp;
   float strafe_curve;
   float drive_curve;
+  int16_t         power_limit;
   int16_t         rotate_x_offset;
   int16_t         rotate_y_offset;
   int16_t         current[4];
@@ -182,6 +186,6 @@ void power_limit_handle(void);
 void speed_limit_handle(void);
 void save_life(void);
 
-
+#define MOTOR_DEBUG_CAN   &CAND2
 
 #endif /* INC_CHASSIS_H_ */

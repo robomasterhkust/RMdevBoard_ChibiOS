@@ -149,9 +149,6 @@ static void can_processEncoderMessage(CANDriver* const canp, const CANRxFrame* c
             chassis_encoder[BACK_RIGHT].msg_count++;
             chassis_encoder[BACK_RIGHT].msg_count <= 50 ? can_getMotorOffset(&chassis_encoder[BACK_RIGHT],rxmsg) : can_processChassisEncoder(&chassis_encoder[BACK_RIGHT],rxmsg);
           break;
-        case CAN_GIMBAL_SEND_DBUS_ID:
-            can_processSendDbusEncoder(&gimbal_send_dbus,rxmsg);
-            break;
         case CAN_CHASSIS_SEND_BARREL_ID:
             can_processSendBarrelStatus(&chassis_send_barrel, rxmsg);
             break;
@@ -161,6 +158,9 @@ static void can_processEncoderMessage(CANDriver* const canp, const CANRxFrame* c
   {
     switch(rxmsg->SID)
     {
+        case CAN_GIMBAL_SEND_DBUS_ID:
+            can_processSendDbusEncoder(&gimbal_send_dbus,rxmsg);
+            break;
         case CAN_GIMBAL_YAW_FEEDBACK_MSG_ID:
             can_processGimbalEncoder(&gimbal_encoder[GIMBAL_YAW] ,rxmsg);
             break;
