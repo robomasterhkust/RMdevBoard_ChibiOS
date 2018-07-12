@@ -3,6 +3,7 @@
 #include "canBusProcess.h"
 #include "dbus.h"
 #include "keyboard.h"
+// #include <stdbool.h>
 static PWMConfig pwm8cfg = {
         1000000,   /* 1MHz PWM clock frequency.   */
         20000,      /* Initial PWM period 20ms.       */
@@ -20,12 +21,14 @@ Gimbal_Send_Dbus_canStruct* PRC;
 // const int LEFTCOVER = 0; // D
 // const int RIGHTCOVER = 1; // C
 
-static bool internalState = false; // True = open; False = close;
-static int* bitmap_for_magCover;
-static bool Q_press = false;
+static magCoverStruct_t magCover;
+static bool inited = false;
 const int LEFTCOVER = 1; // D
 const int RIGHTCOVER = 2; // C
 
+magCoverStruct_t* getMagCover(void){
+  return &magCover;
+}
 
 
 // void magCoverClose(void){
@@ -43,12 +46,12 @@ const int RIGHTCOVER = 2; // C
 // }
 
 void magCoverToggle(void){
-  if(!internalState){
+  if(!magCover.internalState){
     magCoverOpen();
-    internalState = true;
+    magCover.internalState = true;
   }else{
     magCoverClose();
-    internalState = false;
+    magCover.internalState = false;
 
   }
 }
@@ -74,7 +77,6 @@ void magCoverOpen(void){
 
 }
 
-
 static THD_WORKING_AREA(magazine_cover_wa, 2048);
 static THD_FUNCTION(magazine_cover, p)
 {
@@ -92,15 +94,15 @@ static THD_FUNCTION(magazine_cover, p)
     {
       tick = chVTGetSystemTimeX();
     }
-    if(bitmap_for_magCover[KEY_Q]){
-      if(!Q_press){
+    if(magCover.bitmap_for_magCover[KEY_Q]){
+      if(!magCover.Q_press){
         magCoverToggle();
       }
-      Q_press = true;
+      magCover.Q_press = true;
 
     }
     else{
-      Q_press = false;
+      magCover.Q_press = false;
     }
 
     // if(PRC->s1 == MI){
@@ -112,6 +114,9 @@ static THD_FUNCTION(magazine_cover, p)
 
 
   }
+}
+bool getMagCoverInitStatus(void){
+  return inited;
 }
 
 
@@ -126,8 +131,10 @@ void pwm_magazine_cover_init(void)
         pwmEnableChannel(pwmp, 3, PWM_PERCENTAGE_TO_WIDTH(pwmp, p));
     }
     pwmStart(&PWMD8,&pwm8cfg);
-
-    bitmap_for_magCover = Bitmap_get();
+    magCover.internalState = false;
+    magCover.bitmap_for_magCover = Bitmap_get();
+    inited = true;
+    magCover.Q_press = false;
 
     magCoverClose();
     chThdCreateStatic(magazine_cover_wa, sizeof(magazine_cover_wa),

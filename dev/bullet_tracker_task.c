@@ -11,6 +11,7 @@
 static Bullet_Tracker_t bulletTracker;
 // static uint32_t stats;
 static int stats;
+// static int count;
 
 /**
  * Getter function for the weight

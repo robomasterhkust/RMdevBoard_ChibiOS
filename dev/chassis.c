@@ -156,13 +156,13 @@ static inline void motor_debug_can(CANDriver *const CANx) {
   MotorDebug_canStruct motor_debug[CHASSIS_MOTOR_NUM];
   uint8_t i;
   for (i = 0; i < CHASSIS_MOTOR_NUM; i++) {
-    motor_debug[i]._speed = chassis._motors[i]._speed;
-    motor_debug[i].speed_curve = chassis._motors[i].speed_curve;
+    motor_debug[i]._speed = (int16_t)(chassis._motors[i]._speed * 60.0f);
+    motor_debug[i].speed_curve = (int16_t)(chassis._motors[i].speed_curve * 60.0f);
   }
   txmsg.IDE = CAN_IDE_STD;
   txmsg.SID = CAN_CHASSIS_DEBUG_FR;
   txmsg.RTR = CAN_RTR_DATA;
-  txmsg.DLC = 0x08;
+  txmsg.DLC = 0x04;
 
   chSysLock();
   memcpy(&(txmsg.data8), &motor_debug[0], 8);
@@ -244,7 +244,8 @@ static THD_FUNCTION(chassis_control, p) {
     }
 */
 
-    if(JudgeP->powerInfo.powerBuffer<=60 && JudgeP->powerInfo.powerBuffer >=5){
+
+    if(JudgeP->powerInfo.powerBuffer<=30 && JudgeP->powerInfo.powerBuffer >=5){
       chassis.power_limit = 1.3*JudgeP->powerInfo.powerBuffer;
     }else {
       if(JudgeP->powerInfo.power > 80 && !chassis_absolute_speed(1)){

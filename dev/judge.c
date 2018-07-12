@@ -34,6 +34,7 @@
 #include "hal.h"
 #include "judge.h"
 #include <string.h>
+#include <stdbool.h>
 
 
 /***********************************  CRC  ***********************************/
@@ -251,7 +252,13 @@ static volatile uint8_t lastpacketID = 0;
 #ifdef JUDGE_USE_2018
 static judge_fb_t judgeInData;
 static void* datagroups[JUDGE_DATA_TYPES + 1];
+static bool inited = false;
 #endif
+
+
+bool getJudgeInitStatus(void){
+  return inited;
+}
 
 /*
  * returns all judgment system sata
@@ -273,15 +280,15 @@ size_t judgeDataWrite(float a, float b, float c, uint8_t mask) {
   memset((void*)sdtxbuf, 0, sizeof(sdtxbuf));
 
   sdtxbuf[0] = JUDGE_FRAMEHEAD;                             //Append frame head
-  sdtxbuf[1] = 0;                                           //Append frame length : 1
-  sdtxbuf[2] = 13;   //17                                       //Append frame length : 0
+  sdtxbuf[1] = 13;                                           //Append frame length : 1
+  sdtxbuf[2] = 0;   //17                                       //Append frame length : 0
   sdtxbuf[3] = outcount;                                    //Append frame count
   // sdtxbuf[3] = lastpacketID++;
   outcount++;
   Append_CRC8_Check_Sum(sdtxbuf, 5);    //Append frame CRC8
 
-  sdtxbuf[5] = 1; // 6                                           //Append frame type : 1
-  sdtxbuf[6] = 0; // 7                                          //Append frame type : 0
+  sdtxbuf[5] = 0; // 6                                           //Append frame type : 1
+  sdtxbuf[6] = 1; // 7                                          //Append frame type : 0
 
   memcpy(sdtxbuf + 7, &a, sizeof(float));                         //Append frame data
   memcpy(sdtxbuf + 11, &b, sizeof(float));                        //Append frame data
@@ -465,6 +472,7 @@ void judgedatainit(void) {
   datagroups[ENDGAMEINFO] = &judgeInData.gameOverInfo;
   datagroups[BUFFERINFO] = &judgeInData.bufferInfo;
   datagroups[POSITIONINFO] = &judgeInData.locationInfo;
+  inited = true;
 
 #endif
 
