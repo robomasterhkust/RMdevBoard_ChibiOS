@@ -6,11 +6,19 @@
 #include "chsystypes.h"
 #include "hal.h"
 
-/* ----------------------- WEIGHT Channel Definition---------------------------- */
+/*-------------------------- WEIGHT Channel Definition ------------------------*/
+
+#define SERIAL_WEIGHT                &SD3
+
+// #define WEIGHT_BUFFER_SIZE           SERIAL_BUFFERS_SIZE
+
+#define WEIGHT_BUFFER_SIZE           4
+
+/* ----------------------- BULLET TRACKER Channel Definition---------------------------- */
 
 #define BULLET_TRACKER_BUFFER_SIZE             ((uint8_t)1)
 
-#define UART_BULLET_TRACKER                    &UARTD3
+// #define UART_BULLET_TRACKER                    &UARTD3
 
 typedef struct
 {
@@ -20,6 +28,8 @@ typedef struct
 	thread_reference_t thread_handler;
 	struct{
 		uint8_t bulletCount;
+		float weight;
+		float weightOffset;
 	}bullet_tracker;
 	bool inited;
 }Bullet_Tracker_t;
@@ -30,8 +40,16 @@ extern "C" {
 #endif
 
 Bullet_Tracker_t* bulletTracker_get(void);
-void bulletTracker_init(void);
-int* getBulletTrackerError(void);
+void weightdecode(void);
+
+void weightinit(void);
+
+// bool getWeightInitStatus(void);
+
+
+
+// void bulletTracker_init(void);
+// int* getBulletTrackerError(void);
 
 #ifdef __cplusplus
 }

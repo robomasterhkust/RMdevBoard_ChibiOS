@@ -94,7 +94,8 @@ int main(void) {
   //***
   can_processInit(); 
   pwm_magazine_cover_init();
-  magazineTracker_init(); 
+  // magazineTracker_init(); 
+  weightinit();
   RC_init(); 
   // pwm_shooter_init();
   judgeinit(); 
