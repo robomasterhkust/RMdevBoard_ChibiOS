@@ -3,9 +3,10 @@
 
 #define MPU6500_UPDATE_FREQ                    1000U  //Read MPU @ 1000Hz
 #define IMU_USE_EULER_ANGLE
+//#define IMU_ACCL_USE_LPF
 
 #include "params.h"
-/* TODO something wrong*/
+
 typedef enum {
   X = 0U,
   Y = 1U,
@@ -47,27 +48,28 @@ typedef enum {
 typedef enum {
   IMU_OK = 0,
   IMU_CORRUPTED_Q_DATA = 1<<1,
+  IMU_TEMP_ERROR = 1<<2,
+  IMU_TEMP_WARNING = 1<<30,
   IMU_LOSE_FRAME = 1<<31
 } imu_att_error_t;
 
-typedef enum
-{
-    MPU6500_I2CMST_CLK_348K = 0,
-    MPU6500_I2CMST_CLK_333K = 1,
-    MPU6500_I2CMST_CLK_320K = 2,
-    MPU6500_I2CMST_CLK_308K = 3,
-    MPU6500_I2CMST_CLK_296K = 4,
-    MPU6500_I2CMST_CLK_286K = 5,
-    MPU6500_I2CMST_CLK_276K = 6,
-    MPU6500_I2CMST_CLK_267K = 7,
-    MPU6500_I2CMST_CLK_258K = 8,
-    MPU6500_I2CMST_CLK_500K = 9,
-    MPU6500_I2CMST_CLK_471K = 10,
-    MPU6500_I2CMST_CLK_444K = 11,
-    MPU6500_I2CMST_CLK_421K = 12,
-    MPU6500_I2CMST_CLK_400K = 13,
-    MPU6500_I2CMST_CLK_381K = 14,
-    MPU6500_I2CMST_CLK_364K = 15
+typedef enum {
+  MPU6500_I2CMST_CLK_348K = 0,
+  MPU6500_I2CMST_CLK_333K = 1,
+  MPU6500_I2CMST_CLK_320K = 2,
+  MPU6500_I2CMST_CLK_308K = 3,
+  MPU6500_I2CMST_CLK_296K = 4,
+  MPU6500_I2CMST_CLK_286K = 5,
+  MPU6500_I2CMST_CLK_276K = 6,
+  MPU6500_I2CMST_CLK_267K = 7,
+  MPU6500_I2CMST_CLK_258K = 8,
+  MPU6500_I2CMST_CLK_500K = 9,
+  MPU6500_I2CMST_CLK_471K = 10,
+  MPU6500_I2CMST_CLK_444K = 11,
+  MPU6500_I2CMST_CLK_421K = 12,
+  MPU6500_I2CMST_CLK_400K = 13,
+  MPU6500_I2CMST_CLK_381K = 14,
+  MPU6500_I2CMST_CLK_364K = 15
 } mpu_i2cmst_clk_t;
 
 #define MPU6500_I2C_MSTR_EN          0x80
@@ -102,15 +104,22 @@ typedef enum
 
 #define IMU_ERROR_COUNT    1U
 #define IMU_WARNING_COUNT  1U
-static const char imu_error_messages[IMU_ERROR_COUNT][50] =
+static const char imu_error_messages[][IMU_ERROR_COUNT] =
 {
   "E:Corrupted IMU Q data",
 };
 
-static const char imu_warning_messages[IMU_WARNING_COUNT][50] =
+static const char imu_warning_messages[][IMU_WARNING_COUNT] =
 {
   "W:IMU Reading lose frame"
 };
+
+typedef enum{
+  IMU_STATE_UNINIT = 0,
+  IMU_STATE_HEATING,
+  IMU_STATE_CALIBRATING,
+  IMU_STATE_READY
+} imu_state_t;
 
 #define MPU6500_UPDATE_PERIOD     1000000U/MPU6500_UPDATE_FREQ
 
@@ -127,6 +136,9 @@ typedef struct tagIMUStruct {
   #ifdef  IMU_USE_EULER_ANGLE
     float euler_angle[3];      /* Euler angle of the IMU. */
     float d_euler_angle[3];    /* Euler angle changing rate of the IMU. */
+
+    int rev;
+    float prev_yaw;         /* used to detect zero-crossing */
   #else
     float dqIMU[4];         /* Attitude quaternion changing rate of the IMU. */
   #endif
@@ -135,12 +147,12 @@ typedef struct tagIMUStruct {
   param_t _accelT[3][3];    /* Accelerometer rotational bias matrix       */
   param_t _gyroBias[3];     /* Gyroscope bias.                 */
 
-    bool _axis_rev[3];
+  bool  _axis_rev[3];
   float _accel_psc;
   float _gyro_psc;
 
   SPIDriver* _imu_spi;
-  uint8_t inited;
+  imu_state_t state;
   uint32_t errorCode;
   uint32_t _tprev;
   float dt;

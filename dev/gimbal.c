@@ -393,28 +393,6 @@ static THD_FUNCTION(gimbal_init_thread, p)
       else
         _init_score[i] = 0;
     }
-    if(_init_score[0] > GIMBAL_INIT_SCORE_FULL && _init_score[1] > GIMBAL_INIT_SCORE_FULL)
-    {
-      if(gimbal._pIMU->inited == 1)
-      {
-        attitude_imu_init(gimbal._pIMU);
-        gimbal._pIMU->inited = 2;
-      }
-      _wait_time++;
-      if(_wait_time>200)
-      {
-        /*exit this thread and start attitude control*/
-        chSysLock();
-        chThdResumeS(&gimbal_thread_handler, MSG_OK);
-        chThdExitS(MSG_OK);
-      }
-    }
-    else if(_init_time++ > GIMBAL_INIT_TIMEOUT)
-    {
-      gimbal.errorFlag |= GIMBAL_INITALIZATION_TIMEOUT;
-      gimbal_kill();
-      chThdExit(MSG_OK);
-    }
 
     chThdSleepMilliseconds(1);
   }
