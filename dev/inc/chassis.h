@@ -141,7 +141,7 @@ typedef struct {
   float strafe_sp;
   float strafe_curve;
   float drive_curve;
-  int16_t         power_limit;
+  float power_limit;
   int16_t         rotate_x_offset;
   int16_t         rotate_y_offset;
   int16_t         current[4];

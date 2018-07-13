@@ -155,7 +155,9 @@ static inline void motor_debug_can(CANDriver *const CANx) {
   CANTxFrame txmsg;
   MotorDebug_canStruct motor_debug[CHASSIS_MOTOR_NUM];
   uint8_t i;
-  for (i = 0; i < CHASSIS_MOTOR_NUM; i++) {
+  motor_debug[0]._speed = (int16_t)(chassis.drive_curve * 60.0f);
+  motor_debug[0].speed_curve = (int16_t)(chassis.drive_sp * 60.0f);
+  for (i = 1; i < CHASSIS_MOTOR_NUM; i++) {
     motor_debug[i]._speed = (int16_t)(chassis._motors[i]._speed * 60.0f);
     motor_debug[i].speed_curve = (int16_t)(chassis._motors[i].speed_curve * 60.0f);
   }
@@ -243,10 +245,13 @@ static THD_FUNCTION(chassis_control, p) {
       chassis.ctrl_mode = SAVE_LIFE;
     }
 */
-
-
-    if(JudgeP->powerInfo.powerBuffer<=30 && JudgeP->powerInfo.powerBuffer >=5){
-      chassis.power_limit = 1.3*JudgeP->powerInfo.powerBuffer;
+/*
+    if(JudgeP->powerInfo.powerBuffer > 30){
+      chassis.power_limit = 80;
+    }
+    else*/
+    if(JudgeP->powerInfo.powerBuffer<=60 && JudgeP->powerInfo.powerBuffer >=5){
+      chassis.power_limit = JudgeP->powerInfo.powerBuffer+20;
     }else {
       if(JudgeP->powerInfo.power > 80 && !chassis_absolute_speed(1)){
         chassis.ctrl_mode = SAVE_LIFE;
@@ -257,14 +262,17 @@ static THD_FUNCTION(chassis_control, p) {
         }
         power_limit_controller.error_int = 0;
       }
-      chassis.power_limit = 7;
+      chassis.power_limit = 20;
     }
-
+    /*
+    rm_chassis_process();
+    keyboard_chassis_process(&chassis, pRC);
+    */
     if (keyboard_enable(pRC)) {
       keyboard_chassis_process(&chassis, pRC);
       rm.vx = 0;
       rm.vy = 0;
-    } else {
+    }else {
       rm_chassis_process();
       keyboard_reset();
     }
@@ -431,7 +439,7 @@ void mecanum_cal(){
   //    power_limit_handle();
   //  }
   //  else{
-  if (fabs(chassis.strafe_curve) < fabs(chassis.strafe_sp)) {
+  if (fabs(chassis.strafe_curve) <= fabs(chassis.strafe_sp)) {
     if (chassis.strafe_sp >= 0) {
       chassis.strafe_curve += acceleration_limit_control(
           &acceleration_limit_controller, JudgeP->powerInfo.power,
@@ -439,7 +447,7 @@ void mecanum_cal(){
       if (chassis.strafe_curve <= 0) {
         chassis.strafe_curve = 0;
       }
-    } else {
+    }else {
       chassis.strafe_curve -= acceleration_limit_control(
           &acceleration_limit_controller, JudgeP->powerInfo.power,
           chassis.power_limit);
@@ -452,7 +460,7 @@ void mecanum_cal(){
       chassis.strafe_curve = chassis.strafe_sp;
     }
 
-  } else if (fabs(chassis.strafe_curve) > fabs(chassis.strafe_sp)) {
+  } else if (fabs(chassis.strafe_curve) > fabs(chassis.strafe_sp)){
     // if(fabs(chassis.strafe_sp) < 0.003){ // check whether the user intended
     // to stop
     float previous_strafe_curve = chassis.strafe_curve;
@@ -476,7 +484,7 @@ void mecanum_cal(){
     chassis.strafe_curve = chassis.strafe_sp;
   }
 
-  if (fabs(chassis.drive_curve) < fabs(chassis.drive_sp)) {
+  if (fabs(chassis.drive_curve) <= fabs(chassis.drive_sp)) {
     if (chassis.drive_sp >= 0) {
       chassis.drive_curve += acceleration_limit_control(
           &acceleration_limit_controller, JudgeP->powerInfo.power, chassis.power_limit);
