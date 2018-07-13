@@ -43,7 +43,7 @@ bool checkInit(void){
 	    	d->data1 = (float)(pBT->bullet_tracker.bulletCount);
 	    	d->data2 = (float)(pJudge->projectileInfo.bulletSpeed); // edit
 	    	d->data3 = (float)(-1.0); // edit
-	    	d->lights8 = 0b00000000 | (uint8_t)(pMC->internalState);  // edit
+	    	d->lights8 = 0b00111111 ^ (uint8_t)(pMC->internalState);  // edit
     	}else{
     		checkInit();
     		d->data1 = -1.0f;

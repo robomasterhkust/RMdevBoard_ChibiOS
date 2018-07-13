@@ -10,7 +10,7 @@ int bitmap[15] = {};
 #define LONG_PRESS_TIME  1000  //ms
 /* key acceleration time */
 #define slide_ratio 1
-#define Up_ratio 0.8
+#define Up_ratio 1.0
 #define Normal_ratio 0.6
 #define Down_ratio 0.2
 
@@ -128,7 +128,7 @@ void keyboard_chassis_process(chassisStruct* chassisP,Gimbal_Send_Dbus_canStruct
     if(chassisP->ctrl_mode == SAVE_LIFE ||chassisP->ctrl_mode ==CHASSIS_STOP ){
       // Do nothing. No input
     }
-    else if(bitmap[KEY_R]){
+    else if(bitmap[KEY_E] || bitmap[KEY_Q]){
       if(bitmap[KEY_W] || bitmap[KEY_S] || bitmap[KEY_A] || bitmap[KEY_D]){
         chassisP->ctrl_mode = DODGE_MOVE_MODE;
         move_direction_ctrl(bitmap[KEY_W], bitmap[KEY_S], bitmap[KEY_A], bitmap[KEY_D]);

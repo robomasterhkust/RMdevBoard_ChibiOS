@@ -11,7 +11,7 @@ void magCoverToggle(void);
 typedef struct {
 	bool internalState;
 	int* bitmap_for_magCover;
-	bool Q_press;
+	bool R_press;
 } magCoverStruct_t;
 
 magCoverStruct_t* getMagCover(void);

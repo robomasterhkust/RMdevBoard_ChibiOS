@@ -94,15 +94,15 @@ static THD_FUNCTION(magazine_cover, p)
     {
       tick = chVTGetSystemTimeX();
     }
-    if(magCover.bitmap_for_magCover[KEY_Q]){
-      if(!magCover.Q_press){
+    if(magCover.bitmap_for_magCover[KEY_R]){
+      if(!magCover.R_press){
         magCoverToggle();
       }
-      magCover.Q_press = true;
+      magCover.R_press = true;
 
     }
     else{
-      magCover.Q_press = false;
+      magCover.R_press = false;
     }
 
     // if(PRC->s1 == MI){
@@ -134,7 +134,7 @@ void pwm_magazine_cover_init(void)
     magCover.internalState = false;
     magCover.bitmap_for_magCover = Bitmap_get();
     inited = true;
-    magCover.Q_press = false;
+    magCover.R_press = false;
 
     magCoverClose();
     chThdCreateStatic(magazine_cover_wa, sizeof(magazine_cover_wa),
