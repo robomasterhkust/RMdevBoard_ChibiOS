@@ -17,8 +17,8 @@
 
 /* Mechanical mounting orientation parameters*/
 typedef enum {
-  IMU_X = 1U,
-  IMU_Y = 0U,
+  IMU_X = 0U,
+  IMU_Y = 1U,
   IMU_Z = 2U
 } mpu_axis_mask_t;
 

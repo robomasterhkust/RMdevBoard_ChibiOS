@@ -29,7 +29,7 @@ static THD_FUNCTION(Attitude_thread, p)
   PIMUStruct pIMU = imu_get();
 
   static const IMUConfigStruct imu1_conf =
-    {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_2000, MPU6500_AXIS_REV_X};
+    {&SPID5, MPU6500_ACCEL_SCALE_8G, MPU6500_GYRO_SCALE_2000, MPU6500_AXIS_REV_NO};
   imuInit(pIMU, &imu1_conf);
 
   imuGetData(pIMU);

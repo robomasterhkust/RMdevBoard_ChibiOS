@@ -7,7 +7,6 @@
 #include "ch.h"
 #include "hal.h"
 #include <canBusProcess.h>
-
 #include "adis16265.h"
 #include "canBusProcess.h"
 #include "chassis.h"
@@ -15,6 +14,7 @@
 #include "gimbal.h"
 #include "judge.h"
 #include "keyboard.h"
+#include "mpu6500.h"
 #include "magazine_cover_task.h"
 #include "math.h"
 #include "math_misc.h"
@@ -23,6 +23,7 @@ static volatile chassisStruct chassis;
 GimbalEncoder_canStruct *gimbal_p;
 RC_Ctl_t *Rc;
 judge_fb_t *JudgeP;
+PIMUStruct IMU_Data;
 pi_controller_t motor_vel_controllers[CHASSIS_MOTOR_NUM];
 pid_controller_t chassis_heading_controller;
 pid_controller_t dancing_controller;
@@ -115,6 +116,28 @@ bool chassis_absolute_speed(float i){
   }
   return false;
 }
+
+void Collision_detection(){
+  float Collision_extent = (IMU_Data->accelData[0]*IMU_Data->accelData[0] + IMU_Data->accelData[1]*IMU_Data->accelData[1])/sqrt(IMU_Data->accelData[0]*IMU_Data->accelData[0] + IMU_Data->accelData[1]*IMU_Data->accelData[1]);
+  if(Collision_extent > 10){
+    int i;
+    for(i =0; i<4;i++){
+      motor_vel_controllers[i].error_int = 0;
+    }
+    chassis.ctrl_mode = SAVE_LIFE;
+  }
+
+  if(JudgeP->powerInfo.power > 80 && !chassis_absolute_speed(1.2) && JudgeP->powerInfo.powerBuffer < 10){
+    chassis.ctrl_mode = SAVE_LIFE;
+          // chassis.power_limit = 0;
+    int i;
+    for (i = 0; i < 4; i++) {
+      motor_vel_controllers[i].error_int = 0;
+    }
+      power_limit_controller.error_int = 0;
+    }
+}
+
 
 /*
 #define H_MAX  200  // Heading PID_outputx
@@ -214,10 +237,11 @@ static THD_FUNCTION(chassis_control, p) {
   chassis.ctrl_mode = CHASSIS_STOP;
   while (!chThdShouldTerminateX()) {
 
-    if (pRC->channel0 > 1684 || pRC->channel0 < 0) {
+ // Handle reboot
+    if(pRC->channel0 > 1684 || pRC->channel0 < 0){
       chassis.ctrl_mode = CHASSIS_STOP;
       reboot = false;
-    } else {
+    }else{
       chassis.ctrl_mode = MANUAL_FOLLOW_GIMBAL;
       if (!reboot) {
         reboot = true;
@@ -269,13 +293,13 @@ static THD_FUNCTION(chassis_control, p) {
 //      chassis.power_limit = 40;
 //    }
 
+    Collision_detection();
 
-
-    if (keyboard_enable(pRC)) {
+    if (keyboard_enable(pRC)){
       keyboard_chassis_process(&chassis, pRC);
       rm.vx = 0;
       rm.vy = 0;
-    }else {
+    }else{
       rm_chassis_process();
       keyboard_reset();
     }
@@ -333,6 +357,7 @@ void chassis_init(void) {
   chassis.rotate_x_offset = GIMBAL_X_OFFSET;
   chassis.rotate_y_offset = GIMBAL_Y_OFFSET;
   bitmap_for_chassis = Bitmap_get();
+  IMU_Data = imu_get();
   uint8_t i;
   // *********************temporary section*********************
   {
