@@ -82,7 +82,7 @@ static void chassis_encoderUpdate(void) {
 }
 #define OUTPUT_MAX 16384
 static int16_t chassis_controlSpeed(motorStruct *motor,
-                                    pi_controller_t *controller) {
+                                    pi_controller_t *controller){
   //  float wheel_rpm_ratio = 60.0f/(PERIMETER*CHASSIS_SPEED_PSC);
 
   float error = motor->speed_curve - motor->_speed; //*wheel_rpm_ratio;
@@ -119,7 +119,7 @@ bool chassis_absolute_speed(float i){
 
 void Collision_detection(){
   float Collision_extent = (IMU_Data->accelData[0]*IMU_Data->accelData[0] + IMU_Data->accelData[1]*IMU_Data->accelData[1])/sqrt(IMU_Data->accelData[0]*IMU_Data->accelData[0] + IMU_Data->accelData[1]*IMU_Data->accelData[1]);
-  if(Collision_extent > 10){
+  if(Collision_extent > 15 && JudgeP->powerInfo.powerBuffer < 20){
     int i;
     for(i =0; i<4;i++){
       motor_vel_controllers[i].error_int = 0;
@@ -166,13 +166,14 @@ static void rm_chassis_process(void) {
   rm.vx = (pRC->channel0 - 1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
   rm.vy = (pRC->channel1 - 1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
 
+
   /*
        rm.vx =  (Rc->rc.channel0 - 1024) / RC_RESOLUTION *
      CHASSIS_RC_MAX_SPEED_X;
        rm.vy =   (Rc->rc.channel1 - 1024) / RC_RESOLUTION *
      CHASSIS_RC_MAX_SPEED_Y;
        rm.vw = (Rc->rc.channel2 - 1024) / RC_RESOLUTION * MAX_CHASSIS_VR_SPEED;
-  */
+*/
 }
 
 static inline void motor_debug_can(CANDriver *const CANx) {
@@ -236,8 +237,9 @@ static THD_FUNCTION(chassis_control, p) {
   //  uint32_t tick_magazine = ST2MS(chVTGetSystemTimeX());
   chassis.ctrl_mode = CHASSIS_STOP;
   while (!chThdShouldTerminateX()) {
-
+ //   chassis.ctrl_mode = MANUAL_SEPARATE_GIMBAL;
  // Handle reboot
+
     if(pRC->channel0 > 1684 || pRC->channel0 < 0){
       chassis.ctrl_mode = CHASSIS_STOP;
       reboot = false;
@@ -261,20 +263,8 @@ static THD_FUNCTION(chassis_control, p) {
       chassis.over_time = true;
     }
     chassis_encoderUpdate();
-/*
-    if(JudgeP->powerInfo.powerBuffer<=5){
-      int i;
-      for(i =0; i<4;i++){
-        motor_vel_controllers[i].error_int = 0;
-      }
-      chassis.ctrl_mode = SAVE_LIFE;
-    }
-*/
-/*
-    if(JudgeP->powerInfo.powerBuffer > 30){
-      chassis.power_limit = 80;
-    }
-    else*/
+
+
 
     chassis.power_limit = 75;
 
@@ -303,6 +293,7 @@ static THD_FUNCTION(chassis_control, p) {
       rm_chassis_process();
       keyboard_reset();
     }
+
     switch (chassis.ctrl_mode) {
     case DODGE_MODE: {
       chassis.strafe_sp = 0;
@@ -590,8 +581,10 @@ void mecanum_cal(){
   }
 
   // speed_limit_handle();
-  // Need more consideration!!!s
+  // Need more consideration!!!
 
+
+/*
   for (i = 0; i < 4; i++) {
     if (fabs(chassis._motors[i].speed_curve) <
             fabs(chassis._motors[i].speed_sp) &&
@@ -610,9 +603,11 @@ void mecanum_cal(){
     } else {
       chassis._motors[i].speed_curve = chassis._motors[i].speed_sp;
     }
+  }*/
+  for (i = 0; i < 4; i++) {
+    chassis._motors[i].speed_curve = chassis._motors[i].speed_sp;
   }
-
-  for (i = 0; i < CHASSIS_MOTOR_NUM; i++) {
+    for (i = 0; i < CHASSIS_MOTOR_NUM; i++) {
     chassis.current[i] =
         chassis_controlSpeed(&chassis._motors[i], &motor_vel_controllers[i]);
     VAL_LIMIT(chassis.current[i], -16384, 16384);
@@ -682,6 +677,8 @@ void follow_gimbal_handle() {
   }
   chassis.rotate_sp = boundOutput(chassis_heading_control(
       &chassis_heading_controller, gimbal_p[0].radian_angle, gimbal_initP),120);
+
+
 }
 
 void chassis_stop_handle() {

@@ -39,18 +39,42 @@ bool checkInit(void){
      // msg_t rxmsg;
      // systime_t timeout = MS2ST(CUSTOM_DATA_UPDATE_PERIOD);
     while (!chThdShouldTerminateX()) {
-    	if(allInited){
-	    	d->data1 = (float)(pBT->bullet_tracker.bulletCount);
-	    	d->data2 = (float)(pJudge->projectileInfo.bulletSpeed); // edit
-	    	d->data3 = (float)(-1.0); // edit
-	    	d->lights8 = 0b00111111 ^ (uint8_t)(pMC->internalState);  // edit
-    	}else{
-    		checkInit();
-    		d->data1 = -1.0f;
-    		d->data2 = -1.0f;
-    		d->data3 = -1.0f;
-    		d->lights8 = 0b00000000;
-    	}
+        bool bulletCountInit = pBT->inited;
+        bool judgeDataInit = getJudgeInitStatus();
+        bool magCoverInit = getMagCoverInitStatus();
+        if(bulletCountInit){
+          d->data1 = (float)(pBT->bullet_tracker.bulletCount);
+        }else{
+          d->data1 = -1.0f;
+        }
+
+        if(judgeDataInit){
+          d->data2 = (float)(pJudge->powerInfo.volt);
+        }else{
+          d->data2 = -1.0f;
+        }
+
+        d->data3 = -1.0f;
+
+        if(magCoverInit){
+          d->lights8 = 0b00111111 ^ (uint8_t)(pMC->internalState);
+        }else{
+          d->lights8 = 0b00000000;
+        }
+//***************************************************
+//    	if(allInited){
+//	    	d->data1 = (float)(pBT->bullet_tracker.bulletCount);
+//	    	d->data2 = (float)(pJudge->projectileInfo.bulletSpeed); // edit
+//	    	d->data3 = (float)(-1.0); // edit
+//	    	d->lights8 = 0b00111111 ^ (uint8_t)(pMC->internalState);  // edit
+//    	}else{
+//    		checkInit();
+//    		d->data1 = -1.0f;
+//    		d->data2 = -1.0f;
+//    		d->data3 = -1.0f;
+//    		d->lights8 = 0b00000000;
+//    	}
+        //*******************************************
     	sizeout = judgeDataWrite(d->data1, d->data2, d->data3, d->lights8); 
     	chThdSleepMilliseconds(CUSTOM_DATA_UPDATE_PERIOD);
     }
