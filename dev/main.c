@@ -101,6 +101,7 @@ int main(void) {
   chassis_init();
 
   customData_init();
+  power_module_init();
 
   while (true)
   {

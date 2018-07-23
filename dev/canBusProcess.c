@@ -15,6 +15,7 @@ static volatile ChassisEncoder_canStruct chassis_encoder[CHASSIS_MOTOR_NUM];
 static volatile ChassisEncoder_canStruct extra_encoder[EXTRA_MOTOR_NUM];
 static volatile Gimbal_Send_Dbus_canStruct gimbal_send_dbus;
 static volatile BarrelStatus_canStruct chassis_send_barrel;
+static volatile PowerModule_canStruct power_module_info;
 /*
  * 500KBaud, automatic wakeup, automatic recover
  * from abort mode.
@@ -52,6 +53,10 @@ volatile BarrelStatus_canStruct* can_get_sent_barrelStatus(void){
     return &chassis_send_barrel;
 }
 
+volatile PowerModule_canStruct* can_get_powerModuleInfo(void){
+  return &power_module_info;
+}
+
 
 static inline void  can_processSendDbusEncoder
         (volatile Gimbal_Send_Dbus_canStruct* db, const CANRxFrame* const rxmsg){
@@ -71,6 +76,19 @@ static inline void  can_processSendBarrelStatus
     chSysLock();
     db->heatLimit           = (uint16_t)rxmsg->data16[0];
     db->currentHeatValue    = (uint16_t)rxmsg->data16[1];
+    chSysUnlock();
+}
+
+static inline void  can_processPowerModuleInfo
+  (volatile PowerModule_canStruct* db, const CANRxFrame* const rxmsg)
+{
+    chSysLock();
+    // add struct details
+    db->Vin = (uint8_t)rxmsg->data8[0];
+    db->pathType = (uint8_t)rxmsg->data8[1];
+    db->capEnergy = (uint16_t)rxmsg->data16[1];
+    db->powerJudge = (uint16_t)rxmsg->data16[2];
+    db->powerChassis = (uint16_t)rxmsg->data16[3];
     chSysUnlock();
 }
 
@@ -179,6 +197,8 @@ static void can_processEncoderMessage(CANDriver* const canp, const CANRxFrame* c
         case CAN_CHASSIS_BR_FEEDBACK_MSG_ID:
           can_processChassisEncoder(&extra_encoder[BACK_RIGHT] ,rxmsg);
           break;
+        case CAN_POWER_MODULE_RECEIVER_ID:
+          can_processPowerModuleInfo(&power_module_info, rxmsg);
     }
   }
 }

@@ -25,6 +25,9 @@
 #define CAN_GIMBAL_SEND_DBUS_ID                     0x001
 #define CAN_CHASSIS_SEND_BARREL_ID                  0x002
 
+#define CAN_POWER_MODULE_RECEIVER_ID                0x050
+#define CAN_POWER_MODULE_SEND_MODE_ID               0x055      
+
 #define CAN_ENCODER_RANGE           8192            // 0x2000
 #define CAN_ENCODER_RADIAN_RATIO    7.669904e-4f    // 2*M_PI / 0x2000
 
@@ -99,6 +102,15 @@ typedef struct{
   int16_t _speed;
   int16_t speed_curve;
 } MotorDebug_canStruct;
+
+typedef struct 
+{
+  uint8_t Vin;
+  uint8_t pathType; // (1 = judge power, 2 = cap power)
+  uint16_t capEnergy;
+  uint16_t powerJudge;
+  uint16_t powerChassis;
+} PowerModule_canStruct;
 
 volatile GimbalEncoder_canStruct* can_getGimbalMotor(void);
 volatile ChassisEncoder_canStruct* can_getChassisMotor(void);

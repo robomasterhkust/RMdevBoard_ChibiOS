@@ -31,6 +31,7 @@
 #include "imu_temp.h"
 #include "sdlog.h"
 #include "barrelStatus.h"
+#include "power_module.h"
 
 void shellStart(void);
 
