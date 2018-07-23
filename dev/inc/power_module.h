@@ -4,7 +4,7 @@
 #include "stdbool.h"
 #include "hal.h"
 
-#define POWER_MODULE_CAN        &CAND1
+#define POWER_MODULE_CAN        &CAND2
 
 #define CAN_POWER_MODULE_RECEIVER_ID                0x050
 #define CAN_POWER_MODULE_SEND_MODE_ID               0x055   
