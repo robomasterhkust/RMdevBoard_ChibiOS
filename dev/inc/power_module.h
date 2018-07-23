@@ -26,6 +26,11 @@ typedef struct {
 	bool Shift_press;
 } powerModuleStruct_t;
 
+typedef struct{
+	uint8_t power_mode;
+	uint8_t robotType;
+} powerModule_canTransmitStruct;
+
 void power_module_init();
 
 #endif

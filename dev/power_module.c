@@ -7,25 +7,46 @@
 static powerModuleStruct_t powerModule;
 static Gimbal_Send_Dbus_canStruct* pRC;
 
-#define POWER_MODULE_UPDATE_PERIOD_US 100
+#define POWER_MODULE_UPDATE_PERIOD_US 1000000/1000
 
-void can_send_powerMode(CANDriver *const CANx,
-  const uint16_t EID, uint8_t powerMode, uint8_t robotType)
+static inline void powerMode_txCan(CANDriver *const CANx, const uint16_t SID)
 {
-    CANTxFrame txmsg;
+  CANTxFrame txmsg;
+  powerModule_canTransmitStruct txCan;
 
-    txmsg.IDE = CAN_IDE_STD;
-    txmsg.EID = EID;
-    txmsg.RTR = CAN_RTR_DATA;
-    txmsg.DLC = 0x08;
+  txmsg.IDE = CAN_IDE_STD;
+  txmsg.SID = SID;
+  txmsg.RTR = CAN_RTR_DATA;
+  txmsg.DLC = 0x08;
 
-    chSysLock();
-    txmsg.data8[0] = (uint8_t)powerMode;
-    txmsg.data8[1] = (uint8_t)robotType;
-    chSysUnlock();
+  chSysLock();
+  txCan.power_mode = powerModule.power_mode;
+  txCan.robotType = powerModule.robotType;
 
-    canTransmit(CANx, CAN_ANY_MAILBOX, &txmsg, MS2ST(100));
+  memcpy(&(txmsg.data8), &txCan ,sizeof(powerModule_canTransmitStruct));
+  chSysUnlock();
+
+  canTransmit(CANx, CAN_ANY_MAILBOX, &txmsg, MS2ST(100));
 }
+
+
+// void can_send_powerMode(CANDriver *const CANx,
+//   const uint16_t EID, uint8_t powerMode, uint8_t robotType)
+// {
+//     CANTxFrame txmsg;
+
+//     txmsg.IDE = CAN_IDE_STD;
+//     txmsg.EID = EID;
+//     txmsg.RTR = CAN_RTR_DATA;
+//     txmsg.DLC = 0x08;
+
+//     chSysLock();
+//     txmsg.data8[0] = (uint8_t)powerMode;
+//     txmsg.data8[1] = (uint8_t)robotType;
+//     chSysUnlock();
+
+//     canTransmit(CANx, CAN_ANY_MAILBOX, &txmsg, MS2ST(100));
+// }
 
 
 
@@ -68,7 +89,8 @@ static THD_FUNCTION(power_module, p)
 			powerModule.power_mode = PJUDGE;
 		}
 	}
-	can_send_powerMode(POWER_MODULE_CAN, CAN_POWER_MODULE_SEND_MODE_ID, powerModule.power_mode, powerModule.robotType);
+	powerMode_txCan(POWER_MODULE_CAN,CAN_POWER_MODULE_SEND_MODE_ID);
+	// can_send_powerMode(POWER_MODULE_CAN, CAN_POWER_MODULE_SEND_MODE_ID, powerModule.power_mode, powerModule.robotType);
   }
 }
 
