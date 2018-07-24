@@ -110,6 +110,7 @@ typedef struct
   int16_t capEnergy;
   uint16_t powerJudge;
   uint16_t powerChassis;
+  bool updated;
 }__attribute__((packed)) PowerModule_canStruct;
 
 volatile GimbalEncoder_canStruct* can_getGimbalMotor(void);

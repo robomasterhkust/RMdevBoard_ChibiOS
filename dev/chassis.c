@@ -30,13 +30,17 @@ pid_controller_t dancing_controller;
 pid_controller_t power_limit_controller;
 pid_controller_t acceleration_limit_controller;
 lpfilterStruct lp_speed[CHASSIS_MOTOR_NUM];
+
+uint8_t count_for_powerM = 0;
+
 int *bitmap_for_chassis;
 rc_ctrl_t rm;
 Gimbal_Send_Dbus_canStruct *pRC;
+PowerModule_canStruct* PowerModule_info;
 float gimbal_initP = 0;
 float record = 0;
 bool reboot = false;
-
+bool powerM_enable = true;
 #define TWIST_ANGLE 150
 #define TWIST_PERIOD 800
 
@@ -48,6 +52,8 @@ bool reboot = false;
 #define accl_x 3300 * 0.4 / (500) // slide
 #define deccl_y 3300*1.1/ (500)
 #define deccl_x 3300*1.1 / (500)
+
+#define boost_accl 3300 * 0.4 / (500)
 chassis_error_t chassis_getError(void) { return chassis.errorFlag; }
 
 chassisStruct *chassis_get(void) { return &chassis; }
@@ -327,6 +333,20 @@ static THD_FUNCTION(chassis_control, p) {
     }
     mecanum_cal();
     drive_motor();
+
+
+    if(PowerModule_info->updated){
+      count_for_powerM = 0;
+      PowerModule_info->updated = false;
+    }
+    else{
+      count_for_powerM++;
+    }
+    if(count_for_powerM > 25){
+      powerM_enable = false;
+    }
+
+
   }
 }
 
@@ -349,6 +369,7 @@ void chassis_init(void) {
   chassis.rotate_y_offset = GIMBAL_Y_OFFSET;
   bitmap_for_chassis = Bitmap_get();
   IMU_Data = imu_get();
+  PowerModule_info = can_get_powerModuleInfo();
   uint8_t i;
   // *********************temporary section*********************
   {
@@ -455,31 +476,46 @@ void mecanum_cal(){
   VAL_LIMIT(chassis.rotate_sp, -MAX_CHASSIS_VR_SPEED,
             MAX_CHASSIS_VR_SPEED); // deg/s
 
-  //  if(JudgeP->powerInfo.powerBuffer<=40 && reboot){
-  //    power_limit_handle();
-  //  }
-  //  else{
   if (fabs(chassis.strafe_curve) <= fabs(chassis.strafe_sp)) {
-    if (chassis.strafe_sp >= 0) {
-      chassis.strafe_curve += acceleration_limit_control(
-          &acceleration_limit_controller, JudgeP->powerInfo.power,
-          chassis.power_limit);
+    if (chassis.strafe_sp >= 0){
+      if(PowerModule_info->pathType == 2 && JudgeP->powerInfo.volt > 22.3 && powerM_enable){
+        chassis.strafe_curve += boost_accl;
+      }
+      else{
+        if(powerM_enable){
+          chassis.strafe_curve += acceleration_limit_control(
+              &acceleration_limit_controller,PowerModule_info->powerChassis, chassis.power_limit);
+        }else{
+          chassis.strafe_curve += acceleration_limit_control(
+              &acceleration_limit_controller, JudgeP->powerInfo.power,
+              chassis.power_limit);
+        }
+
+      }
       if (chassis.strafe_curve <= 0) {
         chassis.strafe_curve = 0;
       }
-    }else {
-      chassis.strafe_curve -= acceleration_limit_control(
-          &acceleration_limit_controller, JudgeP->powerInfo.power,
-          chassis.power_limit);
+    }else{
+      if(PowerModule_info->pathType == 2 && JudgeP->powerInfo.volt > 22.3&& powerM_enable ){
+        chassis.strafe_curve -= boost_accl;
+      }
+      else{
+        if(powerM_enable){
+          chassis.strafe_curve -= acceleration_limit_control(
+              &acceleration_limit_controller,PowerModule_info->powerChassis, chassis.power_limit);
+        }else{
+          chassis.strafe_curve -= acceleration_limit_control(
+              &acceleration_limit_controller, JudgeP->powerInfo.power,
+              chassis.power_limit);
+        }
+      }
       if (chassis.strafe_curve >= 0) {
         chassis.strafe_curve = 0;
       }
     }
-
     if (fabs(chassis.strafe_curve) >= fabs(chassis.strafe_sp)) {
       chassis.strafe_curve = chassis.strafe_sp;
     }
-
   } else if (fabs(chassis.strafe_curve) > fabs(chassis.strafe_sp)){
     // if(fabs(chassis.strafe_sp) < 0.003){ // check whether the user intended
     // to stop
@@ -506,14 +542,35 @@ void mecanum_cal(){
 
   if (fabs(chassis.drive_curve) <= fabs(chassis.drive_sp)) {
     if (chassis.drive_sp >= 0) {
-      chassis.drive_curve += acceleration_limit_control(
-          &acceleration_limit_controller, JudgeP->powerInfo.power, chassis.power_limit);
+      if(PowerModule_info->pathType == 2 && JudgeP->powerInfo.volt > 22.3 && powerM_enable){
+        chassis.drive_curve += boost_accl;
+      }else{
+        if(powerM_enable){
+          chassis.drive_curve += acceleration_limit_control(
+              &acceleration_limit_controller,PowerModule_info->powerChassis, chassis.power_limit);
+        }
+        else{
+          chassis.drive_curve += acceleration_limit_control(
+              &acceleration_limit_controller, JudgeP->powerInfo.power, chassis.power_limit);
+        }
+      }
+
       if (chassis.drive_curve <= 0) {
         chassis.drive_curve = 0;
       }
-    } else {
-      chassis.drive_curve -= acceleration_limit_control(
-          &acceleration_limit_controller, JudgeP->powerInfo.power, chassis.power_limit);
+    }else{
+      if(PowerModule_info->pathType == 2 && JudgeP->powerInfo.volt > 22.3 && powerM_enable){
+        chassis.drive_curve -= boost_accl;
+      }else{
+        if(powerM_enable){
+          chassis.drive_curve -= acceleration_limit_control(
+              &acceleration_limit_controller,PowerModule_info->powerChassis, chassis.power_limit);
+        }
+        else{
+          chassis.drive_curve -= acceleration_limit_control(
+              &acceleration_limit_controller, JudgeP->powerInfo.power, chassis.power_limit);
+        }
+      }
       if (chassis.drive_curve >= 0) {
         chassis.drive_curve = 0;
       }
@@ -541,10 +598,10 @@ void mecanum_cal(){
     } else {
       chassis.drive_curve = chassis.drive_sp;
     }
-  } else {
+  }else{
     chassis.drive_curve = chassis.drive_sp;
   }
-  // }
+
 
   chassis._motors[FRONT_RIGHT].speed_sp =
       (chassis.strafe_curve - chassis.drive_curve +

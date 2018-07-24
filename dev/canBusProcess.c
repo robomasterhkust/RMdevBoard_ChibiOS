@@ -91,7 +91,7 @@ static inline void  can_processPowerModuleInfo
 //    db->powerChassis = (uint16_t)rxmsg->data16[3];
 
     memcpy(db, rxmsg->data8, sizeof(uint8_t) * 8);
-
+    db->updated = true;
     chSysUnlock();
 }
 
