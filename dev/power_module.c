@@ -9,7 +9,7 @@ static volatile Gimbal_Send_Dbus_canStruct* pRC;
 
 #define POWER_MODULE_UPDATE_PERIOD_US 1000000/1000
 
-static inline void powerMode_txCan(CANDriver *const CANx, const uint16_t SID)
+static void powerMode_txCan(CANDriver *const CANx, const uint16_t SID)
 {
   CANTxFrame txmsg;
   powerModule_canTransmitStruct txCan;
