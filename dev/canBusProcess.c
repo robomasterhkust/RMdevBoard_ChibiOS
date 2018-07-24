@@ -84,11 +84,14 @@ static inline void  can_processPowerModuleInfo
 {
     chSysLock();
     // add struct details
-    db->Vin = (uint8_t)rxmsg->data8[0];
-    db->pathType = (uint8_t)rxmsg->data8[1];
-    db->capEnergy = (uint16_t)rxmsg->data16[1];
-    db->powerJudge = (uint16_t)rxmsg->data16[2];
-    db->powerChassis = (uint16_t)rxmsg->data16[3];
+//    db->Vin = (uint8_t)rxmsg->data8[0];
+//    db->pathType = (uint8_t)rxmsg->data8[1];
+//    db->capEnergy = (int16_t)rxmsg->data16[1];
+//    db->powerJudge = (uint16_t)rxmsg->data16[2];
+//    db->powerChassis = (uint16_t)rxmsg->data16[3];
+
+    memcpy(db, rxmsg->data8, sizeof(uint8_t) * 8);
+
     chSysUnlock();
 }
 
@@ -170,6 +173,8 @@ static void can_processEncoderMessage(CANDriver* const canp, const CANRxFrame* c
         case CAN_CHASSIS_SEND_BARREL_ID:
             can_processSendBarrelStatus(&chassis_send_barrel, rxmsg);
             break;
+        case CAN_POWER_MODULE_RECEIVER_ID:
+          can_processPowerModuleInfo(&power_module_info, rxmsg);
     }
   }
   else
@@ -197,8 +202,7 @@ static void can_processEncoderMessage(CANDriver* const canp, const CANRxFrame* c
         case CAN_CHASSIS_BR_FEEDBACK_MSG_ID:
           can_processChassisEncoder(&extra_encoder[BACK_RIGHT] ,rxmsg);
           break;
-        case CAN_POWER_MODULE_RECEIVER_ID:
-          can_processPowerModuleInfo(&power_module_info, rxmsg);
+
     }
   }
 }

@@ -5,7 +5,7 @@
 
 
 static powerModuleStruct_t powerModule;
-static Gimbal_Send_Dbus_canStruct* pRC;
+static volatile Gimbal_Send_Dbus_canStruct* pRC;
 
 #define POWER_MODULE_UPDATE_PERIOD_US 1000000/1000
 
@@ -17,7 +17,7 @@ static inline void powerMode_txCan(CANDriver *const CANx, const uint16_t SID)
   txmsg.IDE = CAN_IDE_STD;
   txmsg.SID = SID;
   txmsg.RTR = CAN_RTR_DATA;
-  txmsg.DLC = 0x08;
+  txmsg.DLC = 0x02;
 
   chSysLock();
   txCan.power_mode = powerModule.power_mode;
@@ -54,7 +54,7 @@ static THD_WORKING_AREA(power_module_wa, 1024);
 static THD_FUNCTION(power_module, p)
 {
 
-  (void*)p;
+  (void)p;
   chRegSetThreadName("power_module");
   uint32_t tick = chVTGetSystemTimeX();
   pRC = can_get_sent_dbus();
@@ -94,14 +94,14 @@ static THD_FUNCTION(power_module, p)
   }
 }
 
-void resetPowerModuleInfo(){
+void resetPowerModuleInfo(void){
 	powerModule.power_mode = PJUDGE;
 	powerModule.robotType = INFANTRY_T;
 	powerModule.bitmap_for_powerModule = Bitmap_get();
 	powerModule.Shift_press = 0;
 }
 
-void power_module_init(){
+void power_module_init(void){
 	resetPowerModuleInfo();
     chThdCreateStatic(power_module_wa, sizeof(power_module_wa),
                                NORMALPRIO, power_module, NULL);

@@ -107,10 +107,10 @@ typedef struct
 {
   uint8_t Vin;
   uint8_t pathType; // (1 = judge power, 2 = cap power)
-  uint16_t capEnergy;
+  int16_t capEnergy;
   uint16_t powerJudge;
   uint16_t powerChassis;
-} PowerModule_canStruct;
+}__attribute__((packed)) PowerModule_canStruct;
 
 volatile GimbalEncoder_canStruct* can_getGimbalMotor(void);
 volatile ChassisEncoder_canStruct* can_getChassisMotor(void);
