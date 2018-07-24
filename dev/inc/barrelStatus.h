@@ -67,6 +67,7 @@ typedef enum{
 typedef struct {
   uint16_t heatLimit;
   uint16_t currentHeatValue;
+  uint16_t remainHealth;
 } barrelStatus_t, *pBarrelStatus;
 
 pBarrelStatus barrelStatus_get(void);

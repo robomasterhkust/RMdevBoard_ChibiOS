@@ -3,6 +3,7 @@
 #include "bullet_tracker_task.h"
 #include "magazine_cover_task.h"
 #include <stdbool.h>
+#include "canBusProcess.h"
 
 static Custom_Data_t customData;
 static bool allInited = false;
@@ -12,6 +13,7 @@ static Bullet_Tracker_t* pBT;
 // static projectile_fb_t projectile;
 static judge_fb_t* pJudge;
 static magCoverStruct_t* pMC;
+static ShooterInfo_canStruct* pShooterInfo;
 
 
 
@@ -54,7 +56,11 @@ bool checkInit(void){
           d->data2 = -1.0f;
         }
 
-        d->data3 = -1.0f;
+        if(pShooterInfo->updated){
+          d->data3 = (float)pShooterInfo->shoot_speed + ((float)pShooterInfo->rps / 100.0f);
+        }else{
+          d->data3 = -1.0f;
+        }
 
         if(magCoverInit){
           d->lights8 = 0b00111111 ^ (uint8_t)(pMC->internalState);
@@ -86,6 +92,7 @@ void customData_init(void){
     pBT = bulletTracker_get();
     pJudge = judgeDataGet();
     pMC = getMagCover();
+    pShooterInfo = can_get_gimbal_send_shooter_info();
 
 	customData.data1 = 0.0f;
 	customData.data2 = 0.0f;
