@@ -16,6 +16,7 @@ static volatile ChassisEncoder_canStruct extra_encoder[EXTRA_MOTOR_NUM];
 static volatile Gimbal_Send_Dbus_canStruct gimbal_send_dbus;
 static volatile BarrelStatus_canStruct chassis_send_barrel;
 static volatile PowerModule_canStruct power_module_info;
+static volatile ShooterInfo_canStruct gimbal_send_shooter_info;
 /*
  * 500KBaud, automatic wakeup, automatic recover
  * from abort mode.
@@ -57,6 +58,18 @@ volatile PowerModule_canStruct* can_get_powerModuleInfo(void){
   return &power_module_info;
 }
 
+volatile ShooterInfo_canStruct* can_get_gimbal_send_shooter_info(void){
+  return &gimbal_send_shooter_info;
+}
+
+static inline void can_processGimbalSendShooterInfo
+(volatile ShooterInfo_canStruct* db, const CANRxFrame* const rxmsg){
+    chSysLock();
+    db->shoot_speed = rxmsg->data16[0];
+    db->rps = rxmsg->data16[1];
+    db->updated = true;
+    chSysUnlock();
+}
 
 static inline void  can_processSendDbusEncoder
         (volatile Gimbal_Send_Dbus_canStruct* db, const CANRxFrame* const rxmsg){
@@ -76,6 +89,7 @@ static inline void  can_processSendBarrelStatus
     chSysLock();
     db->heatLimit           = (uint16_t)rxmsg->data16[0];
     db->currentHeatValue    = (uint16_t)rxmsg->data16[1];
+    db->remainHealth        = (uint16_t)rxmsg->data16[2];
     chSysUnlock();
 }
 
@@ -202,6 +216,9 @@ static void can_processEncoderMessage(CANDriver* const canp, const CANRxFrame* c
         case CAN_CHASSIS_BR_FEEDBACK_MSG_ID:
           can_processChassisEncoder(&extra_encoder[BACK_RIGHT] ,rxmsg);
           break;
+        case CAN_SHOOTER_INFO_ID:
+          can_processGimbalSendShooterInfo(&gimbal_send_shooter_info, rxmsg);
+    
 
     }
   }
@@ -282,6 +299,8 @@ void can_processInit(void)
   memset((void *)chassis_encoder, 0, sizeof(ChassisEncoder_canStruct)*CHASSIS_MOTOR_NUM);
   memset((void *)extra_encoder, 0, sizeof(ChassisEncoder_canStruct)*EXTRA_MOTOR_NUM);
   memset((void *)&chassis_send_barrel, 0, sizeof(BarrelStatus_canStruct));
+  memset((void *)&gimbal_send_shooter_info, 0, sizeof(ShooterInfo_canStruct));
+
 
   uint8_t i;
   for (i = 0; i < CAN_FILTER_NUM; i++)

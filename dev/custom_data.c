@@ -3,6 +3,7 @@
 #include "bullet_tracker_task.h"
 #include "magazine_cover_task.h"
 #include <stdbool.h>
+#include "canBusProcess.h"
 
 static Custom_Data_t customData;
 static bool allInited = false;
@@ -12,7 +13,8 @@ static Bullet_Tracker_t* pBT;
 // static projectile_fb_t projectile;
 static judge_fb_t* pJudge;
 static magCoverStruct_t* pMC;
-
+static ShooterInfo_canStruct* pShooterInfo;
+static PowerModule_canStruct* pPowerModule;
 
 
 bool checkInit(void){
@@ -42,11 +44,16 @@ bool checkInit(void){
         bool bulletCountInit = pBT->inited;
         bool judgeDataInit = getJudgeInitStatus();
         bool magCoverInit = getMagCoverInitStatus();
-        if(bulletCountInit){
-          d->data1 = (float)(pBT->bullet_tracker.bulletCount);
-        }else{
-          d->data1 = -1.0f;
-        }
+        // if(bulletCountInit){
+        //   d->data1 = (float)(pBT->bullet_tracker.bulletCount);
+        // }else{
+        //   d->data1 = -1.0f;
+        // }
+        // if(pPowerModule->updated){
+          d->data1 = (float)(pPowerModule->capEnergy);
+        // }else{
+          // d->data1 = -1.0f;
+        // }
 
         if(judgeDataInit){
           d->data2 = (float)(pJudge->powerInfo.volt);
@@ -54,8 +61,11 @@ bool checkInit(void){
           d->data2 = -1.0f;
         }
 
-        d->data3 = -1.0f;
-
+        if(pShooterInfo->updated){
+          d->data3 = (float)pShooterInfo->shoot_speed + ((float)pShooterInfo->rps / 100.0f);
+        }else{
+          d->data3 = -1.0f;
+        }
         if(magCoverInit){
           d->lights8 = 0b00111111 ^ (uint8_t)(pMC->internalState);
         }else{
@@ -86,6 +96,8 @@ void customData_init(void){
     pBT = bulletTracker_get();
     pJudge = judgeDataGet();
     pMC = getMagCover();
+    pShooterInfo = can_get_gimbal_send_shooter_info();
+    pPowerModule = can_get_powerModuleInfo();
 
 	customData.data1 = 0.0f;
 	customData.data2 = 0.0f;

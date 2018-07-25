@@ -23,7 +23,7 @@ typedef struct {
 	uint8_t power_mode;
 	uint8_t robotType;
 	int* bitmap_for_powerModule;
-	bool Shift_press;
+	bool X_press;
 } powerModuleStruct_t;
 
 typedef struct{

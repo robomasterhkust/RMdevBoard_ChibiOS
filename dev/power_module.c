@@ -68,19 +68,19 @@ static THD_FUNCTION(power_module, p)
       tick = chVTGetSystemTimeX();
     }
     if((pRC->s1 == MI) & (pRC->s2 == DN)){
-	    if(powerModule.bitmap_for_powerModule[KEY_SHIFT]){
-	      if(!powerModule.Shift_press){
+	    if(powerModule.bitmap_for_powerModule[KEY_X]){
+	      if(!powerModule.X_press){
 	        if(powerModule.power_mode == PJUDGE){
 	        	powerModule.power_mode = BOOST;
 	        }else if(powerModule.power_mode == BOOST){
 	        	powerModule.power_mode = PJUDGE;
 	        }
 	      }
-	      powerModule.Shift_press = true;
+	      powerModule.X_press = true;
 
 	    }
     	else{
-      	powerModule.Shift_press = false;
+      	powerModule.X_press = false;
     	}
 	}else if((pRC->s1 == MI)){
 		if(pRC->s2 == UP){ // Power from Judge 
@@ -98,7 +98,7 @@ void resetPowerModuleInfo(void){
 	powerModule.power_mode = PJUDGE;
 	powerModule.robotType = INFANTRY_T;
 	powerModule.bitmap_for_powerModule = Bitmap_get();
-	powerModule.Shift_press = 0;
+	powerModule.X_press = 0;
 }
 
 void power_module_init(void){
