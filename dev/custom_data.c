@@ -67,7 +67,7 @@ bool checkInit(void){
           d->data3 = -1.0f;
         }
         if(magCoverInit){
-          d->lights8 = 0b00111111 ^ (uint8_t)(pMC->internalState);
+          d->lights8 = 0b00111111 ^ ((uint8_t)(pMC->internalState) | ((uint8_t)(pPowerModule->pathType == 2) << 1) );
         }else{
           d->lights8 = 0b00000000;
         }

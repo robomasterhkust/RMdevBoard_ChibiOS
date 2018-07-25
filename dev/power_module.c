@@ -29,6 +29,9 @@ static void powerMode_txCan(CANDriver *const CANx, const uint16_t SID)
   canTransmit(CANx, CAN_ANY_MAILBOX, &txmsg, MS2ST(100));
 }
 
+void powerModule_get(void){
+  return &powerModule;
+}
 
 // void can_send_powerMode(CANDriver *const CANx,
 //   const uint16_t EID, uint8_t powerMode, uint8_t robotType)
