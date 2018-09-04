@@ -33,14 +33,14 @@ else if((val) >= (max))\
 #define powerlimit 80
 /************************ chassis parameter ****************************/
 /* the radius of wheel(mm) */
-#define RADIUS     76
+#define MECANUM_WHEEL_RADIUS     76
 /* the perimeter of wheel(mm) */
-#define PERIMETER  478
+#define MECANUM_WHEEL_PERIMETER  478
 
 /* wheel track distance(mm) */
-#define WHEELTRACK  425 //403
+#define WHEELTRACK  420 //403
 /* wheelbase distance(mm) */
-#define WHEELBASE  315 //385
+#define WHEELBASE  307 //385
 
 /* gimbal is relative to chassis center x axis offset(mm) */
 #define GIMBAL_X_OFFSET 87 //150
@@ -52,8 +52,12 @@ else if((val) >= (max))\
 
 /* chassis motor use 3508 */
 /* the deceleration ratio of chassis motor */
+#define MOTOR_GEAR_RATIO    (3591 / 187)      // RM3508 V1.0 Datasheet
 
-//  #define CHASSIS_DECELE_RATIO (1.0f/27.0f)
+#define RAD_TO_DEGREE 57.3f   // degree/s to rad/s
+#define DEGREE_TO_RAD 0.0174532f  // rad/s to degree/s
+
+#define CHASSIS_OUTPUT_MAX 16384
 
   /* single 3508 motor maximum speed, unit is rpm */
   #define MAX_WHEEL_RPM        350 //414 //8000  //8347rpm = 3500mm/s
@@ -64,19 +68,15 @@ else if((val) >= (max))\
   #define MAX_CHASSIS_VR_SPEED 300   //5000rpm
 
 
-
 //Codes above are copied from Official
 
-
-// DBUS MACRO
-#define CHASSIS_GEAR_RATIO    27U
 //#define RPM_MAX    ((int16_t) 350)              //
 //#define RPM_MIN    ((int16_t) -350)              //
 #define HEADING_MIN     ((float) -3.14159) // - pi
 #define HEADING_MAX     ((float) 3.14159)   // pi
 #define HEADING_SCALE   ((uint16_t) 1)
 #define ABS(x)     ( ((x) > 0) ? (x) : (-(x)) ) //return abs value of x
-#define RADIAN_COEF 57.3f
+
 //#define CHASSIS_USE_POS_MOTOR
 
 
