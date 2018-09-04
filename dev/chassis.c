@@ -87,21 +87,21 @@ static void mecanum_inverse_kinematics(volatile chassisStruct *chassisPtr,
 
     if (!rotation_center_gimbal) {
         // normal kinematics
-        rotate_ratio_fr = (lx + ly) / r;
-        rotate_ratio_fl = (lx + ly) / r;
-        rotate_ratio_bl = (lx + ly) / r;
-        rotate_ratio_br = (lx + ly) / r;
+        rotate_ratio_fr = (lx + ly);
+        rotate_ratio_fl = (lx + ly);
+        rotate_ratio_bl = (lx + ly);
+        rotate_ratio_br = (lx + ly);
     } else {
-        rotate_ratio_fr = (lx + ly - dx + dy) / r;
-        rotate_ratio_fl = (lx + ly - dx - dy) / r;
-        rotate_ratio_bl = (lx + ly + dx - dy) / r;
-        rotate_ratio_br = (lx + ly + dx + dy) / r;
+        rotate_ratio_fr = (lx + ly - dx + dy);
+        rotate_ratio_fl = (lx + ly - dx - dy);
+        rotate_ratio_bl = (lx + ly + dx - dy);
+        rotate_ratio_br = (lx + ly + dx + dy);
     }
 
-    chassisPtr->_motors[FRONT_RIGHT].speed_sp = (vy - vx + w * rotate_ratio_fr);
-    chassisPtr->_motors[BACK_RIGHT].speed_sp = (-1 * vy - vx + w * rotate_ratio_br);
-    chassisPtr->_motors[FRONT_LEFT].speed_sp = (vy + vx + w * rotate_ratio_fl);
-    chassisPtr->_motors[BACK_LEFT].speed_sp = (-1 * vy + vx + w * rotate_ratio_bl);
+    chassisPtr->_motors[FRONT_RIGHT].speed_sp = (vy - vx + w * rotate_ratio_fr) / r;
+    chassisPtr->_motors[BACK_RIGHT].speed_sp = (-1 * vy - vx + w * rotate_ratio_br) / r;
+    chassisPtr->_motors[FRONT_LEFT].speed_sp = (vy + vx + w * rotate_ratio_fl) / r;
+    chassisPtr->_motors[BACK_LEFT].speed_sp = (-1 * vy + vx + w * rotate_ratio_bl) / r;
 }
 
 /**
