@@ -26,6 +26,8 @@
 #define CAN_CHASSIS_SEND_BARREL_ID                  0x002
 #define CAN_NVIDIA_TX2_BOARD_ID                     0x103
 
+#define CAN_SHOOTER_INFO_ID                         0x005
+
 #define CAN_ENCODER_RANGE           8192            // 0x2000
 #define CAN_ENCODER_RADIAN_RATIO    7.669904e-4f    // 2*M_PI / 0x2000
 
@@ -94,6 +96,7 @@ typedef struct{
 typedef struct{
   uint16_t heatLimit;
   uint16_t currentHeatValue;
+  uint16_t remainHealth;
 } BarrelStatus_canStruct;
 
 typedef struct {
@@ -111,12 +114,20 @@ typedef struct{
   int16_t speed_curve;
 } MotorDebug_canStruct;
 
+typedef struct 
+{
+  uint16_t shoot_speed;
+  uint16_t rps;
+  bool updated;
+} ShooterInfo_canStruct;
+
 volatile GimbalEncoder_canStruct* can_getGimbalMotor(void);
 volatile ChassisEncoder_canStruct* can_getChassisMotor(void);
 volatile ChassisEncoder_canStruct* can_getExtraMotor(void);
 volatile Gimbal_Send_Dbus_canStruct* can_get_sent_dbus(void);
 volatile BarrelStatus_canStruct* can_get_sent_barrelStatus(void);
 volatile Ros_msg_canStruct *can_get_ros_msg(void);
+volatile ShooterInfo_canStruct* can_get_gimbal_send_shooter_info(void);
 
 void can_processInit(void);
 void can_motorSetCurrent(CANDriver *const CANx,

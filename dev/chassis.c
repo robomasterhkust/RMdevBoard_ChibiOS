@@ -69,7 +69,7 @@ chassisStruct *chassis_get(void)
  * @param w,  degree/s
  * @output w1, w2, w3, w4, RPM
  */
-static void mecanum_inverse_kinematics(volatile chassisStruct* chassisPtr,
+static void mecanum_inverse_kinematics(volatile chassisStruct *chassisPtr,
                                        float vx, float vy, float w_degree)
 {
     // TODO: check units
@@ -85,25 +85,23 @@ static void mecanum_inverse_kinematics(volatile chassisStruct* chassisPtr,
     float r = MECANUM_WHEEL_RADIUS;
     float w = w_degree / 6.0f; // Convert the degree/s to RPM
 
-    if (!rotation_center_gimbal)
-    {
+    if (!rotation_center_gimbal) {
         // normal kinematics
         rotate_ratio_fr = (lx + ly) / r;
         rotate_ratio_fl = (lx + ly) / r;
         rotate_ratio_bl = (lx + ly) / r;
         rotate_ratio_br = (lx + ly) / r;
-    } else
-    {
+    } else {
         rotate_ratio_fr = (lx + ly - dx + dy) / r;
         rotate_ratio_fl = (lx + ly - dx - dy) / r;
         rotate_ratio_bl = (lx + ly + dx - dy) / r;
         rotate_ratio_br = (lx + ly + dx + dy) / r;
     }
 
-    chassisPtr->_motors[FRONT_RIGHT].speed_sp = (    vy - vx + w * rotate_ratio_fr);
+    chassisPtr->_motors[FRONT_RIGHT].speed_sp = (vy - vx + w * rotate_ratio_fr);
     chassisPtr->_motors[BACK_RIGHT].speed_sp = (-1 * vy - vx + w * rotate_ratio_br);
-    chassisPtr->_motors[FRONT_LEFT].speed_sp = (     vy + vx + w * rotate_ratio_fl);
-    chassisPtr->_motors[BACK_LEFT].speed_sp = ( -1 * vy + vx + w * rotate_ratio_bl);
+    chassisPtr->_motors[FRONT_LEFT].speed_sp = (vy + vx + w * rotate_ratio_fl);
+    chassisPtr->_motors[BACK_LEFT].speed_sp = (-1 * vy + vx + w * rotate_ratio_bl);
 }
 
 /**
@@ -131,7 +129,6 @@ static void chassis_encoderUpdate(void)
 #ifdef CHASSIS_USE_POS_MOTOR
 #endif
 }
-
 
 /**
  * PID controller for motor speed
@@ -225,7 +222,6 @@ float RC_RESOLUTION = 660.0f;
 
 static void rm_chassis_process(void)
 {
-
     float cv_pos_y = (float) ros_msg->py;
     rm.vx = (pRC->channel0 - 1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
     rm.vy = (pRC->channel1 - 1024) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
@@ -615,10 +611,10 @@ void mecanum_cal()
 
 
     chSysLock(); // ensure that the calculation is done in batch
-        mecanum_inverse_kinematics(&chassis,
-                                   chassis.strafe_curve,
-                                   chassis.drive_curve,
-                                   chassis.rotate_sp * DEGREE_TO_RAD);
+    mecanum_inverse_kinematics(&chassis,
+                               chassis.strafe_curve,
+                               chassis.drive_curve,
+                               chassis.rotate_sp * DEGREE_TO_RAD);
     chSysUnlock();
 
 
@@ -639,33 +635,36 @@ void mecanum_cal()
         }
     }
 
+
     // speed_limit_handle();
-    // Need more consideration!!!s
-
-    for (i = 0; i < 4; i++) {
-        if (fabsf(chassis._motors[i].speed_curve) <
-            fabsf(chassis._motors[i].speed_sp) &&
-            chassis.ctrl_mode != DODGE_MODE &&
-            chassis.ctrl_mode != DODGE_MOVE_MODE) {
-            if (chassis._motors[i].speed_sp > 0) {
-                chassis._motors[i].speed_curve += accl_value;
-            } else {
-                chassis._motors[i].speed_curve -= accl_value;
-            }
-
-            if (fabsf(chassis._motors[i].speed_curve) >
-                fabsf(chassis._motors[i].speed_sp)) {
-                chassis._motors[i].speed_curve = chassis._motors[i].speed_sp;
-            }
-        } else {
-            chassis._motors[i].speed_curve = chassis._motors[i].speed_sp;
-        }
+    // Need more consideration!!!
+/*
+  for (i = 0; i < 4; i++) {
+    if (fabs(chassis._motors[i].speed_curve) <
+            fabs(chassis._motors[i].speed_sp) &&
+        chassis.ctrl_mode != DODGE_MODE &&
+        chassis.ctrl_mode != DODGE_MOVE_MODE) {
+      if (chassis._motors[i].speed_sp > 0) {
+        chassis._motors[i].speed_curve += accl_value;
+      } else {
+        chassis._motors[i].speed_curve -= accl_value;
+      }
+      if (fabs(chassis._motors[i].speed_curve) >
+          fabs(chassis._motors[i].speed_sp)) {
+        chassis._motors[i].speed_curve = chassis._motors[i].speed_sp;
+      }
+    } else {
+      chassis._motors[i].speed_curve = chassis._motors[i].speed_sp;
     }
-
+  }*/
+    for (i = 0; i < 4; i++) {
+        chassis._motors[i].speed_curve = chassis._motors[i].speed_sp;
+    }
     for (i = 0; i < CHASSIS_MOTOR_NUM; i++) {
         chassis.current[i] =
                 chassis_controlSpeed(&chassis._motors[i], &motor_vel_controllers[i]);
         // VAL_LIMIT(chassis.current[i], -16384, 16384);
+        // chassis.current[i] = 0;
     }
 }
 

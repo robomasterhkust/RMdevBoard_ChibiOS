@@ -33,6 +33,7 @@ pBarrelStatus barrelStatus_get(void){
 void barrelStatus_init(void){
   bStatus.heatLimit = HEATLIMIT_LVL_1;
   bStatus.currentHeatValue = 0;
+  bStatus.remainHealth = 0;
 }
 
 void updateBarrelStatus(void){
@@ -59,6 +60,8 @@ void updateBarrelStatus(void){
       bStatus.currentHeatValue = pInfo.shooterHeat1;
     }
 
+    bStatus.remainHealth = gInfo.remainHealth;
+
   #endif
 
 #ifdef GIMBAL
@@ -81,6 +84,7 @@ static inline void BarrelStatus_txCan(CANDriver *const CANx, const uint16_t SID)
   chSysLock();
   txCan.currentHeatValue = bStatus.currentHeatValue;
   txCan.heatLimit = bStatus.heatLimit;
+  txCan.remainHealth = bStatus.remainHealth;
 
   memcpy(&(txmsg.data8), &txCan ,sizeof(BarrelStatus_canStruct));
   chSysUnlock();

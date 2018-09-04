@@ -23,7 +23,7 @@ static volatile Ros_msg_canStruct ros_msg={
         .last_py=0,
         .last_pz=0
 };
-
+static volatile ShooterInfo_canStruct gimbal_send_shooter_info;
 /*
  * 500KBaud, automatic wakeup, automatic recover
  * from abort mode.
@@ -61,8 +61,21 @@ volatile BarrelStatus_canStruct* can_get_sent_barrelStatus(void){
     return &chassis_send_barrel;
 }
 
-volatile Ros_msg_canStruct* can_get_ros_msg(void){
+volatile Ros_msg_canStruct* can_get_ros_msg(void)
+{
     return &ros_msg;
+}
+volatile ShooterInfo_canStruct* can_get_gimbal_send_shooter_info(void){
+  return &gimbal_send_shooter_info;
+}
+
+static inline void can_processGimbalSendShooterInfo
+(volatile ShooterInfo_canStruct* db, const CANRxFrame* const rxmsg){
+    chSysLock();
+    db->shoot_speed = rxmsg->data16[0];
+    db->rps = rxmsg->data16[1];
+    db->updated = true;
+    chSysUnlock();
 }
 
 static inline void  can_processSendDbusEncoder
@@ -83,6 +96,7 @@ static inline void  can_processSendBarrelStatus
     chSysLock();
     db->heatLimit           = (uint16_t)rxmsg->data16[0];
     db->currentHeatValue    = (uint16_t)rxmsg->data16[1];
+    db->remainHealth        = (uint16_t)rxmsg->data16[2];
     chSysUnlock();
 }
 
@@ -219,6 +233,8 @@ static void can_processEncoderMessage(CANDriver* const canp, const CANRxFrame* c
         case CAN_CHASSIS_BR_FEEDBACK_MSG_ID:
           can_processChassisEncoder(&extra_encoder[BACK_RIGHT] ,rxmsg);
           break;
+        case CAN_SHOOTER_INFO_ID:
+          can_processGimbalSendShooterInfo(&gimbal_send_shooter_info, rxmsg);
     }
   }
 }
@@ -298,6 +314,7 @@ void can_processInit(void)
   memset((void *)chassis_encoder, 0, sizeof(ChassisEncoder_canStruct)*CHASSIS_MOTOR_NUM);
   memset((void *)extra_encoder, 0, sizeof(ChassisEncoder_canStruct)*EXTRA_MOTOR_NUM);
   memset((void *)&chassis_send_barrel, 0, sizeof(BarrelStatus_canStruct));
+  memset((void *)&gimbal_send_shooter_info, 0, sizeof(ShooterInfo_canStruct));
 
   uint8_t i;
   for (i = 0; i < CAN_FILTER_NUM; i++)
