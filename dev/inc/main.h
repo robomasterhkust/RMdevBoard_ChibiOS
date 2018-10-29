@@ -1,42 +1,41 @@
 #ifndef _MAIN_H_
 #define _MAIN_H_
 
-// #define RM_CHASSIS_BOARD
-
 #include "ch.h"
 #include "hal.h"
 
+#include "math_misc.h"
+
 #include "usbcfg.h"
-#include "shellcfg.h"
-#include "params.h"
 #include "flash.h"
 #include "chprintf.h"
-#include "detect_error_task.h"
 
-#include "math_misc.h"
-#include "can_bus.h"
+#include "canBusProcess.h"
 #include "dbus.h"
-#include "keyboard.h"
+#include "params.h"
+#include "sdlog.h"
+#include "exti.h"
 
-#include "attitude_estimator_task.h"
-#include "adis16470.h"
+#include "mpu6500.h"
+#include "ist8310.h"
+#include "adis16265.h"
+#include "attitude.h"
+#include "imu_temp.h"
 #include "calibrate_sensor.h"
 
 #include "gimbal.h"
-#include "chassis.h"
-
-#include "exti.h"
-#include "judge.h"
 #include "shoot.h"
-#include "shooter_rm3508.h"
-#include "bullet_tracker_task.h"
-
-#include "command_mixer_task.h"
-#include "gimbal_simple_controller.h"
 #include "feeder.h"
-#include "bullet_count_task.h"
+#include "barrelStatus.h"
 
-#include "pwm_test.h"
-#include "auto_fetch_task.h"
+#include "complementary_filter.h"
+#include "can_comm.h"
+
+#include "rune.h"
+#include "keyboard.h"
+void shellStart(void);
+
+bool power_check(void);
+bool power_failure(void);
 
 #endif

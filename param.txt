@@ -1,0 +1,103 @@
+--RMTunerEnterprize--2018-03-31-16-45-57--
+Gimbal Yaw Vel
+ 0 False 2
+	-2120.0 KP 3 0
+	-7.61000013351 KI 0 1
+Gimbal Pitch Vel
+ 1 False 2
+	-2860.0 KP 3 0
+	-8.30000019073 KI 1 1
+Gimbal Axis FF
+ 2 False 6
+	0.0 Yaw_w1 0 0
+	1220.0 Pitch_w 3 1
+	0.740000009537 Yaw_SD 0 2
+	0.0 Pitch_a 0 3
+	0.0 Yaw_w2 0 4
+	0.0 Yaw_th 0 5
+Gimbal Yaw Pos
+ 3 False 3
+	-14100.0 KP 4 0
+	-6.86000013351 KI 0 1
+	-1050.0 KD 3 2
+Gimbal Pitch Pos
+ 4 False 3
+	-59700.0 KP 4 0
+	-22.0 KI 1 1
+	-1043.0 KD 2 2
+Gimbal Init Pos
+ 5 False 2
+	-1.6740000248 Yaw -1 0
+	-2.51699995995 Pitch -1 1
+Gimbal FF Accl
+ 6 False 6
+	-0.146999999881 YawX -1 0
+	-0.0 YawY 0 1
+	9.72999954224 YawZ 0 2
+	0.0 PitchX 0 3
+	-0.0 PitchY 0 4
+	0.0 PitchZ 0 5
+Gimbal Yaw Atti
+ 7 False 3
+	29.0 KP 1 0
+	0.0920000001788 KI -1 1
+	0.259999990463 KD 0 2
+Gimbal Pitch Atti
+ 8 False 3
+	33.0 KP 1 0
+	1.35000002384 KI 0 1
+	0.186000004411 KD -1 2
+Gimbal FF Int
+ 9 False 2
+	0.0 Yaw 0 0
+	0.0 Pitch 0 1
+Gimbal axis limit
+ 10 False 4
+	1.63999998569 Yaw_min 0 0
+	0.72000002861 Yaw_max 0 1
+	-2.97000002861 Pitch_min 0 2
+	-1.89999997616 Pitch_max 0 3
+FEEDER_VEL
+ 14 False 4
+	1.37000000477 p0 0 0
+	0.189999997616 p1 0 1
+	6.05000019073 p2 0 2
+	14700.0 p3 4 3
+FEEDER_POS
+ 15 False 4
+	5.0 p0 0 0
+	0.0 p1 0 1
+	0.0 p2 0 2
+	0.0 p3 0 3
+FEEDER_POS_VEL
+ 16 False 4
+	0.449999988079 p0 0 0
+	0.0 p1 0 1
+	0.0 p2 0 2
+	0.0 p3 0 3
+Gyro_cal
+ 27 True 1
+	-0.0100348163396 Gyro_Offset 0 0
+accelT2
+ 28 True 3
+	0.000568101415411 7 0 0
+	-0.00406900653616 8 0 1
+	0.996777653694 9 0 2
+accelT1
+ 29 True 6
+	1.00308442116 1 0 0
+	-0.0166599340737 2 0 1
+	0.057370852679 3 0 2
+	0.0360062718391 4 0 3
+	1.00578808784 5 0 4
+	-0.0566854253411 6 0 5
+gyroBias
+ 30 True 3
+	0.00652803480625 X 0 0
+	-0.00419247383252 Y 0 1
+	-0.00771086430177 Z 0 2
+accelBias
+ 31 True 3
+	0.0347690582275 X 0 0
+	-0.00543880462646 Y 0 1
+	-0.321079730988 Z 0 2

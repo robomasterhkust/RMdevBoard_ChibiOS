@@ -90,7 +90,7 @@
  * @note    The default is @p FALSE.
  */
 #if !defined(STM32_UART_USE_USART6) || defined(__DOXYGEN__)
-#define STM32_UART_USE_USART6               TRUE
+#define STM32_UART_USE_USART6               FALSE
 #endif
 
 /**

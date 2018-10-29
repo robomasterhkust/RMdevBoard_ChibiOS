@@ -5,7 +5,6 @@
  */
 #include "hal.h"
 #include "flash.h"
-#include "string.h"
 
 size_t flashSectorSize(flashsector_t sector)
 {

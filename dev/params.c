@@ -9,7 +9,7 @@
 
 #include "params.h"
 #include "flash.h"
-#include "string.h"
+#include  <string.h>
 
 #define PARAM_FLASH_SECTOR           11U
 #define PARAM_FLASH_ADDR      0x080E0000
@@ -230,7 +230,7 @@ static THD_FUNCTION(params_rx,p)
 static void sendLine(BaseSequentialStream * chp, const char* const string)
 {
   uint8_t i;
-  uint8_t * byte = (uint8_t *)string;
+  char* byte = string;
   if(string != NULL)
     for (i = 0; i < strlen(string); i++)
       chSequentialStreamPut(chp, *byte++);
@@ -244,10 +244,10 @@ static void sendLine(BaseSequentialStream * chp, const char* const string)
 
 void cmd_param_rx(BaseSequentialStream * chp, int argc, char *argv[])
 {
-  uint8_t* data = (uint8_t*)argv[0];
+  uint8_t* data = argv[0];
 
-  uint8_t index = data[0] - (uint8_t)'0';
-  uint8_t sub_index = data[1] - (uint8_t)'0';
+  uint8_t index = data[0] - '0';
+  uint8_t sub_index = data[1] - '0';
 
   if((1<<index)&param_valid_flag &&
      sub_index < subparams[index][0])
@@ -272,11 +272,11 @@ void cmd_param_rx(BaseSequentialStream * chp, int argc, char *argv[])
 
 void cmd_param_scale(BaseSequentialStream * chp, int argc, char *argv[])
 {
-  uint8_t* data = (uint8_t*)argv[0];
+  uint8_t* data = argv[0];
 
-  uint8_t index = data[0] - (uint8_t)'0';
-  uint8_t sub_index = data[1] - (uint8_t)'0';
-  int8_t scale = data[2] - (uint8_t)'0';
+  uint8_t index = data[0] - '0';
+  uint8_t sub_index = data[1] - '0';
+  int8_t scale = data[2] - '0';
 
   if((1<<index)&param_valid_flag &&
      sub_index < subparams[index][0])
@@ -301,7 +301,7 @@ void cmd_param_tx(BaseSequentialStream * chp, int argc, char *argv[])
   chSequentialStreamPut(chp, subparams_total);
   chThdSleepMilliseconds(10);
 
-  uint8_t * byte = (uint8_t*)&param_private_flag;
+  char* byte = (char*)&param_private_flag;
   uint8_t i,j;
   for (i = 0; i < 4; i++)
     chSequentialStreamPut(chp, *byte++);
@@ -318,7 +318,7 @@ void cmd_param_tx(BaseSequentialStream * chp, int argc, char *argv[])
   {
     if(flag&param_valid_flag)
     {
-      byte = (uint8_t*)subparams[i];
+      byte = (char*)subparams[i];
       for (j = 0; j < 8; j++)
         chSequentialStreamPut(chp, *byte++);
       chThdSleepMilliseconds(10);
@@ -334,7 +334,7 @@ void cmd_param_tx(BaseSequentialStream * chp, int argc, char *argv[])
   {
     if(flag&param_valid_flag)
     {
-      byte = (uint8_t*)params[i];
+      byte = (char*)params[i];
       for (j = 0; j < 4*subparams[i][0]; j++)
         chSequentialStreamPut(chp, *byte++);
       chThdSleepMilliseconds(10);
@@ -360,7 +360,7 @@ static uint8_t param_load_flash(const uint8_t param_pos, const uint8_t param_num
   uint8_t result = 0;
 
   flashaddr_t address = PARAM_FLASH_ADDR + 16 + param_pos*PARAM_FLASH_BLOCK;
-  flashRead(address,(char*)subparams[param_pos],8);
+  flashRead(address,subparams[param_pos],8);
 
   uint8_t i;
   if(subparams[param_pos][0] != param_num)
@@ -372,7 +372,7 @@ static uint8_t param_load_flash(const uint8_t param_pos, const uint8_t param_num
   }
 
   flashRead(address + PARAM_FLASH_HALF_BLOCK,
-            (char*)(params[param_pos]), (uint32_t)subparams[param_pos][0]*4);
+            (char*)(params[param_pos]), subparams[param_pos][0]*4);
 
   for (i = 0; i < param_num; i++)
     //Check the validity of the read-out value
@@ -426,6 +426,9 @@ uint8_t params_set(param_t* const     p_param,
 
 void param_save_flash(void)
 {
+  LEDR_ON();
+  LEDG_OFF();
+
   flashSectorErase(PARAM_FLASH_SECTOR);
   uint8_t i;
   uint32_t flag = 1;
@@ -436,12 +439,14 @@ void param_save_flash(void)
     if(flag&param_valid_flag)
     {
       address = PARAM_FLASH_ADDR + 16 + PARAM_FLASH_BLOCK*i;
-      flashWrite(address,(const char*)subparams[i],8);
+      flashWrite(address,subparams[i],8);
       flashWrite(address + PARAM_FLASH_HALF_BLOCK,
-        (char*)(params[i]), (uint32_t)subparams[i][0]*4);
+        (char*)(params[i]), subparams[i][0]*4);
     }
     flag = flag<<1;
   }
+
+  LEDR_OFF();
 }
 
 void params_init(void)

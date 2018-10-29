@@ -116,9 +116,4 @@ void flashSectorErase(flashsector_t sector);
 void flashWrite(flashaddr_t address, const char* buffer, size_t size);
 void flashRead(flashaddr_t address, char* buffer, size_t size);
 
-
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* INC_FLASH_H_ */

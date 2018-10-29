@@ -102,15 +102,9 @@ include $(CHIBIOS)/os/hal/osal/rt/osal.mk
 # RTOS files (optional).
 include $(CHIBIOS)/os/rt/rt.mk
 include $(CHIBIOS)/os/rt/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
-#include $(CHIBIOS)/os/various/fatfs_bindings/fatfs.mk
+include $(CHIBIOS)/os/various/fatfs_bindings/fatfs.mk
+# Other files (optional).
 #include $(CHIBIOS)/test/rt/test.mk
-
-# Our software development architecture
-include $(CHIBIOS)/dev/dev.mk
-include $(CHIBIOS)/3_driver/driver.mk
-include $(CHIBIOS)/4_module/module.mk
-include $(CHIBIOS)/5_task/task.mk
-include $(CHIBIOS)/6_tool/tool.mk
 
 # Define linker script file here
 LDSCRIPT= $(STARTUPLD)/STM32F429xI.ld
@@ -124,18 +118,22 @@ CSRC = $(STARTUPSRC) \
        $(HALSRC) \
        $(PLATFORMSRC) \
        $(BOARDSRC) \
-       $(DEVSRC)    \
-       $(DRIVERSRC) \
-       $(MODULESRC) \
-       $(TASKSRC)   \
-       $(TOOLSRC)   \
-       $(FATFSSRC) \
-       $(CHIBIOS)/os/various/shell.c \
+       $(TESTSRC) \
+       $(MATHSRC) \
+			 $(FATFSSRC) \
+			 $(CHIBIOS)/os/various/shell.c \
        $(CHIBIOS)/os/various/evtimer.c \
        $(CHIBIOS)/os/various/syscalls.c \
-       $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
+			 $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
        $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
-       main.c
+       main.c shellcfg.c flash.c sdlog.c\
+       mpu6500.c attitude.c ist8310.c adis16265.c math_misc.c \
+       canBusProcess.c dbus.c gimbal.c params.c usbcfg.c \
+       calibrate_sensor.c shoot_pwm.c feeder.c rune.c\
+       exti.c imu_temp.c barrelStatus.c keyboard.c complementary_filter.c \
+       can_comm.c
+
+
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -163,18 +161,18 @@ TCPPSRC =
 
 # List ASM source files here
 ASMSRC = $(STARTUPASM) $(PORTASM) $(OSALASM)
+#define SERIAL_CMD       &SDU1
+#define SERIAL_DATA      &SDU1
+INCDIR = $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
+         $(HALINC) $(PLATFORMINC) $(BOARDINC) $(TESTINC) \
+         $(CHIBIOS)/dev \
+				 $(FATFSINC) \
+         $(CHIBIOS)/os/various \
+				 $(CHIBIOS)/os/hal/lib/streams \
+				 inc -lm
 
-INCDIR =    $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
-            $(HALINC) $(PLATFORMINC) $(BOARDINC) $(TESTINC) \
-            $(DEVINC)    \
-            $(DRIVERINC) \
-            $(MODULEINC) \
-            $(TASKINC)   \
-            $(TOOLINC)   \
-            $(FATFSINC) \
-            $(CHIBIOS)/os/various \
-            $(CHIBIOS)/os/hal/lib/streams
-
+##define SERIAL_CMD       &SDU1
+#define SERIAL_DATA      &SDU1
 # Project, sources and paths
 ##############################################################################
 
@@ -191,8 +189,8 @@ CPPC = $(TRGT)g++
 # Enable loading with g++ only if you need C++ runtime support.
 # NOTE: You can use C++ even without C++ support if you are careful. C++
 #       runtime support makes code size explode.
-#LD   = $(TRGT)gcc
-LD   = $(TRGT)g++
+LD   = $(TRGT)gcc
+#LD   = $(TRGT)g++
 CP   = $(TRGT)objcopy
 AS   = $(TRGT)gcc -x assembler-with-cpp
 AR   = $(TRGT)ar
@@ -207,14 +205,11 @@ AOPT =
 # THUMB-specific options here
 TOPT = -mthumb -DTHUMB
 
-# Define C warning options here -Wextra -Wundef
-CWARN = -Wall -Wstrict-prototypes \
-        -Wno-unused-variable -Wno-unused-function \
-        -Wno-unused-value -Wno-implicit-function-declaration \
-        -Wno-int-conversion
+# Define C warning options here
+CWARN = -Wall -Wextra -Wundef -Wstrict-prototypes
 
-# Define C++ warning options here -Wextra -Wundef
-CPPWARN = -Wall
+# Define C++ warning options here
+CPPWARN = -Wall -Wextra -Wundef
 
 #
 # Compiler settings
