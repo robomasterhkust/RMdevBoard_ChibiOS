@@ -4,7 +4,7 @@
 
 #include "can_comm.h"
 
-chassisStruct* chassis;
+chassis_t* chassis;
 
 void
 can_transmit(CANDriver *const CANx, const uint16_t SID,
@@ -60,7 +60,7 @@ static THD_FUNCTION(can_comm_function, p)
 void
 can_comm_init(void)
 {
-    chassis = chassis_get();
+    chassis = chassis_struct_get();
 
     chThdCreateStatic(can_comm_thread, sizeof(can_comm_thread),
                       NORMALPRIO, can_comm_function, NULL);

@@ -4,7 +4,6 @@
  *  Created on: 10 Jan, 2018
  *      Author: ASUS
 */
-#include <chassis.h>
 #include "ch.h"
 #include "hal.h"
 #include "adis16265.h"
@@ -95,10 +94,10 @@ static void mecanum_inverse_kinematics(volatile chassisStruct *chassisPtr,
         rotate_ratio_br = (lx + ly + dx + dy);
     }
 
-    chassisPtr->_motors[FRONT_RIGHT].speed_sp = 30 * (-1 * vx + vy + w * rotate_ratio_fr) / r;
-    chassisPtr->_motors[FRONT_LEFT].speed_sp = 30 * (vx + vy + w * rotate_ratio_fl) / r;
-    chassisPtr->_motors[BACK_LEFT].speed_sp = 30 * (vx - vy + w * rotate_ratio_bl) / r;
-    chassisPtr->_motors[BACK_RIGHT].speed_sp = 30 * (-1 * vx - vy + w * rotate_ratio_br) / r;
+    chassisPtr->_motors[FRONT_RIGHT].speed_sp = (-1 * vx + vy + w * rotate_ratio_fr) / r;
+    chassisPtr->_motors[FRONT_LEFT].speed_sp  = (vx + vy + w * rotate_ratio_fl) / r;
+    chassisPtr->_motors[BACK_LEFT].speed_sp   = (vx - vy + w * rotate_ratio_bl) / r;
+    chassisPtr->_motors[BACK_RIGHT].speed_sp  = (-1 * vx - vy + w * rotate_ratio_br) / r;
 }
 
 /**
@@ -916,8 +915,8 @@ void power_limit_handle()
     float a2 = fabsf(chassis._encoders[2].act_current * 20.0/16384.0);
     float a3 = fabsf(chassis._encoders[3].act_current * 20.0/16384.0);
     int MAX = (power_limit - 3 - 0.14*(a0*a0+a1*a1+a2*a2+a3*a3))/0.005;
-  
-  
+
+
     float A0 = fabsf(chassis.current[0] * 20.0/16384.0);
     float A1 = fabsf(chassis.current[1]* 20.0/16384.0);
     float A2 = fabsf(chassis.current[2] * 20.0/16384.0);
@@ -926,7 +925,7 @@ void power_limit_handle()
                +fabsf(chassis._encoders[1].raw_speed)*A1
                +fabsf(chassis._encoders[2].raw_speed)*A2
                +fabsf(chassis._encoders[3].raw_speed)*A3;
-  
+
     if(SUM > MAX && JudgeP->powerInfo.power >= 80){
       chassis.current[FRONT_RIGHT] = chassis.current[FRONT_RIGHT] * MAX / SUM;
       chassis.current[FRONT_LEFT] = chassis.current[FRONT_LEFT] * MAX / SUM;

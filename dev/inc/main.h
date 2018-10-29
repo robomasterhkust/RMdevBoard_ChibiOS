@@ -22,6 +22,7 @@
 #include "calibrate_sensor.h"
 
 #include "chassis.h"
+#include "chassis_task.h"
 #include "can_comm.h"
 
 #include "exti.h"

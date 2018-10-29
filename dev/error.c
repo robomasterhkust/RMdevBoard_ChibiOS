@@ -24,7 +24,7 @@ void EMsg_update(void){
 //  EMsg.imu_error = imu_get_error();
   EMsg.dbus_error = dbus_getError();
   EMsg.ist8310_error = ist8310_getError();
-  EMsg.chassis_error = chassis_getError();
+  // EMsg.chassis_error = chassis_getError();
 }
 
 

@@ -93,6 +93,7 @@ typedef enum
     SAVE_LIFE = 8,
 } chassis_mode_e;
 
+
 typedef struct
 {
     float speed_sp;
@@ -131,6 +132,7 @@ typedef enum
     CHASSIS_MOTOR_NOT_CONNECTED = 1 << 0
 };
 typedef uint8_t chassis_error_t;
+
 
 typedef struct
 {

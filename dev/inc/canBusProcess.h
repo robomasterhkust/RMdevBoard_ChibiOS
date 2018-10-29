@@ -48,7 +48,7 @@ typedef enum
 //  FRONT_RIGHT = 3,
 //  BACK_LEFT = 0,
 //  BACK_RIGHT = 2
-            FRONT_RIGHT = 0,
+    FRONT_RIGHT = 0,
     FRONT_LEFT = 1,
     BACK_LEFT = 2,
     BACK_RIGHT = 3
