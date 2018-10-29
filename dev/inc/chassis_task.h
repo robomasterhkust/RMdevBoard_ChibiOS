@@ -34,12 +34,13 @@ typedef struct
 {
     chassis_motor_t _motors[CHASSIS_MOTOR_NUM];
 
-    float           heading_sp;
-    float           rotation_sp;
-    float           drive_sp;
-    float           straft_sp;
+    float           vx_sp;
+    float           vy_sp;
+    float           vw_sp;
+
     int16_t         rotate_x_offset;
     int16_t         rotate_y_offset;
+    float           position_ref;
 
     int16_t         current[4];
 

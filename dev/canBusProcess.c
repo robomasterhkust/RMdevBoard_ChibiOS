@@ -15,13 +15,13 @@ static volatile ChassisEncoder_canStruct extra_encoder[EXTRA_MOTOR_NUM];
 static volatile Gimbal_Send_Dbus_canStruct gimbal_send_dbus;
 static volatile BarrelStatus_canStruct chassis_send_barrel;
 static volatile Ros_msg_canStruct ros_msg = {
+        .px=0.0,
         .py=0.0,
-        .pz=0.0,
         .vy=0.0,
         .vz=0.0,
         .updated=false,
-        .last_py=0,
-        .last_pz=0
+        .last_px=0,
+        .last_py=0
 };
 static volatile ShooterInfo_canStruct gimbal_send_shooter_info;
 /*

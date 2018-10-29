@@ -18,6 +18,9 @@
 #include "math_misc.h"
 #include <stdio.h>
 #include <math.h>
+#include <command_mixer.h>
+#include <canBusProcess.h>
+#include <chassis_task.h>
 
 
 static chassis_t chassis;
@@ -35,6 +38,8 @@ chassis_error_t chassis_getError(void) { return chassis.error_flag; }
 static void mecanum_inverse_kinematics
         (float vx, float vy, float w_degree);
 
+static void clear_motor_speed_sp();
+
 static void chassis_encoder_update
         (volatile ChassisEncoder_canStruct *encoderPtr);
 
@@ -44,7 +49,9 @@ static void velocity_control();
 
 static void chassis_drive_motor();
 
-static void chassis_state_machine();
+static void chassis_state_machine(command_t* cmd, volatile GimbalEncoder_canStruct *encoder);
+
+static void follow_gimbal_handler(float vx, float vy, float angle, pid_controller_t* heading_controller);
 
 /*
  * private parameters
@@ -53,6 +60,7 @@ bool                rotation_center_gimbal = false;
 float               motor_speed_cutoff_freq = 20.0f;
 lpfilterStruct      lp_motor_speed[CHASSIS_MOTOR_NUM];
 pi_controller_t     motor_vel_ctrl[CHASSIS_MOTOR_NUM];
+pid_controller_t    heading_ctrl;
 
 /**
  * 1. Chassis thread
@@ -65,8 +73,7 @@ static THD_FUNCTION(chassis_control, p)
     chRegSetThreadName("chassis controller");
 
     volatile ChassisEncoder_canStruct* encoderPtr = can_getChassisMotor();
-
-    chassis.ctrl_mode = CHASSIS_STOP;
+    command_t* cmd_mixer = cmd_mixer_get();
 
     uint32_t tick = chVTGetSystemTimeX();
 
@@ -79,13 +86,7 @@ static THD_FUNCTION(chassis_control, p)
         }
         chassis_encoder_update(encoderPtr);
 
-        chassis_state_machine();
-
-        float vx = 0.0f;
-        float vy = 0.0f;
-        float vw = 0.0f;
-
-        mecanum_inverse_kinematics(vx, vy, vw);
+        chassis_state_machine(cmd_mixer, can_getGimbalMotor());
 
         power_limit_control(judgeDataGet());
 
@@ -105,11 +106,16 @@ chassis_task_init()
         memset(&chassis._motors, 0, sizeof(chassis_motor_t));
         memset(&motor_vel_ctrl, 0, sizeof(pi_controller_t));
         lpfilter_init(lp_motor_speed + i, CHASSIS_UPDATE_FREQ, motor_speed_cutoff_freq);
-        motor_vel_ctrl[i].ki = 0.2f;
         motor_vel_ctrl[i].kp = 150.0f;
+        motor_vel_ctrl[i].ki = 0.2f;
         motor_vel_ctrl[i].error_int_max = 150.0f;
         motor_vel_ctrl[i].output_max = MOTOR_OUTPUT_MAX;
     }
+    memset(&heading_ctrl, 0, sizeof(pid_controller_t));
+    heading_ctrl.kp = 70.0f;
+    heading_ctrl.ki = 0.0f;
+    heading_ctrl.kd = 1.0f;
+
     chThdCreateStatic(chassis_control_wa, sizeof(chassis_control_wa), NORMALPRIO,
                       chassis_control, NULL);
 }
@@ -180,6 +186,14 @@ mecanum_inverse_kinematics(float vx, float vy, float w_degree)
     chassis._motors[FRONT_LEFT].speed_sp  = (vx + vy + vw * rotate_ratio_fl) / r;
     chassis._motors[BACK_LEFT].speed_sp   = (vx - vy + vw * rotate_ratio_bl) / r;
     chassis._motors[BACK_RIGHT].speed_sp  = (-1 * vx - vy + vw * rotate_ratio_br) / r;
+}
+
+static void
+clear_motor_speed_sp() {
+    chassis._motors[FRONT_RIGHT].speed_sp = 0;
+    chassis._motors[FRONT_LEFT].speed_sp  = 0;
+    chassis._motors[BACK_LEFT].speed_sp   = 0;
+    chassis._motors[BACK_RIGHT].speed_sp  = 0;
 }
 
 /*
@@ -273,7 +287,37 @@ power_limit_control(judge_fb_t* judgePtr)
  * 4. State Machine
  */
 static void
-chassis_state_machine(){
+chassis_state_machine(command_t* cmd, volatile GimbalEncoder_canStruct *encoder){
+    if (cmd->reboot_flag) {
+        chassis.position_ref = encoder[GIMBAL_YAW].radian_angle;
+    }
 
+    switch (cmd->ctrl_mode) {
+        case CTL_CHASSIS_RELAX:     clear_motor_speed_sp(); break;
+        case CTL_CHASSIS_STOP:      clear_motor_speed_sp(); break;
+        case CTL_MANUAL_SEPARATE_GIMBAL: break;
+        case CTL_MANUAL_FOLLOW_GIMBAL:
+            follow_gimbal_handler(cmd->vx, cmd->vy, \
+            encoder[GIMBAL_YAW].radian_angle - chassis.position_ref, &heading_ctrl);
+            break;
+        case CTL_DODGE_MODE: break;
+        case CTL_AUTO_SEPARATE_GIMBAL: break;
+        case CTL_AUTO_FOLLOW_GIMBAL: break;
+        case CTL_DODGE_MOVE_MODE: break;
+        case CTL_SAVE_LIFE: break;
+        default:break;
+    }
+}
+
+// planar robot velocity command to follow an angle
+static void
+follow_gimbal_handler(float vx, float vy, float angle, pid_controller_t* heading_controller)
+{
+    chassis.vx_sp = vx * sinf(angle) + vy * cosf(angle);
+    chassis.vy_sp = vx * cosf(angle) - vy * sinf(angle);
+
+    chassis.vw_sp = pid_control(angle, heading_controller);
+
+    mecanum_inverse_kinematics(chassis.vx_sp, chassis.vy_sp, chassis.vw_sp);
 }
 
