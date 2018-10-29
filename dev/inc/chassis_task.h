@@ -18,6 +18,8 @@
 
 #define CHASSIS_CONNECTION_ERROR_COUNT 10U
 
+#define MOTOR_OUTPUT_MAX 16384
+
 typedef uint8_t chassis_error_t;
 
 /*

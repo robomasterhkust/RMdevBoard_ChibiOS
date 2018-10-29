@@ -9,8 +9,6 @@
  *
  * 20181029 Beck Pang
  */
-
-#include <chassis_task.h>
 #include "ch.h"
 #include "hal.h"
 #include "canBusProcess.h"
@@ -19,6 +17,9 @@
 #include "keyboard.h"
 #include "chassis_task.h"
 #include "math_misc.h"
+#include <stdio.h>
+#include <math.h>
+
 
 static chassis_t chassis;
 
@@ -38,6 +39,10 @@ static void mecanum_inverse_kinematics
 static void chassis_encoder_update
         (volatile ChassisEncoder_canStruct *encoderPtr);
 
+static void power_limit_control(judge_fb_t* judgePtr);
+
+static void velocity_control();
+
 static void chassis_drive_motor();
 
 static void chassis_state_machine();
@@ -45,9 +50,10 @@ static void chassis_state_machine();
 /*
  * private parameters
  */
-bool            rotation_center_gimbal = false;
-float           motor_speed_cutoff_freq = 20.0f;
-lpfilterStruct  lp_motor_speed[CHASSIS_MOTOR_NUM];
+bool                rotation_center_gimbal = false;
+float               motor_speed_cutoff_freq = 20.0f;
+lpfilterStruct      lp_motor_speed[CHASSIS_MOTOR_NUM];
+pi_controller_t     motor_vel_ctrl[CHASSIS_MOTOR_NUM];
 
 /**
  * 1. Chassis thread
@@ -82,10 +88,11 @@ static THD_FUNCTION(chassis_control, p)
 
         mecanum_inverse_kinematics(vx, vy, vw);
 
-        chassis_drive_motor();
+        power_limit_control(judgeDataGet());
+
+        velocity_control();
     }
 }
-
 
 
 void
@@ -97,14 +104,19 @@ chassis_task_init()
 
     for (int i = 0; i < CHASSIS_MOTOR_NUM; ++i) {
         memset(&chassis._motors, 0, sizeof(chassis_motor_t));
+        memset(&motor_vel_ctrl, 0, sizeof(pi_controller_t));
         lpfilter_init(lp_motor_speed + i, CHASSIS_UPDATE_FREQ, motor_speed_cutoff_freq);
+        motor_vel_ctrl[i].ki = 0.2f;
+        motor_vel_ctrl[i].kp = 150.0f;
+        motor_vel_ctrl[i].error_int_max = 150.0f;
+        motor_vel_ctrl[i].output_max = MOTOR_OUTPUT_MAX;
     }
     chThdCreateStatic(chassis_control_wa, sizeof(chassis_control_wa), NORMALPRIO,
                       chassis_control, NULL);
 }
 
 /**
- * 2. Mechanum wheel kinematics
+ 2. Mechanum wheel kinematics
 
            ^ x
            |
@@ -198,6 +210,11 @@ chassis_encoder_update(volatile ChassisEncoder_canStruct *encoderPtr)
     }
 }
 
+
+/**
+ * 3. Chassis control policy
+ */
+
 static void
 chassis_drive_motor()
 {
@@ -208,10 +225,50 @@ chassis_drive_motor()
                         chassis.current[BACK_RIGHT]);
 }
 
-/**
- * 3. Chassis control policy
+/*
+ * PI velocity control loop, send motor command
  */
+static void
+velocity_control()
+{
+    for (int i = 0; i < CHASSIS_MOTOR_NUM; ++i) {
+        float error = chassis._motors[i].speed_sp - chassis._motors[i]._speed;
+        chassis.current[i] = (int16_t) pi_control(error, &motor_vel_ctrl[i]);
+    }
+    chassis_drive_motor();
+}
 
+static void
+power_limit_control(judge_fb_t* judgePtr)
+{
+    float energy_threshold = 40.0f; // Joules
+    int32_t total_cur_threshold = 40000;
+
+    float remain_energy = judgePtr->powerInfo.powerBuffer;
+    int32_t total_cur_limit;
+
+    // if (!judge_connected)
+    // else
+    if (remain_energy > energy_threshold) {
+        total_cur_limit = total_cur_threshold;
+    }
+    else {
+        // control
+        total_cur_limit = (int32_t)(remain_energy * remain_energy / \
+                            (energy_threshold * energy_threshold) * total_cur_threshold);
+    }
+    int32_t total_cur = abs(chassis.current[0]) + abs(chassis.current[1]) + \
+                        abs(chassis.current[2]) + abs(chassis.current[3]);
+
+    if (total_cur > total_cur_limit)
+    {
+        float ratio = (float)total_cur_limit / total_cur;
+        chassis.current[0] = (int16_t)(chassis.current[0] * ratio);
+        chassis.current[1] = (int16_t)(chassis.current[0] * ratio);
+        chassis.current[2] = (int16_t)(chassis.current[0] * ratio);
+        chassis.current[3] = (int16_t)(chassis.current[0] * ratio);
+    }
+}
 
 /**
  * 4. State Machine
