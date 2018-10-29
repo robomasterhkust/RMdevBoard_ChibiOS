@@ -17,7 +17,7 @@
 #include "attitude.h"
 #include "calibrate_sensor.h"
 
-#include "chassis.h"
+//#include "chassis.h"
 #include "shell.h"
 #include <string.h>
 
@@ -25,7 +25,7 @@ typedef struct{
   dbus_error_t dbus_error;
   imu_att_error_t imu_error;
   ist8310_error_flag_t ist8310_error;
-  chassis_error_t chassis_error;
+//  chassis_error_t chassis_error;
 }ERRORStruct, *pEStruct;
 
 pEStruct get_EMsg(void);
@@ -81,7 +81,7 @@ void printError_dbus(BaseSequentialStream * chp, dbus_error_t error_Index);
  * CHASSIS_MOTOR_3_NOT_CONNECTED = 1 <<3
  */
 
-void printError_chassis(BaseSequentialStream * chp, chassis_error_t error_Index);
+//void printError_chassis(BaseSequentialStream * chp, chassis_error_t error_Index);
 
 
 //

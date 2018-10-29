@@ -298,7 +298,7 @@ chassis_state_machine(command_t* cmd, volatile GimbalEncoder_canStruct *encoder)
         case CTL_MANUAL_SEPARATE_GIMBAL: break;
         case CTL_MANUAL_FOLLOW_GIMBAL:
             follow_gimbal_handler(cmd->vx, cmd->vy, \
-            encoder[GIMBAL_YAW].radian_angle - chassis.position_ref, &heading_ctrl);
+            (encoder[GIMBAL_YAW].radian_angle - chassis.position_ref) * GIMBAL_YAW_GEAR, &heading_ctrl);
             break;
         case CTL_DODGE_MODE: break;
         case CTL_AUTO_SEPARATE_GIMBAL: break;

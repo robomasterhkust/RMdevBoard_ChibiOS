@@ -11,6 +11,8 @@
 #define CMD_MIXER_RC_MAX 364
 #define RC_RESOLUTION    660
 
+#define GIMBAL_YAW_GEAR 0.533f
+
 // remote mode chassis move speed limit, mm/s
 #define CHASSIS_RC_MAX_SPEED_X  3300.0f
 #define CHASSIS_RC_MAX_SPEED_Y  3300.0f
