@@ -4,38 +4,35 @@
 #include "ch.h"
 #include "hal.h"
 
-#include "math_misc.h"
-
 #include "usbcfg.h"
 #include "flash.h"
 #include "chprintf.h"
 
+#include "math_misc.h"
 #include "canBusProcess.h"
 #include "dbus.h"
 #include "params.h"
-#include "sdlog.h"
-#include "exti.h"
+#include "error.h"
+#include "judge.h"
 
 #include "mpu6500.h"
 #include "ist8310.h"
 #include "adis16265.h"
 #include "attitude.h"
-#include "imu_temp.h"
 #include "calibrate_sensor.h"
 
-#include "gimbal.h"
-#include "shoot.h"
-#include "feeder.h"
-#include "barrelStatus.h"
-
-#include "complementary_filter.h"
+#include "chassis.h"
 #include "can_comm.h"
 
-#include "rune.h"
-#include "keyboard.h"
-void shellStart(void);
+#include "exti.h"
+#include "imu_temp.h"
+#include "sdlog.h"
+#include "barrelStatus.h"
 
-bool power_check(void);
-bool power_failure(void);
+#include "custom_data.h"
+#include "bullet_tracker_task.h"
+#include "magazine_cover_task.h"
+
+void shellStart(void);
 
 #endif

@@ -4,6 +4,7 @@
 #include "stdbool.h"
 #include "hal.h"
 #include "string.h"
+#include "chassis.h"
 /**********************************************************************************
  * bit      :15   14   13   12   11   10   9   8   7   6     5     4   3   2   1
  * keyboard : V    C    X     Z    G    F    R   E   Q  CTRL  SHIFT  D   A   S   W
@@ -40,9 +41,8 @@
 #define KEY_A       2
 #define KEY_S       1
 #define KEY_W       0
-
-#define KEYBOARD_UPDATE_FREQ 500
-#define KEYBOARD_UPDATE_PERIOD_US 1000000/KEYBOARD_UPDATE_FREQ
+#define CHASSIS_KB_MAX_SPEED_X 3300.0f
+#define CHASSIS_KB_MAX_SPEED_Y 3300.0f
 
 typedef enum
 {
@@ -88,9 +88,8 @@ typedef struct
 } kb_ctrl_t;
 
 extern kb_ctrl_t km;
-extern int bitmap[15];
-//void keyboard_chassis_process(chassisStruct*,Gimbal_Send_Dbus_canStruct* );
+void keyboard_chassis_process(chassisStruct*,Gimbal_Send_Dbus_canStruct* );
 void keyboard_reset();
-void keyboardInit();
-//bool keyboard_enable(Gimbal_Send_Dbus_canStruct* );
+bool keyboard_enable(Gimbal_Send_Dbus_canStruct* );
+int* Bitmap_get();
 #endif

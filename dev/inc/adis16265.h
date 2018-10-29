@@ -42,8 +42,8 @@ typedef enum{
 #define GYRO_NSS_port           GPIOE
 
 /* Sensor specific configuration*/
-#define GYRO_RESET_PIN          GPIOI_PIN9
-#define GYRO_RESET_PORT         GPIOI
+//#define GYRO_RESET_PIN          GPIOA_PIN15
+//#define GYRO_RESET_PORT         GPIOA
 
 /*==========END OF USER CONFIGURATION==================*/
 
@@ -71,9 +71,15 @@ typedef uint16_t gyrodata_t;
 typedef enum{
   NOT_INITED = 0,
   INITED = 1,
-  CALIBRATING = 2,
-  ADIS_ERROR = 3
+  CALIBRATING = 2
 } gyro_state_t;
+
+typedef enum {
+  GYRO_OK = 0,
+  GYRO_CORRUPTED_Q_DATA = 1<<1,
+  GYRO_LOSE_FRAME = 1<<7
+} gyro_error_t;
+
 
 typedef struct {
   gyro_state_t state;
@@ -107,6 +113,8 @@ uint16_t gyro_get_flash(PGyroStruct pGyro);                     //read number of
 uint16_t gyro_get_power(PGyroStruct pGyro);                     //return milli-volt
 uint16_t gyro_get_adc(PGyroStruct pGyro);                       //return milli-volt
 uint16_t gyro_get_temp(PGyroStruct pGyro);                      //return milli-degree
+gyro_state_t gyro_getState(void);                               //return state
+uint8_t gyro_getError(void);                                    //return errorFlag
 
 extern float yaw_pid_output_angle;
 

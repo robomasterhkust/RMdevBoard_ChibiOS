@@ -1,3 +1,4 @@
+
 ##############################################################################
 # Build global options
 # NOTE: Can be overridden externally.
@@ -105,6 +106,7 @@ include $(CHIBIOS)/os/rt/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
 include $(CHIBIOS)/os/various/fatfs_bindings/fatfs.mk
 # Other files (optional).
 #include $(CHIBIOS)/test/rt/test.mk
+include $(CHIBIOS)/dsp/dsp.mk
 
 # Define linker script file here
 LDSCRIPT= $(STARTUPLD)/STM32F429xI.ld
@@ -126,12 +128,14 @@ CSRC = $(STARTUPSRC) \
        $(CHIBIOS)/os/various/syscalls.c \
 			 $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
        $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
-       main.c shellcfg.c flash.c sdlog.c\
-       mpu6500.c attitude.c ist8310.c adis16265.c math_misc.c \
-       canBusProcess.c dbus.c gimbal.c params.c usbcfg.c \
-       calibrate_sensor.c shoot_pwm.c feeder.c rune.c\
-       exti.c imu_temp.c barrelStatus.c keyboard.c complementary_filter.c \
-       can_comm.c
+       main.c shellcfg.c flash.c \
+       mpu6500.c attitude.c ist8310.c math_misc.c \
+       canBusProcess.c dbus.c params.c usbcfg.c \
+       calibrate_sensor.c shoot_pwm.c \
+       exti.c pwm_struct.c imu_temp.c chassis.c keyboard.c judge.c\
+       adis16265.c sdlog.c error.c \
+       barrelStatus.c bullet_tracker_task.c magazine_cover_task.c\
+       custom_data.c remote_debug.c can_comm.c
 
 
 

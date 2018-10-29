@@ -29,8 +29,6 @@ extern "C" {
 
 pTPIDStruct TPID_get(void);
 
-#define tempController_kill() (pwmEnableChannel(&PWMD3, 1, PWM_PERCENTAGE_TO_WIDTH(&PWMD3, 0)))
-
 void tempPID_Init(pTPIDStruct tempPID, const TPIDConfigStruct* const tpid_conf);
 int tempPID_Update(pTPIDStruct tempPID, PIMUStruct pIMU);
 void tempControllerInit(void);

@@ -12,16 +12,24 @@
 #endif
 
 #ifdef PARAMS_USE_UART
-  #define UART_PARAMS &UARTD3
+
+  #define UART_PARAMS &UARTD2
   #define PARAMS_BR 115200
 #elif defined(PARAMS_USE_USB)
   /*
   You need to add these items to shellcfg.c & Shellcommand commands[]
   #ifdef PARAMS_USE_USB
+<<<<<<< HEAD
     {"/xFD",cmd_param_scale},
     {"/xFB",cmd_param_update},
     {"/xFA",cmd_param_tx},
     {"/xF9",cmd_param_rx},
+=======
+    {"/xFE",cmd_param_rx},
+    {"/xFD",cmd_param_scale},
+    {"/xFB",cmd_param_update},
+    {"/xFA",cmd_param_tx},
+>>>>>>> upstream/dev
   #endif
   */
   void cmd_param_rx(BaseSequentialStream * chp, int argc, char *argv[]);
@@ -29,6 +37,7 @@
   void cmd_param_update(BaseSequentialStream * chp, int argc, char *argv[]);
   void cmd_param_tx(BaseSequentialStream * chp, int argc, char *argv[]);
 #endif
+
 
 #define PARAMS_NUM_MAX        32U
 typedef float param_t, *p_param_t;
@@ -45,6 +54,7 @@ typedef struct{
   param_t kp;
   param_t ki;
   param_t kd;
+  float error[3];
   float error_int;
   float error_int_max;
 } __attribute__((packed)) pid_controller_t;

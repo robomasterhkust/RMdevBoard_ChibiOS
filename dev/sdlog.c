@@ -1,10 +1,19 @@
 #include "ch.h"
 #include "hal.h"
 #include "sdlog.h"
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "ff.h"
-
 sdlogStruct logger;
+int tim;
+char w0[10];
+char w1[10];
+char w2[10];
+char w3[10];
+int s_i;
+int s_f;
 
 /*
  * Working area for driver.
@@ -12,7 +21,12 @@ sdlogStruct logger;
 static uint8_t sd_scratchpad[512];
 static FATFS fs;
 static FIL fil;
+static FRESULT reg_error;
 
+FRESULT er;
+char name[10] = "test0.txt";
+
+//extern PIMUStruct pIMU;
 /*
  * SDIO configuration.
  */
@@ -39,16 +53,16 @@ uint8_t sdlog_createFile(char fileName[])
 {
   FRESULT fr;
 
-  fr =  f_mount(&fs, "", 1);
-  if(fr)
-    return (uint8_t)fr;
+  //fr =  f_mount(&fs, "", 0);
+  if(reg_error)
+    return (uint8_t)reg_error;
 
   /* Opens an existing file. If not exist, creates a new file. */
-  fr = f_open(&fil, fileName,  FA_CREATE_ALWAYS);
-  if (!fr)
+  fr = f_open(&fil, fileName,  FA_CREATE_ALWAYS);//FA_CREAT_ALWAYS-->always creat, overwrite if exist
+  if (!fr)//fr == 0 --> the file exists
   {
-    fr = f_lseek(&fil, 0);
-    if (fr)
+    fr = f_lseek(&fil, 0); //try to write from beginning
+    if (fr)//error occurs when writing
     {
       f_close(&fil);
       return fr;
@@ -70,6 +84,12 @@ uint8_t sdlog_createFile(char fileName[])
 uint8_t sdlog_put(const uint8_t pos, const void* const buf, const uint8_t len)
 {
   //TODO put the buf* and length to sdlogstruct and verify it
+  if(logger.buf[pos])
+    return -1;
+  logger.buf[pos] = buf;
+  logger.len_buf[pos] = len;
+  logger.position |= (1<<pos);
+
   return 0;
 }
 
@@ -82,7 +102,14 @@ static inline uint8_t sdlog_write(const uint8_t pos)
 {
   uint8_t len;
   FRESULT fr;
-  fr = f_write(&fil, logger.buf[pos], logger.len_buf[pos], &len);
+
+  //fr = f_write(&fil, logger.buf[pos], logger.len_buf[pos], &len);
+  if(pos==1)
+    fr = f_write(&fil,(int *)logger.buf[pos], logger.len_buf[pos],&len);
+  else if(pos%2)
+    fr = f_write(&fil,(float *)logger.buf[pos], logger.len_buf[pos],&len);
+  else
+    fr = f_write(&fil,(char *)logger.buf[pos], logger.len_buf[pos],&len);
 
   return (uint8_t)fr;
 }
@@ -90,54 +117,99 @@ static inline uint8_t sdlog_write(const uint8_t pos)
 static THD_WORKING_AREA(sdlog_thread_wa,1024);
 static THD_FUNCTION(sdlog_thread,p)
 {
-  uint32_t tick = chVTGetSystemTimeX();
+    uint32_t tick = chVTGetSystemTimeX();
+    tim = ST2MS(tick);
+    s_i = snprintf(NULL,0,"%d",tim)+1;
+   // float temp = pIMU->accelData[0];
+   // s_f = snprintf(NULL,0,"%f",temp)+1;
 
-  /* for test*/
-  char buf1[] = "   \n";
-  char buf2[] = "12345678\n12345678\n";
-  char buf3[] = "abcdefgh\n12345678\n";
-  char buf4[] = "abcdefgh\nabcdefgh\n";
-  logger.buf[0] = buf1;
-  logger.buf[1] = buf2;
-  logger.buf[2] = buf3;
-  logger.buf[3] = buf4;
-  logger.len_buf[0] = 4;
-  logger.len_buf[1] = 18;
-  logger.len_buf[2] = 18;
-  logger.len_buf[3] = 18;
-  logger.position = 0x0006;
-  /**/
-
-  f_open(&fil, "test.txt",  FA_WRITE);
-  f_lseek(&fil, 0);
-
-  while(true)
-  {
-    tick += MS2ST(SDLOG_UPDATE_PERIOD_MS);
-    if(chVTGetSystemTimeX() < tick)
-      chThdSleepUntil(tick);
-    else
-    {
-      tick = chVTGetSystemTimeX();
-      logger.errorCode |= SD_LOSE_FRAME;
-    }
-
-    uint8_t i, error;
-    for(i = 0; i<SDLOG_NUM_BUFFER; i++)
-    {
-      if(!(logger.position & (1<<i)))
-        continue;
-      error = sdlog_write(i);
-      if(error)
-      {
-        logger.errorCode |= (error << 7);
-        break;
+    /* testing writing in IMU acceleration data log*/
+    logger.position = 0x00AA; //use buf[1,3,5,7]
+    /* configuring file head*/
+    int k;
+    logger.len_buf[1] = s_i;
+    for(k=2;k<8;k++){
+      if(k%2)
+        logger.len_buf[k] = s_f;
+      else{
+        logger.len_buf[k] = 1;
+        logger.buf[k] = "\t";
       }
     }
+    logger.len_buf[8] = 1;
+    logger.buf[8] = "\n";
+    /*char buff1[20] = "type:";
+    char buff2[20] = "1systime";
+    char buff3[20] = "3float";
+    char buff4[20] = "\n";
+    logger.buf[1] = buff1;
+    logger.buf[2] = buff2;
+    logger.buf[3] = buff3;
+    logger.buf[4] = buff4;*/
 
-    if(!error)
-      f_sync(&fil);
-  }
+    f_open(&fil, name,  FA_WRITE);
+    f_lseek(&fil, 0);
+
+    while(true)
+    {
+      tick += MS2ST(SDLOG_UPDATE_PERIOD_MS);
+      tim = ST2MS(tick);
+            char s0[5];
+            char b0[9];
+            char b1[9];
+            char b2[9];
+            /*int s_i = snprintf(NULL,0,"%d",s0);
+            int s_f = snprintf(NULL,0,"%d",b0);**/
+            snprintf(s0,s_i,"%d",tim);
+ //           snprintf(b0,s_f,"%f",pIMU->accelData[0]);
+ //           snprintf(b1,s_f,"%f",pIMU->accelData[1]);
+ //           snprintf(b2,s_f,"%f",pIMU->accelData[2]);
+
+            strcat(s0," ");
+            strcat(b0," ");
+            strcat(b1," ");
+            strcat(b2,"\n");
+
+            logger.buf[1] = s0;
+            logger.buf[3] = b0;
+            logger.buf[5] = b1;
+            logger.buf[7] = b2;
+
+            /*logger.buf[1] = &tim;
+            logger.buf[3] = &pIMU->accelData[0];
+            logger.buf[5] = &pIMU->accelData[1];
+            logger.buf[7] = &pIMU->accelData[2];**/
+            /* data used for watching in OZone*/
+            strcpy(w0,logger.buf[1]);
+            strcpy(w1,logger.buf[3]);
+            strcpy(w2,logger.buf[5]);
+            strcpy(w3,logger.buf[7]);
+
+      if(chVTGetSystemTimeX() < tick)
+        chThdSleepUntil(tick);
+      else
+      {
+        tick = chVTGetSystemTimeX();
+        logger.errorCode |= SD_LOSE_FRAME;
+      }
+      uint8_t i, error;
+      for(i = 0; i<SDLOG_NUM_BUFFER; i++)
+      {
+        if(!(logger.position & (1<<i)))
+          continue;
+        error = sdlog_write(i);
+        if(error)
+        {
+          logger.errorCode |= (error << 7);
+          break;
+        }
+      }
+
+      if(!error)
+        f_sync(&fil);
+
+
+    }
 }
 
 /**
@@ -161,8 +233,23 @@ void sdlog_init(void)
     logger.errorCode |= SD_NOCONNECT;
     return;
   }
+  int in = 0;
+  reg_error = f_mount(&fs, "", 1);
 
-  logger.errorCode |= sdlog_createFile("test.txt");
+  volatile FRESULT err = f_open(&fil,"test0.txt",FA_OPEN_EXISTING);
+  while(err==FR_OK){
+    in++;
+    char* head = "test";
+    char* tail = ".txt";
+    char* mid = malloc(4);
+    snprintf(mid,4,"%d",in);
+    strcpy(name,head);
+    strcat(name,mid);
+    strcat(name,tail);
+    err = f_open(&fil,name,FA_OPEN_EXISTING);
+  }
+
+  logger.errorCode |= sdlog_createFile(name);
 
   chThdCreateStatic(sdlog_thread_wa, sizeof(sdlog_thread_wa),
                     NORMALPRIO - 10,

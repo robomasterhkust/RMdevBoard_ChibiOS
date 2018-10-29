@@ -5,16 +5,16 @@
 #define SDLOG_NUM_BUFFER  32U
 
 typedef enum{
-  SD_NOCARD = 1<<4,
-  SD_NOCONNECT = 1<<5,
-  SD_LOSE_FRAME = 1<<6
+    SD_NOCARD = 1<<4,
+    SD_NOCONNECT = 1<<5,
+    SD_LOSE_FRAME = 1<<6
 }sdlog_error_t;
 
 typedef struct{
-  uint32_t position;
-  uint8_t* buf[SDLOG_NUM_BUFFER];
-  uint8_t len_buf[SDLOG_NUM_BUFFER];
-  sdlog_error_t errorCode;
+    uint32_t position;
+    uint8_t* buf[SDLOG_NUM_BUFFER];
+    uint8_t len_buf[SDLOG_NUM_BUFFER];
+    sdlog_error_t errorCode;
 }sdlogStruct;
 
 void sdlog_init(void);

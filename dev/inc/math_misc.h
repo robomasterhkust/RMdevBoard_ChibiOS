@@ -13,7 +13,7 @@
  *
  * Data structure for a IIR second-order sections form filter
  * b_0 + b_1 * z^-1 + b_2 * z^-2
- * -------------------------------
+ * -----------------------------
  *   1 + a_1 * z^-1 + a_2 * z^-2
  */
 typedef struct {
@@ -37,23 +37,14 @@ static inline void bound(float* input, const float max)
 static inline float boundOutput(const float input, const float max)
 {
   float output;
-  if(input < max && input > -max)
+  if(input <= max && input >= -max)
     output = input;
-  else if(input >= max)
+  else if(input > max)
     output = max;
   else
     output = -max;
 
   return output;
-}
-
-static inline float mapInput(float x, float in_min, float in_max, float out_min, float out_max)
-{
-  if(x >= in_max)
-    return out_max;
-  else if(x <= in_min)
-    return out_min;
-  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
 static inline float vector_norm(const float v[], const uint8_t length)
@@ -89,10 +80,7 @@ static inline float vector3_projection(const float u[3], const float v[3])
 static inline float norm_vector3_projection(const float u[3], const float v[3])
 {
   float norm = vector_norm(v,3);
-  if(norm != 0.0f)
-    return (u[0]*v[0]+u[1]*v[1]+u[2]*v[2])/(norm*norm);
-  else
-    return 0.0f;
+  return (u[0]*v[0]+u[1]*v[1]+u[2]*v[2])/(norm*norm);
 }
 
 
@@ -144,25 +132,6 @@ static inline void quarternion2euler(const float q[4], float euler_angle[3])
   euler_angle[0] = atan2f(2.0f * (q[0] * q[1] + q[2] * q[3]), 1.0f - 2.0f * (q[1] * q[1] + q[2] * q[2]));
   euler_angle[1] = asinf(2.0f * (q[0] * q[2] - q[3] * q[1]));
   euler_angle[2] = atan2f(2.0f * (q[0] * q[3] + q[1] * q[2]), 1.0f - 2.0f * (q[2] * q[2] + q[3] * q[3]));
-}
-
-/**
- * create quaternion from euler angle
- */
-static inline void euler2quarternion(const float euler_angle[3], float q[4])
-{
-  float cosPhi_2 = cosf(euler_angle[0] / 2.0f);
-  float sinPhi_2 = sinf(euler_angle[0] / 2.0f);
-  float cosTheta_2 = cosf(euler_angle[1] / 2.0f);
-  float sinTheta_2 = sinf(euler_angle[1] / 2.0f);
-  float cosPsi_2 = cosf(euler_angle[2] / 2.0f);
-  float sinPsi_2 = sinf(euler_angle[2] / 2.0f);
-
-
-  q[0] = (cosPhi_2 * cosTheta_2 * cosPsi_2 + sinPhi_2 * sinTheta_2 * sinPsi_2);
-  q[1] = (sinPhi_2 * cosTheta_2 * cosPsi_2 - cosPhi_2 * sinTheta_2 * sinPsi_2);
-  q[2] = (cosPhi_2 * sinTheta_2 * cosPsi_2 + sinPhi_2 * cosTheta_2 * sinPsi_2);
-  q[3] = (cosPhi_2 * cosTheta_2 * sinPsi_2 - sinPhi_2 * sinTheta_2 * cosPsi_2);
 }
 
 /**
@@ -242,11 +211,23 @@ static inline void rotm2eulerangle(const float rotm[3][3], float euler_angle[3])
   }
 }
 
+/**
+ * @brief map from one unit to another
+ * @param x
+ * @param in_min
+ * @param in_max
+ * @param out_min
+ * @param out_max
+ * @return linearly unified output
+ */
+static inline float map(float x, float in_min, float in_max, float out_min, float out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
 void lpfilter_init(lpfilterStruct* const lp,
   const float sample_freq, const float cutoff_freq);
 
 float lpfilter_apply(lpfilterStruct* const lp, const float input);
-
-bool state_count(const bool statement, const uint16_t count, uint16_t* const curr_count);
 
 #endif

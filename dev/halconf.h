@@ -1,3 +1,4 @@
+
 /*
     ChibiOS - Copyright (C) 2006..2015 Giovanni Di Sirio
 
@@ -29,7 +30,6 @@
 #define _HALCONF_H_
 
 #include "mcuconf.h"
-#include "roboconf.h"
 
 #define CHPRINTF_USE_FLOAT TRUE
 
@@ -39,23 +39,12 @@
 #define LEDR_ON()       (palClearPad(GPIOE, GPIOE_LED_R))
 #define LEDR_OFF()      (palSetPad(GPIOE, GPIOE_LED_R))
 #define LEDR_TOGGLE()   (palTogglePad(GPIOE, GPIOE_LED_R))
-#define LEDY_ON()       (palSetPad(GPIOA, GPIOA_LED_Y))
-#define LEDY_OFF()      (palClearPad(GPIOA, GPIOA_LED_Y))
+#define LEDY_OFF()       (palClearPad(GPIOA, GPIOA_LED_Y))
+#define LEDY_ON()      (palSetPad(GPIOA, GPIOA_LED_Y))
 #define LEDY_TOGGLE()   (palTogglePad(GPIOA, GPIOA_LED_Y))
-#define LEDB_ON()       (palSetPad(GPIOA, GPIOA_LED_B))
-#define LEDB_OFF()      (palClearPad(GPIOA, GPIOA_LED_B))
+#define LEDB_OFF()       (palClearPad(GPIOA, GPIOA_LED_B))
+#define LEDB_ON()      (palSetPad(GPIOA, GPIOA_LED_B))
 #define LEDB_TOGGLE()   (palTogglePad(GPIOA, GPIOA_LED_B))
-
-#define BULLET_LS_GPIO    GPIOC
-#define BULLET_LS_PIN     GPIOC_PIN1
-#define BULLET_LS_DOWN    0U
-
-//#define LEDB_ON()       (palClearPad(GPIOA, GPIOA_TIM2_CH3))
-//#define LEDB_OFF()      (palSetPad(GPIOA, GPIOA_TIM2_CH3))
-//#define LEDB_TOGGLE()   (palTogglePad(GPIOA, GPIOA_TIM2_CH3))
-//#define LEDO_ON()       (palClearPad(GPIOA, GPIOA_TIM2_CH2))
-//#define LEDO_OFF()      (palSetPad(GPIOA, GPIOA_TIM2_CH2))
-//#define LEDO_TOGGLE()   (palTogglePad(GPIOA, GPIOA_TIM2_CH2))
 
 //Sets of command for Pneumatics Output
 #define PN1_ON()        (palSetPad(GPIOD, GPIOD_PNEUMATICS1))
@@ -214,7 +203,7 @@
  * @brief   Enables the WDG subsystem.
  */
 #if !defined(HAL_USE_WDG) || defined(__DOXYGEN__)
-#define HAL_USE_WDG                 TRUE
+#define HAL_USE_WDG                 FALSE
 #endif
 
 /*===========================================================================*/
@@ -345,7 +334,7 @@
  *          buffers.
  */
 #if !defined(SERIAL_BUFFERS_SIZE) || defined(__DOXYGEN__)
-#define SERIAL_BUFFERS_SIZE         16
+#define SERIAL_BUFFERS_SIZE         128
 #endif
 
 /*===========================================================================*/
@@ -426,3 +415,4 @@
 #endif /* _HALCONF_H_ */
 
 /** @} */
+

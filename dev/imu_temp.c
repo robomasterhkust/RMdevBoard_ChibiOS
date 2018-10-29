@@ -6,36 +6,19 @@
  */
 #include "ch.h"
 #include "hal.h"
-
 #include "mpu6500.h"
 #include "imu_temp.h"
 
 extern PWMDriver PWMD12;
 
 #define TEMP_THRESHOLD 62
-#define TEMPERATURE_UPDATE_PERIOD_S 1U
+#define TEMPERATURE_UPDATE_PERIOD_US 1U
 
 TPIDStruct tempPID1;
 
-// These are the definitions of the PWMConfig stuctures
-// E.g. the function name means PWM 3 CONFIGURATION
-static PWMConfig pwm3cfg = {
-        100000,   /* 1MHz PWM clock frequency.   */
-        100,      /* Initial PWM period 1ms.       */
-        NULL,       /* Periodic call back */
-        {
-                {PWM_OUTPUT_DISABLED, NULL}, /* {<pwm_initialisation_status>, <callback function of the channel> */
-                {PWM_OUTPUT_ACTIVE_HIGH, NULL},
-                {PWM_OUTPUT_DISABLED, NULL},
-                {PWM_OUTPUT_DISABLED, NULL}
-        },
-        0,
-        0
-};
-
 static const TPIDConfigStruct tpid1_conf = {
-                                            5600.0f,   //Kp
-                                            70.0f,      //Ki
+                                            3500.0f,   //Kp
+                                            0.075f,      //Ki
                                             0.0f       //Kd
 };
 
@@ -90,7 +73,7 @@ static THD_FUNCTION(Temperature_thread, p)
 
   while(true)
   {
-    tick += S2ST(TEMPERATURE_UPDATE_PERIOD_S);
+    tick += S2ST(TEMPERATURE_UPDATE_PERIOD_US);
     if(chVTGetSystemTimeX() < tick)
       chThdSleepUntil(tick);
     else
@@ -99,21 +82,15 @@ static THD_FUNCTION(Temperature_thread, p)
       pIMU->errorCode |= IMU_LOSE_FRAME;
     }
 
-    if(pIMU->temperature > 88.0f)
-    {
-      pIMU->errorCode |= IMU_TEMP_ERROR;
-      tempController_kill();
-      chThdExit(MSG_OK);
-    }
-
+    imuGetData(pIMU);
     int PWM_Output = tempPID_Update(tempPID, pIMU);
     pwmEnableChannel(&PWMD3, 1, PWM_PERCENTAGE_TO_WIDTH(&PWMD3, PWM_Output));
   }
 }
 
 void tempControllerInit(void){
-  pwmStart(&PWMD3, &pwm3cfg);
+  pwm3init();
   chThdCreateStatic(Temperature_thread_wa, sizeof(Temperature_thread_wa),
-    NORMALPRIO - 10,
+    NORMALPRIO,
                       Temperature_thread, NULL);
 }

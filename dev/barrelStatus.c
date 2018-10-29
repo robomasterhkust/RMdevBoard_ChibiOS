@@ -5,15 +5,15 @@
  *      Author: ASUS
  */
 #include "barrelStatus.h"
-//#include "judge.h"
+#include "judge.h"
 
-//#ifndef CHASSIS
-//  #define CHASSIS
-//#endif
-
-#ifndef GIMBAL
-  #define GIMBAL
+#ifndef CHASSIS
+  #define CHASSIS
 #endif
+
+//#ifndef GIMBAL
+//  #define GIMBAL
+//#endif
 
 #ifdef MM17
   uint8_t bulletType = mm17;
@@ -23,7 +23,9 @@
   uint8_t bulletType = mm42;
 #endif
 
+
 static barrelStatus_t bStatus;
+
 pBarrelStatus barrelStatus_get(void){
   return &bStatus;
 }
@@ -31,13 +33,14 @@ pBarrelStatus barrelStatus_get(void){
 void barrelStatus_init(void){
   bStatus.heatLimit = HEATLIMIT_LVL_1;
   bStatus.currentHeatValue = 0;
+  bStatus.remainHealth = 0;
 }
 
 void updateBarrelStatus(void){
   #ifdef CHASSIS
-    judge_fb_t jStruct = judgeDataGet();
-    power_fb_t pInfo = (power_fb_t)(jStruct.powerInfo);
-    game_fb_t gInfo = (game_fb_t)(jStruct.gameInfo);
+    judge_fb_t* jStruct = judgeDataGet();
+    power_fb_t pInfo = (power_fb_t)(jStruct->powerInfo);
+    game_fb_t gInfo = (game_fb_t)(jStruct->gameInfo);
 
     switch(gInfo.robotLevel){
       case 1:
@@ -52,10 +55,13 @@ void updateBarrelStatus(void){
     }
 
     if(bulletType == mm17){
-      bStatus.currentHeatValue = pInfo.shooterHeat0;
+     bStatus.currentHeatValue = pInfo.shooterHeat0;
     }else if(bulletType == mm42){
       bStatus.currentHeatValue = pInfo.shooterHeat1;
     }
+
+    bStatus.remainHealth = gInfo.remainHealth;
+
   #endif
 
 #ifdef GIMBAL
@@ -78,8 +84,9 @@ static inline void BarrelStatus_txCan(CANDriver *const CANx, const uint16_t SID)
   chSysLock();
   txCan.currentHeatValue = bStatus.currentHeatValue;
   txCan.heatLimit = bStatus.heatLimit;
+  txCan.remainHealth = bStatus.remainHealth;
 
-  memcpy(&(txmsg.data8), &txCan ,8);
+  memcpy(&(txmsg.data8), &txCan ,sizeof(BarrelStatus_canStruct));
   chSysUnlock();
 
   canTransmit(CANx, CAN_ANY_MAILBOX, &txmsg, MS2ST(100));
@@ -107,7 +114,6 @@ static THD_FUNCTION(barrel_status, p)
     #ifdef CHASSIS
       BarrelStatus_txCan(BARREL_CAN,CAN_CHASSIS_SEND_BARREL_ID);
     #endif
-
   }
 }
 

@@ -158,7 +158,7 @@ static uartflags_t translate_errors(uint16_t sr) {
  */
 static void uart_enter_rx_idle_loop(UARTDriver *uartp) {
   uint32_t mode;
-
+  
   /* RX DMA channel preparation, if the char callback is defined then the
      TCIE interrupt is enabled too.*/
   if (uartp->config->rxchar_cb == NULL)
@@ -182,7 +182,7 @@ static void usart_stop(UARTDriver *uartp) {
   /* Stops RX and TX DMA channels.*/
   dmaStreamDisable(uartp->dmarx);
   dmaStreamDisable(uartp->dmatx);
-
+  
   /* Stops USART operations.*/
   uartp->usart->CR1 = 0;
   uartp->usart->CR2 = 0;
@@ -364,7 +364,8 @@ OSAL_IRQ_HANDLER(STM32_USART2_HANDLER) {
  * @brief   USART3 IRQ handler.
  *
  * @isr
- *//*
+ */
+
 OSAL_IRQ_HANDLER(STM32_USART3_HANDLER) {
 
   OSAL_IRQ_PROLOGUE();
@@ -372,7 +373,7 @@ OSAL_IRQ_HANDLER(STM32_USART3_HANDLER) {
   serve_usart_irq(&UARTD3);
 
   OSAL_IRQ_EPILOGUE();
-}*/
+}
 #endif /* STM32_UART_USE_USART3 */
 
 #if STM32_UART_USE_UART4 || defined(__DOXYGEN__)
@@ -417,11 +418,11 @@ OSAL_IRQ_HANDLER(STM32_UART5_HANDLER) {
 #if !defined(STM32_USART6_HANDLER)
 #error "STM32_USART6_HANDLER not defined"
 #endif
-/**
+/*
  * @brief   USART6 IRQ handler.
  *
  * @isr
- *//*
+ */
 OSAL_IRQ_HANDLER(STM32_USART6_HANDLER) {
 
   OSAL_IRQ_PROLOGUE();
@@ -429,7 +430,7 @@ OSAL_IRQ_HANDLER(STM32_USART6_HANDLER) {
   serve_usart_irq(&UARTD6);
 
   OSAL_IRQ_EPILOGUE();
-}*/
+}
 #endif /* STM32_UART_USE_USART6 */
 
 /*===========================================================================*/

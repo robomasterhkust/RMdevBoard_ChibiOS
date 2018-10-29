@@ -10,7 +10,6 @@
 #include "math_misc.h"
 #include "params.h"
 #include "adis16265.h"
-#include "string.h"
 
 #if !defined(GYRO_ADIS)
 #error "Unknown type of Gyro!"
@@ -38,7 +37,7 @@ static gyrodata_t gyro_txrx_spi(SPIDriver* const spid, const gyrodata_t data)
     gyrodata_t temp;
 
   spiAcquireBus(spid);
-  spiSelect(spid);
+    spiSelect(spid);
   spiSend(spid, 1, &data);
   spiUnselect(spid);
 
@@ -63,7 +62,7 @@ static void gyro_write(const PGyroStruct pGyro, const uint8_t addr, const gyroda
     cmd2 = ( (address-1) << 8 ) | ( data & 0x00FF);
 
     gyro_txrx_spi(pGyro->spid, cmd1 );
-    gyro_txrx_spi(pGyro->spid, cmd2 );
+      gyro_txrx_spi(pGyro->spid, cmd2 );
   #endif
 }
 
@@ -79,10 +78,10 @@ static uint16_t gyro_read(const PGyroStruct pGyro, const uint8_t addr )
 
 static void gyro_update(PGyroStruct pGyro)
 {
-  float angle_raw = (float)(gyro_get_raw_vel(pGyro)) * pGyro->psc + pGyro->offset;
+    float angle_raw = (float)(gyro_get_raw_vel(pGyro)) * pGyro->psc + pGyro->offset;
+  float angle_vel;
 
-  //float angle_vel = lpfilter_apply(pGyro->lpf, angle_raw);
-  float angle_vel = angle_raw;
+  angle_vel = lpfilter_apply(pGyro->lpf, angle_raw);
   float angle = angle_vel * (GYRO_UPDATE_PERIOD_US / 1000000.0f);
 
   pGyro->angle += angle;
@@ -102,6 +101,23 @@ float yaw_temp_derivative = 0;
 float yaw_temp_integral = 0;
 float yaw_pre_error= 0;
 float yaw_pid_output_angle = 0;
+
+void yaw_axis_pid_cal(int32_t target_angle, int32_t current_angle){
+
+    float error = target_angle - current_angle;
+    float Kout = error * yaw_Kp;
+
+    yaw_temp_integral += error;
+
+    float Iout = yaw_temp_integral * yaw_Ki;
+
+    yaw_temp_derivative = error - yaw_pre_error;
+
+    float Dout = yaw_temp_derivative * yaw_Kd;
+
+    yaw_pid_output_angle = Dout + Iout + Kout;
+
+}
 
 #if defined(GYRO_ADIS)
 #define GYRO_OFFS_PSC    0.000319657f
@@ -215,17 +231,18 @@ static THD_FUNCTION(gyro_thread,p)
     else
     {
       tick = chVTGetSystemTimeX();
+      pGyro->error_flag |= GYRO_LOSE_FRAME;
     }
 
     if(pGyro->state == INITED)
       gyro_update(pGyro);
 
     if(pGyro->adis_gyroscope_not_calibrated)
-    {
-      chSysLock();
-      chThdSuspendS(&(pGyro->adis_Thd));
-      chSysUnlock();
-    }
+        {
+          chSysLock();
+          chThdSuspendS(&(pGyro->adis_Thd));
+          chSysUnlock();
+        }
   }
 }
 
@@ -234,21 +251,17 @@ PGyroStruct gyro_init(void)
   PGyroStruct pGyro = &gyro;
   memset((void *)pGyro, 0, sizeof(GyroStruct));
 
-  //Hardware reset
-  palClearPad(GYRO_RESET_PORT,GYRO_RESET_PIN);
-  chThdSleepMilliseconds(100);
-  palSetPad(GYRO_RESET_PORT,GYRO_RESET_PIN);
-  chThdSleepMilliseconds(100);
-
   pGyro->lpf = &gyro_lpf;
   pGyro->angle = 0.0f;
   pGyro->angle_vel = 0.0f;
   pGyro->adis_Thd = NULL;
-  if(params_set(&pGyro->offset, 27, 1, gyro_cal_name, subname_gyro_cal, PARAM_PRIVATE))
-    pGyro->offset = 0.0f;
+  params_set(&pGyro->offset, 27, 1, gyro_cal_name, subname_gyro_cal, PARAM_PRIVATE);
+ // flashRead(GYRO_CAL_FLASH, &(pGyro->offset), 27);
+  //if(!isfinite(pGyro->offset))
+   // pGyro->offset = 0.0f;
 
   //Set low pass filter at cutoff frequency 44Hz
-  lpfilter_init(pGyro->lpf, (float)GYRO_UPDATE_FREQ, 24.0f);
+  lpfilter_init(pGyro->lpf, (float)GYRO_UPDATE_FREQ, 12.0f);
 
   #if defined(GYRO_ADIS)
     pGyro->spid = GYRO_SPI;
@@ -259,7 +272,7 @@ PGyroStruct gyro_init(void)
       GYRO_NSS_pin,
       SPI_CR1_MSTR | //SPI_Mode_Master
       SPI_CR1_DFF |  //SPI_DataSize_16b
-      SPI_CR1_BR_2 | SPI_CR1_BR_0 |//SPI_BaudRatePrescaler_32
+      SPI_CR1_BR_2 | //SPI_BaudRatePrescaler_32
       SPI_CR1_CPHA | //SPI_CPHA_2Edge
       SPI_CR1_CPOL   //SPI_CPOL_High
     };
@@ -269,8 +282,8 @@ PGyroStruct gyro_init(void)
     spiStart(pGyro->spid, &GyroSPI_cfg);
 
     //Reset.....
-    //gyro_write(pGyro, GYRO_COMD,0x0040);        // sofware reset
-    //  chThdSleepMilliseconds(50);
+    gyro_write(pGyro, GYRO_COMD,0x0080);        // sofware reset
+      chThdSleepMilliseconds(50);
 
     //Factory Cal...
     gyro_write(pGyro, GYRO_COMD, 0x0002);
@@ -283,15 +296,34 @@ PGyroStruct gyro_init(void)
     pGyro->psc = GYRO_PSC / (float)(1U << GYRO_PSC_CONF);
 
     gyro_write(pGyro, GYRO_SMPL,0x0000);        // Internal Sample Freq 1/1.953 ~= 500Hz
-    gyro_write(pGyro, GYRO_COMD,0x0004);        // Auxiliary DAC data latch
-    chThdSleepMilliseconds(100);
+    gyro_write(pGyro, GYRO_COMD,0x0008);        // Auxiliary DAC data latch
+      chThdSleepMilliseconds(100);
   #endif
 
   chThdCreateStatic(gyro_thread_wa,sizeof(gyro_thread_wa),
           NORMALPRIO + 5,
           gyro_thread, &gyro);
 
-  pGyro->state = INITED;
+    pGyro->state = INITED;
 
   return pGyro;
+}
+
+/*
+ * State:
+ *  NOT_INITED = 0,
+ *  INITED = 1,
+ *  CALIBRATING = 2
+ */
+
+gyro_state_t gyro_getState(void){
+  return gyro.state;
+}
+/*
+ * Error List:
+ * 0: Not Inited
+ * 1: No Error
+ */
+uint8_t gyro_getError(void){
+  return gyro.error_flag;
 }
