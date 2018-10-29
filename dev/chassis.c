@@ -16,6 +16,7 @@
 #include "magazine_cover_task.h"
 #include <math.h>
 #include "math_misc.h"
+#include "chassis_config.h"
 
 static volatile chassisStruct chassis;
 
@@ -209,12 +210,6 @@ controller->error_int_max);
   return (int16_t)(boundOutput(output, H_MAX));
 }
 */
-
-
-float CHASSIS_RC_MAX_SPEED_X = 3300.0f;
-float CHASSIS_RC_MAX_SPEED_Y = 3300.0f;
-float CHASSIS_RC_MAX_SPEED_R = 300.0f;
-float RC_RESOLUTION = 660.0f;
 
 static void rm_chassis_process(void)
 {

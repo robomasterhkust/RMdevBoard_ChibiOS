@@ -105,13 +105,13 @@ typedef struct
 
 typedef struct
 {
+    double px;
     double py;
-    double pz;
     double vy;
     double vz;
     bool updated;
+    int16_t last_px;
     int16_t last_py;
-    int16_t last_pz;
 } Ros_msg_canStruct;
 
 typedef struct

@@ -51,6 +51,7 @@ int main(void)
      * Init sequence 3: core functions
      */
     // chassis_init();
+    command_mixer_init();
     chassis_task_init();
     can_comm_init();
 

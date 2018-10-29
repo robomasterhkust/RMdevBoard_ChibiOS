@@ -22,21 +22,6 @@
 
 typedef uint8_t chassis_error_t;
 
-/*
-typedef enum chassis_mode_e
-{
-    CHASSIS_RELAX          = 0,
-    CHASSIS_STOP           = 1,
-    MANUAL_SEPARATE_GIMBAL = 2,
-    MANUAL_FOLLOW_GIMBAL   = 3,
-    DODGE_MODE             = 4,
-    AUTO_SEPARATE_GIMBAL   = 5,
-    AUTO_FOLLOW_GIMBAL     = 6,
-    DODGE_MOVE_MODE        = 7,
-    SAVE_LIFE              = 8,
-} chassis_mode_e;
- */
-
 
 typedef struct
 {
@@ -55,11 +40,6 @@ typedef struct
     float           straft_sp;
     int16_t         rotate_x_offset;
     int16_t         rotate_y_offset;
-
-    chassis_mode_e  ctrl_mode;
-    chassis_mode_e  last_ctrl_mode;
-
-    float           power_limit;
 
     int16_t         current[4];
 

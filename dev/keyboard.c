@@ -124,33 +124,29 @@ static void move_direction_ctrl(uint8_t forward, uint8_t back,
 }
 
 void keyboard_chassis_process(chassisStruct* chassisP,Gimbal_Send_Dbus_canStruct* pRC){
-    keyboard_to_bitmap(pRC);
-    if(chassisP->ctrl_mode == SAVE_LIFE ||chassisP->ctrl_mode ==CHASSIS_STOP ){
-      // Do nothing. No input
-    }
-    else if(bitmap[KEY_E] || bitmap[KEY_Q]){
-      if(bitmap[KEY_W] || bitmap[KEY_S] || bitmap[KEY_A] || bitmap[KEY_D]){
-        chassisP->ctrl_mode = DODGE_MOVE_MODE;
-        move_direction_ctrl(bitmap[KEY_W], bitmap[KEY_S], bitmap[KEY_A], bitmap[KEY_D]);
-      }
-      else{
-        chassisP->ctrl_mode = DODGE_MODE;
-      }
-    }
-    else if(bitmap[KEY_C]){
-      chassisP->ctrl_mode = MANUAL_SEPARATE_GIMBAL;
-    }
-    else{
-      chassisP->ctrl_mode = MANUAL_FOLLOW_GIMBAL;
-      move_speed_ctrl(bitmap[KEY_SHIFT], bitmap[KEY_CTRL]);
+  keyboard_to_bitmap(pRC);
+  if(chassisP->ctrl_mode == SAVE_LIFE ||chassisP->ctrl_mode ==CHASSIS_STOP ){
+    // Do nothing. No input
+  }
+  else if(bitmap[KEY_E] || bitmap[KEY_Q]){
+    if(bitmap[KEY_W] || bitmap[KEY_S] || bitmap[KEY_A] || bitmap[KEY_D]){
+      chassisP->ctrl_mode = DODGE_MOVE_MODE;
       move_direction_ctrl(bitmap[KEY_W], bitmap[KEY_S], bitmap[KEY_A], bitmap[KEY_D]);
     }
-
-
-
-   // chassis_operation_func(bitmap);
-
+    else{
+      chassisP->ctrl_mode = DODGE_MODE;
+    }
+  }
+  else if(bitmap[KEY_C]){
+    chassisP->ctrl_mode = MANUAL_SEPARATE_GIMBAL;
+  }
+  else{
+    chassisP->ctrl_mode = MANUAL_FOLLOW_GIMBAL;
+    move_speed_ctrl(bitmap[KEY_SHIFT], bitmap[KEY_CTRL]);
+    move_direction_ctrl(bitmap[KEY_W], bitmap[KEY_S], bitmap[KEY_A], bitmap[KEY_D]);
+  }
 }
+
 
 
 

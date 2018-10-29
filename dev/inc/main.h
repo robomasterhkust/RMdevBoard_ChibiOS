@@ -21,7 +21,8 @@
 #include "attitude.h"
 #include "calibrate_sensor.h"
 
-#include "chassis.h"
+//#include "chassis.h"
+#include "command_mixer.h"
 #include "chassis_task.h"
 #include "can_comm.h"
 

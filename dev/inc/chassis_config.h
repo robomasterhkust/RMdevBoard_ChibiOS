@@ -5,6 +5,32 @@
 #ifndef RMDEVBOARD_CHIBIOS_CHASSIS_CONFIG_H
 #define RMDEVBOARD_CHIBIOS_CHASSIS_CONFIG_H
 
+
+#define CMD_MIXER_RC_MIN 1684
+#define CMD_MIXER_RC_MID 1024
+#define CMD_MIXER_RC_MAX 364
+#define RC_RESOLUTION    660
+
+// remote mode chassis move speed limit, mm/s
+#define CHASSIS_RC_MAX_SPEED_X  3300.0f
+#define CHASSIS_RC_MAX_SPEED_Y  3300.0f
+// chassis rotation speed, deg/s
+#define CHASSIS_RC_MAX_SPEED_R  300.0f
+
+// remote mode chassis move speed limit, mm/s
+#define CHASSIS_KB_MAX_SPEED_X  3300.0f
+#define CHASSIS_KB_MAX_SPEED_Y  3300.0f
+// chassis rotation speed, deg/s
+#define CHASSIS_KB_MAX_SPEED_R  300.0f
+
+
+// visual servo mode chassis move speed limit, mm/s
+#define CHASSIS_CV_MAX_SPEED_X  3300.0f
+#define CHASSIS_CV_MAX_SPEED_Y  3300.0f
+// visual servo chassis rotation speed, deg/s
+#define CHASSIS_CV_MAX_SPEED_R  300.0f
+
+
 // the radius of wheel, mm
 #define MECANUM_WHEEL_RADIUS     76
 // the perimeter of wheel, mm
