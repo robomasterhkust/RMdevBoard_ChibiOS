@@ -505,8 +505,8 @@ static THD_FUNCTION(gimbal_thread, p)
     //   gimbal_attiCmd(1.0f/GIMBAL_CONTROL_FREQ, yaw_theta1);
     // #endif
 
-    // gimbal_attiCmd(1.0f/GIMBAL_CONTROL_FREQ, yaw_theta1);
-    gimbal_atti_pitch_vel_yaw_cmd(1.0f / GIMBAL_CONTROL_FREQ, yaw_theta1);
+      gimbal_attiCmd(1.0f/GIMBAL_CONTROL_FREQ, yaw_theta1);
+    // gimbal_atti_pitch_vel_yaw_cmd(1.0f / GIMBAL_CONTROL_FREQ, yaw_theta1);
 
     yaw_atti_out = gimbal_controlAttitude(&_yaw_atti,
                                       gimbal.yaw_atti_cmd,
