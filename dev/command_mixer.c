@@ -49,8 +49,8 @@ static THD_FUNCTION(command_mixer, p)
         }
 
         // command value pre-process and addition
-        float vx_dbus = (dbus_msg->channel0 - CMD_MIXER_RC_MID) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
-        float vy_dbus = (dbus_msg->channel1 - CMD_MIXER_RC_MID) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
+        float vx_dbus = ((float)dbus_msg->channel0 - CMD_MIXER_RC_MID) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
+        float vy_dbus = ((float)dbus_msg->channel1 - CMD_MIXER_RC_MID) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
 
         float vx_ros  = (float)ros_msg->px; // mm/s
         float vy_ros  = (float)ros_msg->py; // mm/s
@@ -63,15 +63,14 @@ static THD_FUNCTION(command_mixer, p)
         float vy_dbus_slow = (lp_rise_cmd_y.data[1] - 2 * lp_rise_cmd_y.data[1] + vy_dbus > 0)
                              ? vy_dbus_filed : vy_dbus;
 
-        cmd_mixer.vx = vx_ros + vx_dbus_slow;
-        cmd_mixer.vy = vy_ros + vy_dbus_slow;
+        cmd_mixer.vx = vx_ros + vx_dbus;
+        cmd_mixer.vy = vy_ros + vy_dbus;
 
         /*
          * state machine
          */
 
-        if (dbus_msg->channel0 <= CMD_MIXER_RC_MAX || dbus_msg->channel0 >= CMD_MIXER_RC_MIN ||
-            dbus_msg->channel1 <= CMD_MIXER_RC_MAX || dbus_msg->channel1 >= CMD_MIXER_RC_MIN)
+        if (dbus_msg->channel0 <= CMD_MIXER_RC_MAX  || dbus_msg->channel0 >= CMD_MIXER_RC_MIN)
         {
             cmd_mixer.ctrl_mode = CTL_MANUAL_FOLLOW_GIMBAL;
             if (cmd_mixer.reboot_flag) {

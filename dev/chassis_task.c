@@ -16,12 +16,7 @@
 #include "chassis_task.h"
 #include "command_mixer.h"
 #include "math_misc.h"
-#include <stdio.h>
-#include <math.h>
-#include <command_mixer.h>
-#include <canBusProcess.h>
-#include <chassis_task.h>
-
+#include "math.h"
 
 static chassis_t chassis;
 
@@ -73,9 +68,12 @@ static THD_FUNCTION(chassis_control, p)
     chRegSetThreadName("chassis controller");
 
     volatile ChassisEncoder_canStruct* encoderPtr = can_getChassisMotor();
+
     command_t* cmd_mixer = cmd_mixer_get();
 
     uint32_t tick = chVTGetSystemTimeX();
+
+    chassis.position_ref = encoderPtr[GIMBAL_YAW].radian_angle;
 
     while (!chThdShouldTerminateX()) {
         tick += US2ST(CHASSIS_UPDATE_PERIOD_US);
@@ -104,17 +102,17 @@ chassis_task_init()
 
     for (int i = 0; i < CHASSIS_MOTOR_NUM; ++i) {
         memset(&chassis._motors, 0, sizeof(chassis_motor_t));
-        memset(&motor_vel_ctrl, 0, sizeof(pi_controller_t));
+        memset(&motor_vel_ctrl[i], 0, sizeof(pi_controller_t));
         lpfilter_init(lp_motor_speed + i, CHASSIS_UPDATE_FREQ, motor_speed_cutoff_freq);
-        motor_vel_ctrl[i].kp = 150.0f;
-        motor_vel_ctrl[i].ki = 0.2f;
+        motor_vel_ctrl[i].kp = 1.0f;
+        motor_vel_ctrl[i].ki = 0.0f;
         motor_vel_ctrl[i].error_int_max = 150.0f;
         motor_vel_ctrl[i].output_max = MOTOR_OUTPUT_MAX;
     }
     memset(&heading_ctrl, 0, sizeof(pid_controller_t));
-    heading_ctrl.kp = 70.0f;
+    heading_ctrl.kp = 0.0f;
     heading_ctrl.ki = 0.0f;
-    heading_ctrl.kd = 1.0f;
+    heading_ctrl.kd = 0.0f;
 
     chThdCreateStatic(chassis_control_wa, sizeof(chassis_control_wa), NORMALPRIO,
                       chassis_control, NULL);
@@ -136,11 +134,11 @@ chassis_task_init()
     - [2]-------[3]
 
  config of Mecanum Wheel:
-      [//]-------[\\]
-           | |
-           | |
-           | |
       [\\]-------[//]
+           | |
+           | |
+           | |
+      [//]-------[\\]
  */
 
 /*
@@ -207,7 +205,7 @@ chassis_encoder_update(volatile ChassisEncoder_canStruct *encoderPtr)
         if (encoderPtr[i].updated) {
             encoderPtr[i].updated = false;
 
-            float raw_speed = encoderPtr[i].raw_speed * MOTOR_GEAR_RATIO;
+            float raw_speed = encoderPtr[i].raw_speed * RM3508_MOTOR_GEAR_RATIO; // RPM
             chassis._motors[i]._speed = lpfilter_apply(&lp_motor_speed[i], raw_speed);
             chassis._motors[i]._wait_count = 0;
             // TODO: change the motor sequence
@@ -248,7 +246,7 @@ velocity_control()
         float error = chassis._motors[i].speed_sp - chassis._motors[i]._speed;
         chassis.current[i] = (int16_t) pi_control(error, &motor_vel_ctrl[i]);
     }
-    chassis_drive_motor();
+    // chassis_drive_motor();
 }
 
 static void

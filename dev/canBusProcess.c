@@ -189,28 +189,16 @@ static void can_processEncoderMessage(CANDriver *const canp, const CANRxFrame *c
     if (canp == &CAND2) {
         switch (rxmsg->SID) {
             case CAN_CHASSIS_FL_FEEDBACK_MSG_ID:
-                chassis_encoder[FRONT_LEFT].msg_count++;
-                chassis_encoder[FRONT_LEFT].msg_count <= 50 ? can_getMotorOffset(&chassis_encoder[FRONT_LEFT], rxmsg)
-                                                            : can_processChassisEncoder(&chassis_encoder[FRONT_LEFT],
-                                                                                        rxmsg);
+                can_processChassisEncoder(&extra_encoder[FRONT_LEFT], rxmsg);
                 break;
             case CAN_CHASSIS_FR_FEEDBACK_MSG_ID:
-                chassis_encoder[FRONT_RIGHT].msg_count++;
-                chassis_encoder[FRONT_RIGHT].msg_count <= 50 ? can_getMotorOffset(&chassis_encoder[FRONT_RIGHT], rxmsg)
-                                                             : can_processChassisEncoder(&chassis_encoder[FRONT_RIGHT],
-                                                                                         rxmsg);
+                can_processChassisEncoder(&extra_encoder[FRONT_RIGHT], rxmsg);
                 break;
             case CAN_CHASSIS_BL_FEEDBACK_MSG_ID:
-                chassis_encoder[BACK_LEFT].msg_count++;
-                chassis_encoder[BACK_LEFT].msg_count <= 50 ? can_getMotorOffset(&chassis_encoder[BACK_LEFT], rxmsg)
-                                                           : can_processChassisEncoder(&chassis_encoder[BACK_LEFT],
-                                                                                       rxmsg);
+                can_processChassisEncoder(&extra_encoder[BACK_LEFT], rxmsg);
                 break;
             case CAN_CHASSIS_BR_FEEDBACK_MSG_ID:
-                chassis_encoder[BACK_RIGHT].msg_count++;
-                chassis_encoder[BACK_RIGHT].msg_count <= 50 ? can_getMotorOffset(&chassis_encoder[BACK_RIGHT], rxmsg)
-                                                            : can_processChassisEncoder(&chassis_encoder[BACK_RIGHT],
-                                                                                        rxmsg);
+                can_processChassisEncoder(&extra_encoder[BACK_RIGHT], rxmsg);
                 break;
             case CAN_CHASSIS_SEND_BARREL_ID:
                 can_processSendBarrelStatus(&chassis_send_barrel, rxmsg);
@@ -233,16 +221,24 @@ static void can_processEncoderMessage(CANDriver *const canp, const CANRxFrame *c
                 can_processGimbalEncoder(&gimbal_encoder[GIMBAL_PITCH], rxmsg);
                 break;
             case CAN_CHASSIS_FL_FEEDBACK_MSG_ID:
-                can_processChassisEncoder(&extra_encoder[FRONT_LEFT], rxmsg);
+                chassis_encoder[FRONT_LEFT].msg_count++;
+                chassis_encoder[FRONT_LEFT].msg_count <= 50 ? can_getMotorOffset(&chassis_encoder[FRONT_LEFT], rxmsg)
+                                                            : can_processChassisEncoder(&chassis_encoder[FRONT_LEFT], rxmsg);
                 break;
             case CAN_CHASSIS_FR_FEEDBACK_MSG_ID:
-                can_processChassisEncoder(&extra_encoder[FRONT_RIGHT], rxmsg);
+                chassis_encoder[FRONT_RIGHT].msg_count++;
+                chassis_encoder[FRONT_RIGHT].msg_count <= 50 ? can_getMotorOffset(&chassis_encoder[FRONT_RIGHT], rxmsg)
+                                                             : can_processChassisEncoder(&chassis_encoder[FRONT_RIGHT], rxmsg);
                 break;
             case CAN_CHASSIS_BL_FEEDBACK_MSG_ID:
-                can_processChassisEncoder(&extra_encoder[BACK_LEFT], rxmsg);
+                chassis_encoder[BACK_LEFT].msg_count++;
+                chassis_encoder[BACK_LEFT].msg_count <= 50 ? can_getMotorOffset(&chassis_encoder[BACK_LEFT], rxmsg)
+                                                           : can_processChassisEncoder(&chassis_encoder[BACK_LEFT], rxmsg);
                 break;
             case CAN_CHASSIS_BR_FEEDBACK_MSG_ID:
-                can_processChassisEncoder(&extra_encoder[BACK_RIGHT], rxmsg);
+                chassis_encoder[BACK_RIGHT].msg_count++;
+                chassis_encoder[BACK_RIGHT].msg_count <= 50 ? can_getMotorOffset(&chassis_encoder[BACK_RIGHT], rxmsg)
+                                                            : can_processChassisEncoder(&chassis_encoder[BACK_RIGHT], rxmsg);
                 break;
             case CAN_SHOOTER_INFO_ID:
                 can_processGimbalSendShooterInfo(&gimbal_send_shooter_info, rxmsg);

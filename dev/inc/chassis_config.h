@@ -6,9 +6,9 @@
 #define RMDEVBOARD_CHIBIOS_CHASSIS_CONFIG_H
 
 
-#define CMD_MIXER_RC_MIN 1684
+#define CMD_MIXER_RC_MAX 1684
 #define CMD_MIXER_RC_MID 1024
-#define CMD_MIXER_RC_MAX 364
+#define CMD_MIXER_RC_MIN 364
 #define RC_RESOLUTION    660
 
 #define GIMBAL_YAW_GEAR 0.533f
@@ -49,7 +49,7 @@
 #define GIMBAL_Y_OFFSET 0
 
 // RM3508 gear ratio
-#define MOTOR_GEAR_RATIO    ( 187.0f / 3591.0f )
+#define RM3508_MOTOR_GEAR_RATIO    ( 187.0f / 3591.0f )
 // RM3508 motor maximum speed, rpm
 #define MAX_WHEEL_RPM        8500
 // chassis maximum translation speed, mm/s
