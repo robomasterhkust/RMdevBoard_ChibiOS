@@ -52,10 +52,10 @@ static void follow_gimbal_handler(float vx, float vy, float angle, pid_controlle
  * private parameters
  */
 bool                rotation_center_gimbal = false;
-float               motor_speed_cutoff_freq = 20.0f;
+float               motor_speed_cutoff_freq = 40.0f;
 lpfilterStruct      lp_motor_speed[CHASSIS_MOTOR_NUM];
-pi_controller_t     motor_vel_ctrl[CHASSIS_MOTOR_NUM];
-pid_controller_t    heading_ctrl;
+// pi_controller_t     motor_vel_ctrl[CHASSIS_MOTOR_NUM];
+//pid_controller_t    heading_ctrl;
 
 /**
  * 1. Chassis thread
@@ -76,7 +76,7 @@ static THD_FUNCTION(chassis_control, p)
     chassis.position_ref = encoderPtr[GIMBAL_YAW].radian_angle;
 
     while (!chThdShouldTerminateX()) {
-        tick += US2ST(CHASSIS_UPDATE_PERIOD_US);
+        tick += US2ST(CHASSIS_TASK_UPDATE_PERIOD_US);
         if (tick > chVTGetSystemTimeX()) {
             chThdSleepUntil(tick);
         } else {
@@ -86,7 +86,7 @@ static THD_FUNCTION(chassis_control, p)
 
         chassis_state_machine(cmd_mixer, can_getGimbalMotor());
 
-        power_limit_control(judgeDataGet());
+        // power_limit_control(judgeDataGet());
 
         velocity_control();
     }
@@ -102,17 +102,17 @@ chassis_task_init()
 
     for (int i = 0; i < CHASSIS_MOTOR_NUM; ++i) {
         memset(&chassis._motors, 0, sizeof(chassis_motor_t));
-        memset(&motor_vel_ctrl[i], 0, sizeof(pi_controller_t));
-        lpfilter_init(lp_motor_speed + i, CHASSIS_UPDATE_FREQ, motor_speed_cutoff_freq);
-        motor_vel_ctrl[i].kp = 1.0f;
-        motor_vel_ctrl[i].ki = 0.0f;
-        motor_vel_ctrl[i].error_int_max = 150.0f;
-        motor_vel_ctrl[i].output_max = MOTOR_OUTPUT_MAX;
+        memset(&chassis.motor_vel_ctrl[i], 0, sizeof(pi_controller_t));
+        lpfilter_init(lp_motor_speed + i, CHASSIS_TASK_UPDATE_FREQ, motor_speed_cutoff_freq);
+        chassis.motor_vel_ctrl[i].kp = 0.0f;
+        chassis.motor_vel_ctrl[i].ki = 0.0f;
+        chassis.motor_vel_ctrl[i].error_int_max = 1000.0f;
+        chassis.motor_vel_ctrl[i].output_max = MOTOR_OUTPUT_MAX;
     }
-    memset(&heading_ctrl, 0, sizeof(pid_controller_t));
-    heading_ctrl.kp = 0.0f;
-    heading_ctrl.ki = 0.0f;
-    heading_ctrl.kd = 0.0f;
+    memset(&chassis.heading_ctrl, 0, sizeof(pid_controller_t));
+    chassis.heading_ctrl.kp = 0.0f;
+    chassis.heading_ctrl.ki = 0.0f;
+    chassis.heading_ctrl.kd = 0.0f;
 
     chThdCreateStatic(chassis_control_wa, sizeof(chassis_control_wa), NORMALPRIO,
                       chassis_control, NULL);
@@ -180,10 +180,14 @@ mecanum_inverse_kinematics(float vx, float vy, float w_degree)
     VAL_LIMIT(vy, -MAX_CHASSIS_VY_SPEED, MAX_CHASSIS_VY_SPEED);  //mm/s
     VAL_LIMIT(vw, -MAX_CHASSIS_VR_SPEED, MAX_CHASSIS_VR_SPEED);  //deg/s
 
-    chassis._motors[FRONT_RIGHT].speed_sp = (-1 * vx + vy + vw * rotate_ratio_fr) / r;
+//    chassis._motors[FRONT_RIGHT].speed_sp = (-1 * vx + vy + vw * rotate_ratio_fr) / r;
+//    chassis._motors[FRONT_LEFT].speed_sp  = (vx + vy + vw * rotate_ratio_fl) / r;
+//    chassis._motors[BACK_LEFT].speed_sp   = (vx - vy + vw * rotate_ratio_bl) / r;
+//    chassis._motors[BACK_RIGHT].speed_sp  = (-1 * vx - vy + vw * rotate_ratio_br) / r;
+    chassis._motors[FRONT_RIGHT].speed_sp = (vx - vy - vw * rotate_ratio_fr) / r;
     chassis._motors[FRONT_LEFT].speed_sp  = (vx + vy + vw * rotate_ratio_fl) / r;
     chassis._motors[BACK_LEFT].speed_sp   = (vx - vy + vw * rotate_ratio_bl) / r;
-    chassis._motors[BACK_RIGHT].speed_sp  = (-1 * vx - vy + vw * rotate_ratio_br) / r;
+    chassis._motors[BACK_RIGHT].speed_sp  = (vx + vy - vw * rotate_ratio_br) / r;
 }
 
 static void
@@ -196,16 +200,20 @@ clear_motor_speed_sp() {
 
 /*
  * Update the motor speed to encoder speed in RPM
- * Change the motor direction to fit the defined orientation
+ * Change the motor direction to fit the defined orientation, flipped the front right and back right
  */
 static void
 chassis_encoder_update(volatile ChassisEncoder_canStruct *encoderPtr)
 {
-    for (int i = 0; i < CHASSIS_MOTOR_NUM; ++i) {
+    for (uint8_t i = 0; i < CHASSIS_MOTOR_NUM; ++i) {
         if (encoderPtr[i].updated) {
             encoderPtr[i].updated = false;
 
-            float raw_speed = encoderPtr[i].raw_speed * RM3508_MOTOR_GEAR_RATIO; // RPM
+            float raw_speed = 0.0f;
+            if (i == 0 || i == 3)
+                raw_speed = -encoderPtr[i].raw_speed * RM3508_MOTOR_GEAR_RATIO; // RPM
+            else
+                raw_speed = encoderPtr[i].raw_speed * RM3508_MOTOR_GEAR_RATIO; // RPM
             chassis._motors[i]._speed = lpfilter_apply(&lp_motor_speed[i], raw_speed);
             chassis._motors[i]._wait_count = 0;
             // TODO: change the motor sequence
@@ -230,10 +238,10 @@ static void
 chassis_drive_motor()
 {
     can_motorSetCurrent(CHASSIS_CAN_PORT, CHASSIS_CAN_SID,
-                        chassis.current[FRONT_RIGHT],
+                        -chassis.current[FRONT_RIGHT],
                         chassis.current[FRONT_LEFT],
                         chassis.current[BACK_LEFT],
-                        chassis.current[BACK_RIGHT]);
+                        -chassis.current[BACK_RIGHT]);
 }
 
 /*
@@ -242,11 +250,11 @@ chassis_drive_motor()
 static void
 velocity_control()
 {
-    for (int i = 0; i < CHASSIS_MOTOR_NUM; ++i) {
+    for (uint8_t i = 0; i < CHASSIS_MOTOR_NUM; ++i) {
         float error = chassis._motors[i].speed_sp - chassis._motors[i]._speed;
-        chassis.current[i] = (int16_t) pi_control(error, &motor_vel_ctrl[i]);
+        chassis.current[i] = (int16_t) pi_control(error, &chassis.motor_vel_ctrl[i]);
     }
-    // chassis_drive_motor();
+    chassis_drive_motor();
 }
 
 static void
@@ -296,7 +304,8 @@ chassis_state_machine(command_t* cmd, volatile GimbalEncoder_canStruct *encoder)
         case CTL_MANUAL_SEPARATE_GIMBAL: break;
         case CTL_MANUAL_FOLLOW_GIMBAL:
             follow_gimbal_handler(cmd->vx, cmd->vy, \
-            (encoder[GIMBAL_YAW].radian_angle - chassis.position_ref) * GIMBAL_YAW_GEAR, &heading_ctrl);
+            (encoder[GIMBAL_YAW].radian_angle - chassis.position_ref) * GIMBAL_YAW_GEAR, \
+            &chassis.heading_ctrl);
             break;
         case CTL_DODGE_MODE: break;
         case CTL_AUTO_SEPARATE_GIMBAL: break;

@@ -231,16 +231,17 @@ static inline float pi_control(float error, pi_controller_t *c)
 {
     c->error_int += error * c->ki;
     c->error_int = boundOutput(c->error_int, c->error_int_max);
-    return boundOutput(error * c->kp + c->error_int, c->output_max);
+    double output = error * c->kp + c->error_int;
+    return boundOutput((float)output, c->output_max);
 }
 
 static inline float pid_control(float error, pid_controller_t *c)
 {
     c->error_int += error * c->ki;
     c->error_int = boundOutput(c->error_int, c->error_int_max);
-    float output = error * c->kp + c->error_int + c->kd * (error - c->error_prev);
+    double output = error * c->kp + c->error_int + c->kd * (error - c->error_prev);
     c->error_prev = error;
-    return boundOutput(output, c->output_max);
+    return boundOutput((float)output, c->output_max);
 }
 
 void lpfilter_init(lpfilterStruct * lp,
