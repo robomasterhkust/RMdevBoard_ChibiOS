@@ -9,6 +9,8 @@
  *
  * 20181029 Beck Pang
  */
+#include <chassis_task.h>
+#include <canBusProcess.h>
 #include "ch.h"
 #include "hal.h"
 #include "canBusProcess.h"
@@ -52,10 +54,8 @@ static void follow_gimbal_handler(float vx, float vy, float angle, pid_controlle
  * private parameters
  */
 bool                rotation_center_gimbal = false;
-float               motor_speed_cutoff_freq = 40.0f;
+float               motor_speed_cutoff_freq = 10.0f;
 lpfilterStruct      lp_motor_speed[CHASSIS_MOTOR_NUM];
-// pi_controller_t     motor_vel_ctrl[CHASSIS_MOTOR_NUM];
-//pid_controller_t    heading_ctrl;
 
 /**
  * 1. Chassis thread
@@ -104,8 +104,9 @@ chassis_task_init()
         memset(&chassis._motors, 0, sizeof(chassis_motor_t));
         memset(&chassis.motor_vel_ctrl[i], 0, sizeof(pi_controller_t));
         lpfilter_init(lp_motor_speed + i, CHASSIS_TASK_UPDATE_FREQ, motor_speed_cutoff_freq);
-        chassis.motor_vel_ctrl[i].kp = 0.0f;
+        chassis.motor_vel_ctrl[i].kp = 300.0f;
         chassis.motor_vel_ctrl[i].ki = 0.0f;
+        chassis.motor_vel_ctrl[i].kd = 3.0f;
         chassis.motor_vel_ctrl[i].error_int_max = 1000.0f;
         chassis.motor_vel_ctrl[i].output_max = MOTOR_OUTPUT_MAX;
     }
@@ -144,10 +145,10 @@ chassis_task_init()
 /*
  * Inverse Kinematics of the four Mecanum wheel system
  * @param chassisPtr
- * @param vx, 3300 ~ -3300
- * @param vy, 3300 ~ -3300
+ * @param vx, 3300 ~ -3300, mm/s
+ * @param vy, 3300 ~ -3300, mm/s
  * @param w,  degree/s
- * @output w1, w2, w3, w4, RPM
+ * @output w1, w2, w3, w4, rad/s
  */
 static void
 mecanum_inverse_kinematics(float vx, float vy, float w_degree)
@@ -209,14 +210,13 @@ chassis_encoder_update(volatile ChassisEncoder_canStruct *encoderPtr)
         if (encoderPtr[i].updated) {
             encoderPtr[i].updated = false;
 
-            float raw_speed = 0.0f;
             if (i == 0 || i == 3)
-                raw_speed = -encoderPtr[i].raw_speed * RM3508_MOTOR_GEAR_RATIO; // RPM
+                chassis._motors[i]._speed_raw = -encoderPtr[i].raw_speed * RM3508_MOTOR_GEAR_RATIO * RPM_TO_RAD_PER_SEC; // rad/s
             else
-                raw_speed = encoderPtr[i].raw_speed * RM3508_MOTOR_GEAR_RATIO; // RPM
-            chassis._motors[i]._speed = lpfilter_apply(&lp_motor_speed[i], raw_speed);
+                chassis._motors[i]._speed_raw = encoderPtr[i].raw_speed * RM3508_MOTOR_GEAR_RATIO * RPM_TO_RAD_PER_SEC; // rad/s
+
+            chassis._motors[i]._speed = lpfilter_apply(&lp_motor_speed[i], chassis._motors[i]._speed_raw);
             chassis._motors[i]._wait_count = 0;
-            // TODO: change the motor sequence
         }
         else {
             chassis._motors[i]._wait_count++;
@@ -252,7 +252,7 @@ velocity_control()
 {
     for (uint8_t i = 0; i < CHASSIS_MOTOR_NUM; ++i) {
         float error = chassis._motors[i].speed_sp - chassis._motors[i]._speed;
-        chassis.current[i] = (int16_t) pi_control(error, &chassis.motor_vel_ctrl[i]);
+        chassis.current[i] = (int16_t) pid_control(error, &chassis.motor_vel_ctrl[i]);
     }
     chassis_drive_motor();
 }

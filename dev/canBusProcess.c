@@ -4,6 +4,7 @@
  * @brief   CAN driver configuration file
  * @reference   RM2017_Archive
  */
+#include <canBusProcess.h>
 #include "ch.h"
 #include "hal.h"
 
@@ -158,8 +159,10 @@ static inline void can_processChassisEncoder
     cm->temperature = (uint8_t) rxmsg->data8[6];
     chSysUnlock();
 
-    if (cm->raw_angle - cm->last_raw_angle > CAN_ENCODER_RANGE / 2) cm->round_count--;
-    else if (cm->raw_angle - cm->last_raw_angle < -CAN_ENCODER_RANGE / 2) cm->round_count++;
+    if (cm->raw_angle - cm->last_raw_angle > CAN_ENCODER_RANGE / 2)
+        cm->round_count--;
+    else if (cm->raw_angle - cm->last_raw_angle < -CAN_ENCODER_RANGE / 2)
+        cm->round_count++;
 
     cm->total_ecd = cm->round_count * CAN_ENCODER_RANGE + cm->raw_angle - cm->offset_raw_angle;
     cm->radian_angle = cm->total_ecd * CAN_ENCODER_RADIAN_RATIO;

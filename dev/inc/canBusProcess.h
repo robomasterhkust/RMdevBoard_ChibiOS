@@ -30,6 +30,10 @@
 
 #define CAN_ENCODER_RANGE           8192            // 0x2000
 #define CAN_ENCODER_RADIAN_RATIO    7.669904e-4f    // 2*M_PI / 0x2000
+#define CAN_ENCODER_DEGREE_RATIO    0.0439453125f   // 360 / 0x2000
+
+// 1000Hz C620 CAN update rate
+#define RM3508_MOTOR_UPDATE_FREQ   1000
 
 #define CAN_CHASSIS_DEBUG_FR 0x211
 #define CAN_CHASSIS_DEBUG_FL 0x212
@@ -81,7 +85,11 @@ typedef struct
     uint32_t msg_count;
     int32_t round_count;
     int32_t total_ecd;
+
     float radian_angle; // Continuous
+
+    // int32_t diff_speed;
+    // float diff_rpm;  // bad design
 
     bool updated;
 } ChassisEncoder_canStruct;

@@ -10,8 +10,8 @@
 #include "chassis.h"
 
 // chassis control period frequency
-#define CHASSIS_TASK_UPDATE_FREQ 200
-#define CHASSIS_TASK_UPDATE_PERIOD_US 1000000/CHASSIS_TASK_UPDATE_FREQ
+#define CHASSIS_TASK_UPDATE_FREQ 100
+#define CHASSIS_TASK_UPDATE_PERIOD_US (1000000/CHASSIS_TASK_UPDATE_FREQ)
 
 #define CHASSIS_CAN_PORT    &CAND1
 #define CHASSIS_CAN_SID     0x200
@@ -27,13 +27,14 @@ typedef struct
 {
     float   speed_sp;
     float   _speed;
+    float   _speed_raw;
     uint8_t _wait_count;
 } chassis_motor_t;
 
 typedef struct
 {
     chassis_motor_t     _motors[CHASSIS_MOTOR_NUM];
-    pi_controller_t     motor_vel_ctrl[CHASSIS_MOTOR_NUM];
+    pid_controller_t    motor_vel_ctrl[CHASSIS_MOTOR_NUM];
     pid_controller_t    heading_ctrl;
 
     float               vx_sp;

@@ -50,6 +50,9 @@
 
 // RM3508 gear ratio
 #define RM3508_MOTOR_GEAR_RATIO    ( 187.0f / 3591.0f )
+
+#define RPM_TO_RAD_PER_SEC   (2 * (float)M_PI / 60.0f)
+
 // RM3508 motor maximum speed, rpm
 #define MAX_WHEEL_RPM        8500
 // chassis maximum translation speed, mm/s
