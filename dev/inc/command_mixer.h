@@ -35,6 +35,15 @@ typedef struct
     float           vy;
     float           vw;
 
+    float           vx_up_filtered;
+    float           vy_up_filtered;
+
+    float           vx_down_filtered;
+    float           vy_down_filtered;
+
+    bool            vx_rising_flag;
+    bool            vy_rising_flag;
+
     control_mode_e  ctrl_mode;
     control_mode_e  last_ctrl_mode;
 

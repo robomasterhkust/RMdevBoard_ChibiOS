@@ -49,22 +49,33 @@ static THD_FUNCTION(command_mixer, p)
         }
 
         // command value pre-process and addition
-        float vx_dbus = ((float)dbus_msg->channel0 - CMD_MIXER_RC_MID) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
-        float vy_dbus = ((float)dbus_msg->channel1 - CMD_MIXER_RC_MID) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
+        float vx_dbus = ((float)dbus_msg->channel1 - CMD_MIXER_RC_MID) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
+        float vy_dbus = ((float)dbus_msg->channel0 - CMD_MIXER_RC_MID) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
 
         float vx_ros  = (float)ros_msg->px; // mm/s
         float vy_ros  = (float)ros_msg->py; // mm/s
 
-        float vx_dbus_filed = lpfilter_apply(&lp_rise_cmd_x, vx_dbus);
-        float vy_dbus_filed = lpfilter_apply(&lp_rise_cmd_y, vy_dbus);
+        cmd_mixer.vx_up_filtered = lpfilter_apply(&lp_rise_cmd_x, vx_dbus);
+        cmd_mixer.vy_up_filtered = lpfilter_apply(&lp_rise_cmd_y, vy_dbus);
+        cmd_mixer.vx_down_filtered = lpfilter_apply(&lp_fall_cmd_x, vx_dbus);
+        cmd_mixer.vy_down_filtered = lpfilter_apply(&lp_fall_cmd_y, vy_dbus);
 
-        float vx_dbus_slow = (lp_rise_cmd_x.data[1] - 2 * lp_rise_cmd_x.data[1] + vx_dbus > 0)
-                             ? vx_dbus_filed : vx_dbus;
-        float vy_dbus_slow = (lp_rise_cmd_y.data[1] - 2 * lp_rise_cmd_y.data[1] + vy_dbus > 0)
-                             ? vy_dbus_filed : vy_dbus;
+        if ( fabsf(cmd_mixer.vx_down_filtered) - fabsf(cmd_mixer.vx_up_filtered) > 0 )
+            cmd_mixer.vx_rising_flag = true;
+        else
+            cmd_mixer.vx_rising_flag = false;
 
-        cmd_mixer.vx = vx_ros + vx_dbus;
-        cmd_mixer.vy = vy_ros + vy_dbus;
+        if ( fabsf(cmd_mixer.vy_down_filtered) - fabsf(cmd_mixer.vy_up_filtered) > 0 )
+            cmd_mixer.vy_rising_flag = true;
+        else
+            cmd_mixer.vy_rising_flag = false;
+
+
+        float vx_dbus_slow = (cmd_mixer.vx_rising_flag) ? cmd_mixer.vx_up_filtered : cmd_mixer.vx_down_filtered;
+        float vy_dbus_slow = (cmd_mixer.vy_rising_flag) ? cmd_mixer.vy_up_filtered : cmd_mixer.vy_down_filtered;
+
+        cmd_mixer.vx = vx_ros + vx_dbus_slow;
+        cmd_mixer.vy = vy_ros + vy_dbus_slow;
 
         /*
          * state machine
@@ -87,10 +98,10 @@ static THD_FUNCTION(command_mixer, p)
 
 void command_mixer_init()
 {
-    lpfilter_init(&lp_rise_cmd_x, CMD_MIXER_UPDATE_FREQ, 5);
-    lpfilter_init(&lp_rise_cmd_y, CMD_MIXER_UPDATE_FREQ, 5);
-    lpfilter_init(&lp_fall_cmd_x, CMD_MIXER_UPDATE_FREQ, 30);
-    lpfilter_init(&lp_fall_cmd_y, CMD_MIXER_UPDATE_FREQ, 30);
+    lpfilter_init(&lp_rise_cmd_x, CMD_MIXER_UPDATE_FREQ, 1.5);
+    lpfilter_init(&lp_rise_cmd_y, CMD_MIXER_UPDATE_FREQ, 1.5);
+    lpfilter_init(&lp_fall_cmd_x, CMD_MIXER_UPDATE_FREQ, 15);
+    lpfilter_init(&lp_fall_cmd_y, CMD_MIXER_UPDATE_FREQ, 15);
     chThdCreateStatic(command_mixer_wa, sizeof(command_mixer_wa), NORMALPRIO,
                       command_mixer, NULL);
 }

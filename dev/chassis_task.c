@@ -33,7 +33,7 @@ chassis_error_t chassis_getError(void) { return chassis.error_flag; }
  * private functions
  */
 static void mecanum_inverse_kinematics
-        (float vx, float vy, float w_degree);
+        (float vx, float vy, float w_radian);
 
 static void clear_motor_speed_sp();
 
@@ -151,7 +151,7 @@ chassis_task_init()
  * @output w1, w2, w3, w4, rad/s
  */
 static void
-mecanum_inverse_kinematics(float vx, float vy, float w_degree)
+mecanum_inverse_kinematics(float vx, float vy, float w_radian)
 {
     float rotate_ratio_fr;
     float rotate_ratio_fl;
@@ -162,7 +162,7 @@ mecanum_inverse_kinematics(float vx, float vy, float w_degree)
     float dx = chassis.rotate_x_offset;
     float dy = chassis.rotate_y_offset;
     float r = MECANUM_WHEEL_RADIUS;
-    float vw = w_degree / 6.0f; // Convert the degree/s to RPM
+    float vw = w_radian; // radian/s
 
     if (!rotation_center_gimbal) {
         // normal kinematics
@@ -185,9 +185,9 @@ mecanum_inverse_kinematics(float vx, float vy, float w_degree)
 //    chassis._motors[FRONT_LEFT].speed_sp  = (vx + vy + vw * rotate_ratio_fl) / r;
 //    chassis._motors[BACK_LEFT].speed_sp   = (vx - vy + vw * rotate_ratio_bl) / r;
 //    chassis._motors[BACK_RIGHT].speed_sp  = (-1 * vx - vy + vw * rotate_ratio_br) / r;
-    chassis._motors[FRONT_RIGHT].speed_sp = (vx - vy - vw * rotate_ratio_fr) / r;
+    chassis._motors[FRONT_RIGHT].speed_sp = (-vx + vy - vw * rotate_ratio_fr) / r;
     chassis._motors[FRONT_LEFT].speed_sp  = (vx + vy + vw * rotate_ratio_fl) / r;
-    chassis._motors[BACK_LEFT].speed_sp   = (vx - vy + vw * rotate_ratio_bl) / r;
+    chassis._motors[BACK_LEFT].speed_sp   = (-vx + vy + vw * rotate_ratio_bl) / r;
     chassis._motors[BACK_RIGHT].speed_sp  = (vx + vy - vw * rotate_ratio_br) / r;
 }
 
@@ -316,7 +316,7 @@ chassis_state_machine(command_t* cmd, volatile GimbalEncoder_canStruct *encoder)
     }
 }
 
-// planar robot velocity command to follow an angle
+// planar robot velocity command to follow an angle in radian
 static void
 follow_gimbal_handler(float vx, float vy, float angle, pid_controller_t* heading_controller)
 {
