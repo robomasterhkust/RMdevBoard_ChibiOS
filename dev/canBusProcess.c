@@ -15,15 +15,17 @@ static volatile ChassisEncoder_canStruct chassis_encoder[CHASSIS_MOTOR_NUM];
 static volatile ChassisEncoder_canStruct extra_encoder[EXTRA_MOTOR_NUM];
 static volatile Gimbal_Send_Dbus_canStruct gimbal_send_dbus;
 static volatile BarrelStatus_canStruct chassis_send_barrel;
-static volatile Ros_msg_canStruct ros_msg = {
-        .px=0.0,
-        .py=0.0,
-        .vy=0.0,
-        .vz=0.0,
-        .updated=false,
-        .last_px=0,
-        .last_py=0
-};
+static volatile Ros_msg_canStruct ros_msg[0];
+
+//= {
+//        .px=0.0,
+//        .py=0.0,
+//        .vy=0.0,
+//        .vz=0.0,
+//        .updated=false,
+//        .last_px=0,
+//        .last_py=0
+//};
 static volatile ShooterInfo_canStruct gimbal_send_shooter_info;
 /*
  * 500KBaud, automatic wakeup, automatic recover
@@ -66,7 +68,7 @@ volatile BarrelStatus_canStruct *can_get_sent_barrelStatus(void)
 
 volatile Ros_msg_canStruct *can_get_ros_msg(void)
 {
-    return &ros_msg;
+    return ros_msg;
 }
 
 volatile ShooterInfo_canStruct *can_get_gimbal_send_shooter_info(void)
@@ -220,7 +222,7 @@ static void can_processEncoderMessage(CANDriver *const canp, const CANRxFrame *c
                 can_processSendBarrelStatus(&chassis_send_barrel, rxmsg);
                 break;
             case CAN_NVIDIA_TX2_BOARD_ID:
-                can_process_ros_command(&ros_msg, rxmsg);
+                can_process_ros_command(ros_msg, rxmsg);
                 break;
             default:
                 break;
@@ -338,6 +340,7 @@ void can_processInit(void)
     memset((void *) &gimbal_send_dbus, 0, sizeof(Gimbal_Send_Dbus_canStruct));
     memset((void *) &chassis_send_barrel, 0, sizeof(BarrelStatus_canStruct));
     memset((void *) &gimbal_send_shooter_info, 0, sizeof(ShooterInfo_canStruct));
+    memset((void *) ros_msg, 0, sizeof(Ros_msg_canStruct));
 
     can_process_clear_dbus(&gimbal_send_dbus);
 
