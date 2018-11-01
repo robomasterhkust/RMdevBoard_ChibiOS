@@ -35,7 +35,7 @@ typedef struct
 {
     chassis_motor_t     _motors[CHASSIS_MOTOR_NUM];
     pid_controller_t    motor_vel_ctrl[CHASSIS_MOTOR_NUM];
-    pid_controller_t    heading_ctrl;
+    pid_controller_t    heading_ctrl[1];
 
     float               vx_sp;
     float               vy_sp;
@@ -43,7 +43,8 @@ typedef struct
 
     int16_t             rotate_x_offset;
     int16_t             rotate_y_offset;
-    float               position_ref;
+    float               joint_angle_ref;
+    float               joint_angle_diff;
 
     int16_t             current[4];
 

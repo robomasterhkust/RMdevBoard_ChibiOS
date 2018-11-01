@@ -9,8 +9,7 @@
  *
  * 20181029 Beck Pang
  */
-#include <chassis_task.h>
-#include <canBusProcess.h>
+#include <stdlib.h>
 #include "ch.h"
 #include "hal.h"
 #include "canBusProcess.h"
@@ -18,7 +17,6 @@
 #include "chassis_task.h"
 #include "command_mixer.h"
 #include "math_misc.h"
-#include "math.h"
 
 static chassis_t chassis;
 
@@ -73,7 +71,7 @@ static THD_FUNCTION(chassis_control, p)
 
     uint32_t tick = chVTGetSystemTimeX();
 
-    chassis.position_ref = encoderPtr[GIMBAL_YAW].radian_angle;
+    chassis.joint_angle_ref = encoderPtr[GIMBAL_YAW].radian_angle;
 
     while (!chThdShouldTerminateX()) {
         tick += US2ST(CHASSIS_TASK_UPDATE_PERIOD_US);
@@ -111,9 +109,9 @@ chassis_task_init()
         chassis.motor_vel_ctrl[i].output_max = MOTOR_OUTPUT_MAX;
     }
     memset(&chassis.heading_ctrl, 0, sizeof(pid_controller_t));
-    chassis.heading_ctrl.kp = 0.0f;
-    chassis.heading_ctrl.ki = 0.0f;
-    chassis.heading_ctrl.kd = 0.0f;
+    chassis.heading_ctrl[0].kp = 0.0f;
+    chassis.heading_ctrl[0].ki = 0.0f;
+    chassis.heading_ctrl[0].kd = 0.0f;
 
     chThdCreateStatic(chassis_control_wa, sizeof(chassis_control_wa), NORMALPRIO,
                       chassis_control, NULL);
@@ -185,10 +183,10 @@ mecanum_inverse_kinematics(float vx, float vy, float w_radian)
 //    chassis._motors[FRONT_LEFT].speed_sp  = (vx + vy + vw * rotate_ratio_fl) / r;
 //    chassis._motors[BACK_LEFT].speed_sp   = (vx - vy + vw * rotate_ratio_bl) / r;
 //    chassis._motors[BACK_RIGHT].speed_sp  = (-1 * vx - vy + vw * rotate_ratio_br) / r;
-    chassis._motors[FRONT_RIGHT].speed_sp = (-vx + vy - vw * rotate_ratio_fr) / r;
-    chassis._motors[FRONT_LEFT].speed_sp  = (vx + vy + vw * rotate_ratio_fl) / r;
-    chassis._motors[BACK_LEFT].speed_sp   = (-vx + vy + vw * rotate_ratio_bl) / r;
-    chassis._motors[BACK_RIGHT].speed_sp  = (vx + vy - vw * rotate_ratio_br) / r;
+    chassis._motors[FRONT_RIGHT].speed_sp = (vx + vy - vw * rotate_ratio_fr) / r;
+    chassis._motors[FRONT_LEFT].speed_sp  = (vx - vy + vw * rotate_ratio_fl) / r;
+    chassis._motors[BACK_LEFT].speed_sp   = (vx + vy + vw * rotate_ratio_bl) / r;
+    chassis._motors[BACK_RIGHT].speed_sp  = (vx - vy - vw * rotate_ratio_br) / r;
 }
 
 static void
@@ -295,7 +293,7 @@ power_limit_control(judge_fb_t* judgePtr)
 static void
 chassis_state_machine(command_t* cmd, volatile GimbalEncoder_canStruct *encoder){
     if (cmd->reboot_flag) {
-        chassis.position_ref = encoder[GIMBAL_YAW].radian_angle;
+        chassis.joint_angle_ref = encoder[GIMBAL_YAW].radian_angle;
     }
 
     switch (cmd->ctrl_mode) {
@@ -303,9 +301,8 @@ chassis_state_machine(command_t* cmd, volatile GimbalEncoder_canStruct *encoder)
         case CTL_CHASSIS_STOP:      clear_motor_speed_sp(); break;
         case CTL_MANUAL_SEPARATE_GIMBAL: break;
         case CTL_MANUAL_FOLLOW_GIMBAL:
-            follow_gimbal_handler(cmd->vx, cmd->vy, \
-            (encoder[GIMBAL_YAW].radian_angle - chassis.position_ref) * GIMBAL_YAW_GEAR, \
-            &chassis.heading_ctrl);
+            chassis.joint_angle_diff = (chassis.joint_angle_ref - encoder[GIMBAL_YAW].radian_angle) * GIMBAL_YAW_GEAR;
+            follow_gimbal_handler(cmd->vx, cmd->vy, chassis.joint_angle_diff, chassis.heading_ctrl);
             break;
         case CTL_DODGE_MODE: break;
         case CTL_AUTO_SEPARATE_GIMBAL: break;
@@ -320,8 +317,8 @@ chassis_state_machine(command_t* cmd, volatile GimbalEncoder_canStruct *encoder)
 static void
 follow_gimbal_handler(float vx, float vy, float angle, pid_controller_t* heading_controller)
 {
-    chassis.vx_sp = vx * sinf(angle) + vy * cosf(angle);
-    chassis.vy_sp = vx * cosf(angle) - vy * sinf(angle);
+    chassis.vx_sp = vx * cosf(angle) + vy * sinf(angle);
+    chassis.vy_sp = vx * sinf(angle) - vy * cosf(angle);
 
     chassis.vw_sp = pid_control(angle, heading_controller);
 

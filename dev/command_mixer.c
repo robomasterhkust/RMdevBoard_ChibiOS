@@ -2,12 +2,10 @@
  * Created by beck on 29/10/18.
  * handle chassis state change and
  */
-#include <canBusProcess.h>
-#include <math_misc.h>
-#include <command_mixer.h>
 #include "ch.h"
 #include "hal.h"
 #include "command_mixer.h"
+#include "math.h"
 #include "math_misc.h"
 
 static command_t cmd_mixer;
