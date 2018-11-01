@@ -109,9 +109,10 @@ chassis_task_init()
         chassis.motor_vel_ctrl[i].output_max = MOTOR_OUTPUT_MAX;
     }
     memset(&chassis.heading_ctrl, 0, sizeof(pid_controller_t));
-    chassis.heading_ctrl[0].kp = 0.0f;
-    chassis.heading_ctrl[0].ki = 0.0f;
-    chassis.heading_ctrl[0].kd = 0.0f;
+    chassis.heading_ctrl[0].kp = 10.0f;
+    chassis.heading_ctrl[0].ki = 0.1f;
+    chassis.heading_ctrl[0].kd = 0.5f;
+    chassis.heading_ctrl[0].output_max = ROTATE_OUTPUT_MAX;
 
     chThdCreateStatic(chassis_control_wa, sizeof(chassis_control_wa), NORMALPRIO,
                       chassis_control, NULL);

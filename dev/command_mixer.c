@@ -7,6 +7,7 @@
 #include "command_mixer.h"
 #include "math.h"
 #include "math_misc.h"
+#include <limits.h>
 
 static command_t cmd_mixer;
 
@@ -46,50 +47,62 @@ static THD_FUNCTION(command_mixer, p)
             tick = chVTGetSystemTimeX();
         }
 
-        // command value pre-process and addition
-        float vx_dbus = ((float)dbus_msg->channel1 - CMD_MIXER_RC_MID) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
-        float vy_dbus = ((float)dbus_msg->channel0 - CMD_MIXER_RC_MID) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
+        if (cmd_mixer.reboot_flag) {
+            cmd_mixer.vx = 0;
+            cmd_mixer.vy = 0;
+            lpfilter_apply(&lp_rise_cmd_x, 0.0);
+            lpfilter_apply(&lp_rise_cmd_y, 0.0);
+            lpfilter_apply(&lp_fall_cmd_x, 0.0);
+            lpfilter_apply(&lp_fall_cmd_y, 0.0);
+        }
+        else {
+            // command value pre-process and addition
+            float vx_dbus = ((float)dbus_msg->channel1 - CMD_MIXER_RC_MID) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_X;
+            float vy_dbus = ((float)dbus_msg->channel0 - CMD_MIXER_RC_MID) / RC_RESOLUTION * CHASSIS_RC_MAX_SPEED_Y;
 
-        float vx_ros  = (float)ros_msg->px; // mm/s
-        float vy_ros  = (float)ros_msg->py; // mm/s
+            float vx_ros  = (float)ros_msg->px; // mm/s
+            float vy_ros  = (float)ros_msg->py; // mm/s
 
-        cmd_mixer.vx_up_filtered = lpfilter_apply(&lp_rise_cmd_x, vx_dbus);
-        cmd_mixer.vy_up_filtered = lpfilter_apply(&lp_rise_cmd_y, vy_dbus);
-        cmd_mixer.vx_down_filtered = lpfilter_apply(&lp_fall_cmd_x, vx_dbus);
-        cmd_mixer.vy_down_filtered = lpfilter_apply(&lp_fall_cmd_y, vy_dbus);
+            cmd_mixer.vx_up_filtered = lpfilter_apply(&lp_rise_cmd_x, vx_dbus);
+            cmd_mixer.vy_up_filtered = lpfilter_apply(&lp_rise_cmd_y, vy_dbus);
+            cmd_mixer.vx_down_filtered = lpfilter_apply(&lp_fall_cmd_x, vx_dbus);
+            cmd_mixer.vy_down_filtered = lpfilter_apply(&lp_fall_cmd_y, vy_dbus);
 
-        if ( fabsf(cmd_mixer.vx_down_filtered) - fabsf(cmd_mixer.vx_up_filtered) > 0 )
-            cmd_mixer.vx_rising_flag = true;
-        else
-            cmd_mixer.vx_rising_flag = false;
+            if ( fabsf(cmd_mixer.vx_down_filtered) - fabsf(cmd_mixer.vx_up_filtered) > 0 )
+                cmd_mixer.vx_rising_flag = true;
+            else
+                cmd_mixer.vx_rising_flag = false;
 
-        if ( fabsf(cmd_mixer.vy_down_filtered) - fabsf(cmd_mixer.vy_up_filtered) > 0 )
-            cmd_mixer.vy_rising_flag = true;
-        else
-            cmd_mixer.vy_rising_flag = false;
+            if ( fabsf(cmd_mixer.vy_down_filtered) - fabsf(cmd_mixer.vy_up_filtered) > 0 )
+                cmd_mixer.vy_rising_flag = true;
+            else
+                cmd_mixer.vy_rising_flag = false;
 
 
-        float vx_dbus_slow = (cmd_mixer.vx_rising_flag) ? cmd_mixer.vx_up_filtered : cmd_mixer.vx_down_filtered;
-        float vy_dbus_slow = (cmd_mixer.vy_rising_flag) ? cmd_mixer.vy_up_filtered : cmd_mixer.vy_down_filtered;
+            float vx_dbus_slow = (cmd_mixer.vx_rising_flag) ? cmd_mixer.vx_up_filtered : cmd_mixer.vx_down_filtered;
+            float vy_dbus_slow = (cmd_mixer.vy_rising_flag) ? cmd_mixer.vy_up_filtered : cmd_mixer.vy_down_filtered;
 
-        cmd_mixer.vx = vx_ros + vx_dbus_slow;
-        cmd_mixer.vy = vy_ros + vy_dbus_slow;
+            cmd_mixer.vx = vx_ros + vx_dbus_slow;
+            cmd_mixer.vy = vy_ros + vy_dbus_slow;
+        }
+
 
         /*
          * state machine
          */
 
-        if (dbus_msg->channel0 <= CMD_MIXER_RC_MAX  || dbus_msg->channel0 >= CMD_MIXER_RC_MIN)
+        if (dbus_msg->channel0 == USHRT_MAX || dbus_msg->channel1 == USHRT_MAX )
+        {
+            // handle reboot
+            cmd_mixer.ctrl_mode = CTL_CHASSIS_STOP;
+            cmd_mixer.reboot_flag = true;
+        }
+        else
         {
             cmd_mixer.ctrl_mode = CTL_MANUAL_FOLLOW_GIMBAL;
             if (cmd_mixer.reboot_flag) {
                 cmd_mixer.reboot_flag = false;
             }
-        }
-        else {
-            // handle reboot
-            cmd_mixer.ctrl_mode = CTL_CHASSIS_STOP;
-            cmd_mixer.reboot_flag = true;
         }
     }
 }

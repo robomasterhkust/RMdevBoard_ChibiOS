@@ -4,11 +4,11 @@
  * @brief   CAN driver configuration file
  * @reference   RM2017_Archive
  */
-#include <canBusProcess.h>
 #include "ch.h"
 #include "hal.h"
 
 #include "canBusProcess.h"
+#include <limits.h>
 
 static volatile GimbalEncoder_canStruct gimbal_encoder[GIMBAL_MOTOR_NUM];
 static volatile ChassisEncoder_canStruct chassis_encoder[CHASSIS_MOTOR_NUM];
@@ -94,6 +94,18 @@ static inline void can_processSendDbusEncoder
     db->s2 = rxmsg->data8[5];
     db->key_code = rxmsg->data16[3];
     db->updated = true;
+    chSysUnlock();
+}
+
+static inline void can_process_clear_dbus(volatile Gimbal_Send_Dbus_canStruct *db)
+{
+    chSysLock();
+    db->channel0 = USHRT_MAX;
+    db->channel1 = USHRT_MAX;
+    db->s1 = UCHAR_MAX;
+    db->s2 = UCHAR_MAX;
+    db->key_code = 0;
+    db->updated = false;
     chSysUnlock();
 }
 
@@ -189,6 +201,7 @@ static inline void can_processGimbalEncoder
 
 static void can_processEncoderMessage(CANDriver *const canp, const CANRxFrame *const rxmsg)
 {
+    // can_process_clear_dbus(&gimbal_send_dbus);
     if (canp == &CAND2) {
         switch (rxmsg->SID) {
             case CAN_CHASSIS_FL_FEEDBACK_MSG_ID:
@@ -263,10 +276,7 @@ static THD_FUNCTION(can_rx, p)
     CANDriver *canp = (CANDriver *) p;
     event_listener_t el;
     CANRxFrame rxmsg;
-    gimbal_send_dbus.channel0 = 65535;
-    gimbal_send_dbus.channel1 = 65535;
-    gimbal_send_dbus.key_code = 0;
-    gimbal_send_dbus.updated = false;
+
     (void) p;
     chRegSetThreadName("can receiver");
     chEvtRegister(&canp->rxfull_event, &el, 0);
@@ -325,8 +335,11 @@ void can_processInit(void)
     memset((void *) gimbal_encoder, 0, sizeof(GimbalEncoder_canStruct) * GIMBAL_MOTOR_NUM);
     memset((void *) chassis_encoder, 0, sizeof(ChassisEncoder_canStruct) * CHASSIS_MOTOR_NUM);
     memset((void *) extra_encoder, 0, sizeof(ChassisEncoder_canStruct) * EXTRA_MOTOR_NUM);
+    memset((void *) &gimbal_send_dbus, 0, sizeof(Gimbal_Send_Dbus_canStruct));
     memset((void *) &chassis_send_barrel, 0, sizeof(BarrelStatus_canStruct));
     memset((void *) &gimbal_send_shooter_info, 0, sizeof(ShooterInfo_canStruct));
+
+    can_process_clear_dbus(&gimbal_send_dbus);
 
     uint8_t i;
     for (i = 0; i < CAN_FILTER_NUM; i++) {
