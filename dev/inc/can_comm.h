@@ -10,7 +10,7 @@
 #include "canBusProcess.h"
 
 #define CAN_COMM_PORT &CAND2
-#define CAN_CHASSIS_WHEEL_SID 0x216
+#define CAN_CHASSIS_WHEEL_SID 0x220
 
 #define CAN_COMM_FREQ 100U
 

@@ -4,7 +4,7 @@
 
 #include "can_comm.h"
 
-chassis_t* chassis;
+volatile chassis_t* chassis;
 
 void
 can_transmit(CANDriver *const CANx, const uint16_t SID,
