@@ -96,9 +96,9 @@ int main(void) {
   // pwm_shooter_init();
   judgeinit();
   barrelHeatLimitControl_init();
-  // extiinit(); //*
+  extiinit(); //*
 
-  chassis_init();
+  //chassis_init();
 
   customData_init();
   power_module_init();

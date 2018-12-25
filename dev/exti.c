@@ -63,11 +63,11 @@ static THD_FUNCTION(MotorToggleThread, arg)
 }
 #endif
 /*
- * EXTI 10 CALLBACK
+ * EXTI 2 CALLBACK
  * Configured for motor testing
  * Resumes MotorToggleThread
  */
-static void extcb10(EXTDriver *extp, expchannel_t channel)
+static void extcb2(EXTDriver *extp, expchannel_t channel)
 {
 
     (void) extp;
@@ -90,7 +90,8 @@ static const EXTConfig extcfg = {
         {
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI0
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI1
-                {EXT_CH_MODE_DISABLED, NULL},   //EXTI2
+                {EXT_CH_MODE_FALLING_EDGE | EXT_CH_MODE_AUTOSTART |
+                 EXT_MODE_GPIOB, extcb2},      //EXTI2
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI3
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI4
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI5
@@ -98,8 +99,7 @@ static const EXTConfig extcfg = {
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI7
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI8
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI9
-                {EXT_CH_MODE_FALLING_EDGE | EXT_CH_MODE_AUTOSTART |
-                 EXT_MODE_GPIOF, extcb10},   //EXTI10, RMShield Pushbutton
+                {EXT_CH_MODE_DISABLED, NULL},   //EXTI10
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI11
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI12
                 {EXT_CH_MODE_DISABLED, NULL},   //EXTI13
@@ -119,7 +119,7 @@ void extiinit(void)
 {
 
   extStart(&EXTD1, &extcfg);
-  extChannelEnable(&EXTD1, 10);
+  extChannelEnable(&EXTD1, 2);
 #ifdef MOTOR_TEST
   chThdCreateStatic(MotorToggleThread_wa, sizeof(MotorToggleThread_wa),
                     NORMALPRIO, MotorToggleThread, NULL);
